@@ -1,0 +1,69 @@
+module decode( 
+      wave_instr_pc,
+      wave_instr_valid,
+      wave_instr,
+      wave_wfid,
+      wave_vgpr_base,
+      wave_sgpr_base,
+      wave_lds_base,
+      issue_wf_halt,
+      issue_fu,
+      issue_wfid,
+      issue_opcode,
+      issue_source_reg1,
+      issue_source_reg2,
+      issue_source_reg3,
+      issue_source_reg4,
+      issue_dest_reg1,
+      issue_dest_reg2,
+      issue_imm_value0,
+      issue_imm_value1,
+      issue_valid,
+      issue_instr_pc,
+      issue_vcc_wr,
+      issue_vcc_rd,
+      issue_scc_wr,
+      issue_scc_rd,
+      issue_exec_rd,
+      issue_exec_wr,
+      issue_m0_rd,
+      issue_m0_wr,
+      issue_barrier,
+      issue_branch,
+      issue_lds_base,
+      issue_waitcnt,
+      wave_ins_half_rqd,
+      wave_ins_half_wfid,
+      tracemon_collinstr,
+      tracemon_colldone,
+      clk,
+      rst
+ );
+
+input clk;
+
+input rst;
+
+input wave_instr_valid;
+input[5:0] wave_wfid;
+input[8:0] wave_sgpr_base;
+input[9:0] wave_vgpr_base;
+input[15:0] wave_lds_base;
+input[31:0] wave_instr_pc, wave_instr;
+
+output issue_wf_halt, issue_valid, issue_vcc_wr, issue_vcc_rd, issue_scc_wr,
+         issue_scc_rd, issue_exec_rd, issue_exec_wr, issue_m0_rd, issue_m0_wr,
+         issue_barrier, issue_branch, issue_waitcnt, wave_ins_half_rqd, tracemon_colldone;
+output[1:0] issue_fu;
+output[5:0] issue_wfid, wave_ins_half_wfid;
+output[12:0] issue_source_reg2, issue_source_reg3, issue_dest_reg2;
+output[13:0] issue_source_reg1, issue_source_reg4, issue_dest_reg1;
+output[15:0] issue_imm_value0, issue_lds_base;
+output[31:0] issue_opcode, issue_imm_value1, issue_instr_pc;
+output[63:0] tracemon_collinstr;
+
+///////////////////////////////
+//Your code goes here - beware: script does not recognize changes
+// into files. It ovewrites everithing without mercy. Save your work before running the script
+///////////////////////////////
+endmodule

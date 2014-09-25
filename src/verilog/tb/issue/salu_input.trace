@@ -1,0 +1,16 @@
+valid:1 fu:10 wfid:1 op:1 pc:0 dest1:0801 dest2:0 src1:0802 src2:0803 src3:0 src4:0 imm0:10 imm1:20 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:1 fu:10 wfid:1 op:2 pc:4 dest1:0804 dest2:0 src1:0801 src2:0803 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:1 fu:10 wfid:1 op:3 pc:8 dest1:0805 dest2:0 src1:0801 src2:0803 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+valid:1 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:1
+valid:0 fu:10 wfid:1 op:4 pc:b dest1:0 dest2:0 src1:0 src2:0 src3:0 src4:0 imm0:0 imm1:0 branch:0 barrier:0 halt:0
+

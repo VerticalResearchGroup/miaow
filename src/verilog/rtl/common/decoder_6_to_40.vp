@@ -1,0 +1,11 @@
+module decoder_6_to_40 (out,in);
+  output [39:0] out;
+  input [5:0] in;
+%%start_veriperl
+my $i;
+for($i=0; $i<40; $i=$i+1)
+{
+  print "  assign out[$i] = (in == 6'd$i) ? 1'b1 : 1'b0;\n";
+}
+%%stop_veriperl
+endmodule

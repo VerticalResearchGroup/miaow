@@ -1,0 +1,154 @@
+#!/usr/bin/perl -w
+
+use warnings "all";
+use Getopt::Long;
+
+#Declaration and initialization of variables
+my $test = "";
+my $script_name = $0;
+
+$opt_result = GetOptions (
+  "input=s"   => \$test,
+  "fpga"      => \$fpga,
+  "help"       => \$help,
+);
+
+if(!$opt_result)
+{
+  print STDERR "$script_name: Invalid command line options!\n";
+  print STDERR "$script_name: Use -help if you need it :)\n";
+  die;
+}
+
+if($help)
+{
+  print_help();
+  exit 0;
+}
+
+@list = `ls -d test*`;
+chomp(@list);
+if($test ne "")
+{
+  if(!(-d $test))
+  {
+    print STDERR "$script_name: Test named $test does not exist!\n";
+    die;
+  }
+
+  @list = ("$test");
+}
+
+if($fpga eq "") {
+  foreach $t (@list)
+  {
+
+    $t =~ s/\/$//;
+    $t =~ s/\/$//;
+    print $t;
+    system "
+    cp ../lib/libm2s-opencl.so ./$t/;
+    cd ./common/;
+    cp ut ut_Kernels.bin ../$t/;
+    cd ../;
+    cd ./$t;
+    ../../multi2sim-4.0/bin/m2s --si-debug-isa ${t}_trace --si-sim functional ut --load ut_Kernels.bin;
+    rm -f ut ut_Kernels.bin libm2s-opencl.so;
+    ../../common/trace_parser.pl -i ${t}_trace;
+    ";
+  }  
+}
+
+foreach $t (@list)
+{
+  $t =~ s/\/$//;
+  $t =~ s/\/$//;
+  print "Generating fpga required files: $t\n";
+  
+  # generating instruction file
+  open(INFILE, "./$t/unit_test_instr.mem") or die "Could not open file";
+  @c = <INFILE>;
+  close INFILE;
+  chomp @c;
+
+  $fl = "stage_cu.c";
+
+  if (0 == open(OUTFILE, ">./$t/$fl"))
+  {
+    print STDERR "$script_name: Cannot open file $t/$fl for writing!\n";
+    die;
+  }
+
+  printf OUTFILE "void stage_cu()\n";
+  printf OUTFILE "{\n";
+
+  printf OUTFILE "   // Writing instruction memory\n";
+
+  for($i = 1; $i < scalar(@c); $i+=4) {
+    printf OUTFILE "   Xil_Out32(0x50001004, %d);\n", ($i-1);
+    printf OUTFILE "   Xil_Out32(0x50001000, 0x%s%s%s%s);\n", $c[$i+3], $c[$i+2], $c[$i+1], $c[$i];;
+  }
+
+  # generating sgpr files
+  open(INFILE, "./$t/unit_test_config.txt") or die "Could not open file";
+  @c = <INFILE>;
+  close INFILE;
+  chomp @c;
+
+  foreach($i = 1; $i < scalar(@c); $i++) {
+    
+    printf OUTFILE "\n   // Writing SGPRs for wavefront %d\n", $i;
+    $l = $c[$i];
+
+    if($l =~ m/.*;S:(.*);.*/) 
+    {
+      @slist = split(',', $1);
+      for($j = 0; $j < scalar(@slist); )
+      {
+        printf OUTFILE "   Xil_Out32(0x50002004, %d);\n", ($j * 4);
+
+        $s1 = $s2 = $s3 = $s4 = 0;
+
+        if($j < scalar(@slist)) { $s1 = (split('=', $slist[$j]))[1]; }
+        $j = $j + 1;
+        if($j < scalar(@slist)) { $s2 = (split('=', $slist[$j]))[1]; }
+        $j = $j + 1;
+        if($j < scalar(@slist)) { $s3 = (split('=', $slist[$j]))[1]; }
+        $j = $j + 1;
+        if($j < scalar(@slist)) { $s4 = (split('=', $slist[$j]))[1]; }
+        $j = $j + 1;
+
+        printf OUTFILE "   Xil_Out32(0x50002008, 0x%X);\n", $s1;
+        printf OUTFILE "   Xil_Out32(0x5000200C, 0x%X);\n", $s2;
+        printf OUTFILE "   Xil_Out32(0x50002010, 0x%X);\n", $s3;
+        printf OUTFILE "   Xil_Out32(0x50002014, 0x%X);\n", $s4;
+
+        printf OUTFILE "   Xil_Out32(0x50002000, 1);\n";
+      }
+    }
+
+    printf OUTFILE "}\n";
+    close OUTFILE
+  }
+}
+
+sub print_help
+{
+print STDOUT qq{$script_name:
+
+DESCRIPTION:
+        This script can be used to generate trace, instruction memory buffer, data memory buffer and initial configuration of VGPR and SGPR values.
+
+USAGE:
+	$script_name -i <input_test_name> [-h]
+
+ARGUMENTS:
+
+-i <input_test_name> 
+-input <input_test_name>       This is a compulsory option; used to specify the name of test to be run.
+
+-h
+-help                           Well, you know what this option is for! You couldn't be reading this otherwise.
+};
+
+}

@@ -1,0 +1,5 @@
+ v_cmp_ne_i32  vcc, s3, v6                                 // 00000000: 7D0A0C03
+wf_id0: vcc<=(1) wf_id1: vcc<=(1) wf_id2: vcc<=(1) wf_id3: vcc<=(1) wf_id4: vcc<=(1) wf_id5: vcc<=(1) wf_id6: vcc<=(1) wf_id7: vcc<=(1) wf_id8: vcc<=(1) wf_id9: vcc<=(1) 
+
+ s_endpgm                                                  // 00000004: BF810000
+

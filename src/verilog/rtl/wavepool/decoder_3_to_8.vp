@@ -1,0 +1,11 @@
+module decoder_3_to_8 (out,in);
+  output [7:0] out;
+  input [2:0] in;
+%%start_veriperl
+my $i;
+for($i=0; $i<8; $i=$i+1)
+{
+  print "  assign out[$i] = (in == 3'd$i) ? 1'b1 : 1'b0;\n";
+}
+%%stop_veriperl
+endmodule

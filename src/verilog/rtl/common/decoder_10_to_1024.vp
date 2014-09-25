@@ -1,0 +1,11 @@
+module decoder_10_to_1024 (out,in);
+  output [1023:0] out;
+  input [9:0] in;
+%%start_veriperl
+my $i;
+for($i=0; $i<1024; $i=$i+1)
+{
+  print "  assign out[$i] = (in == 10'd$i) ? 1'b1 : 1'b0;\n";
+}
+%%stop_veriperl
+endmodule

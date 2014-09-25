@@ -1,0 +1,20 @@
+module special_decode(
+	dispatch2cu_wf_size_dispatch,
+	exec_init_value
+);
+
+input[5:0] dispatch2cu_wf_size_dispatch;
+output[63:0] exec_init_value;
+
+assign exec_init_value[63] = (dispatch2cu_wf_size_dispatch == 64);
+%%start_veriperl
+my $i;
+my $j;
+for($i=62; $i>=0; $i=$i-1)
+{
+	$j = $i + 1;
+	print "assign exec_init_value[$i] = (dispatch2cu_wf_size_dispatch == $j) | exec_init_value[$j];\n";
+}
+%%stop_veriperl
+
+endmodule

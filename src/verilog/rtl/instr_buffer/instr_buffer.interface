@@ -1,0 +1,28 @@
+module instr_buffer( 
+      fetch_rd_en,
+      fetch_addr,
+      fetch_tag,
+      fetchwave_ack,
+      wave_instr,
+      wave_tag,
+      clk,
+      rst
+ );
+
+input clk;
+
+input rst;
+
+input fetch_rd_en;
+input[31:0] fetch_addr;
+input[38:0] fetch_tag;
+
+output fetchwave_ack;
+output[31:0] wave_instr;
+output[38:0] wave_tag;
+
+///////////////////////////////
+//Your code goes here - beware: script does not recognize changes
+// into files. It ovewrites everithing without mercy. Save your work before running the script
+///////////////////////////////
+endmodule

@@ -1,0 +1,22 @@
+ s_barrier                                                 // 00000000: BF8A0001
+wavefront[i0-i9] (gid=0) reached barrier (1 reached, 0 left)
+work-group[i0-i10] completed barrier, waking up wavefronts
+
+
+ s_mov_b32     s3, s7                                      // 00000004: BE830307
+S3<=(46) 
+
+ s_mov_b32     s2, s0                                      // 00000008: BE820300
+S2<=(40) 
+
+ s_mov_b32     s8, s7                                      // 0000000C: BE880307
+S8<=(46) 
+
+ s_mov_b32     s2, s9                                      // 00000010: BE820309
+S2<=(20) 
+
+ s_mov_b32     s9, s1                                      // 00000014: BE890301
+S9<=(8) 
+
+ s_endpgm                                                  // 00000018: BF810000
+

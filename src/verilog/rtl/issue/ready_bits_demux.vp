@@ -1,0 +1,29 @@
+module ready_bits_demux(
+    in,
+    addr,
+    out,
+    en
+);
+
+parameter TOTAL_INFO_LENGTH = `ISSUE_GPR_RD_BITS_LENGTH;
+
+input [TOTAL_INFO_LENGTH-1:0] in;
+input [`WF_ID_LENGTH-1:0] addr;
+output [TOTAL_INFO_LENGTH*`WF_PER_CU-1:0] out;
+reg [TOTAL_INFO_LENGTH*`WF_PER_CU-1:0] out;
+input en;
+
+always @(addr or in or en) begin
+    out <= {(TOTAL_INFO_LENGTH*`WF_PER_CU-1){1'b0}};
+    case(addr)
+%%start_veriperl
+my $i;
+for($i=0; $i<40; $i=$i+1)
+{
+  print "        6'd$i : out[TOTAL_INFO_LENGTH*$i+(TOTAL_INFO_LENGTH-1):TOTAL_INFO_LENGTH*$i] <= (en)? in: {TOTAL_INFO_LENGTH{1'b0}} ;\n";
+}
+%%stop_veriperl
+    endcase
+end
+
+endmodule

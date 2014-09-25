@@ -1,0 +1,807 @@
+extern "C" void InitializeTraceMon(int cuid);
+extern "C" void SetKernelId(int kernel_id);
+
+extern "C" void AddBases(int cuid, int wf, int sbase, int vbase, int lbase);
+extern "C" int GetSgprBase(int cuid, int wf);
+extern "C" int GetVgprBase(int cuid, int wf);
+extern "C" int GetLdsBase(int cuid, int wf);
+
+extern "C" void AddNewWavefront(int cuid, int tag, int wf);
+extern "C" void AddInstruction(int cuid, int wf, int pc, int is64,
+	int instr_lo, int instr_hi, int isBarrier, int timestamp);
+extern "C" void PrintAndDelete(int cuid, int wf, int pc);
+extern "C" void PrintAndDeleteOnBranch(int cuid, int wf, int pc, int taken);
+extern "C" void PrintAndDeleteBarrier(int cuid, int wf);
+extern "C" void PrintAndDeleteAll(int cuid, int wf);
+
+extern "C" void PrintVgpr(int cuid, int wf, int pc, int tid, int r, int value);
+extern "C" void PrintVgprWithVcc(int cuid, int wf, int pc, int tid, int r, int value, int vcc);
+extern "C" void PrintVVcc(int cuid, int wf, int pc, int tid, int vcc);
+extern "C" void PrintVSgpr(int cuid, int wf, int pc, int tid, int r, int value);
+extern "C" void PrintVgprF(int cuid, int wf, int pc, int tid, int r, int value);
+extern "C" void PrintVgprFWithVcc(int cuid, int wf, int pc, int tid, int r, int value, int vcc);
+extern "C" void PrintSgpr(int cuid, int wf, int pc, int sel, int r, int hival, int loval);
+extern "C" void PrintScc(int cuid, int wf, int pc, int value);
+extern "C" void PrintSgprWithScc(int cuid, int wf, int pc, int sel, int r, int hival, int loval, int scc);
+extern "C" void PrintSgprExecScc(int cuid, int wf, int pc, int r, int shival, int sloval, int ehival, int eloval, int scc);
+extern "C" void PrintVgprLoad(int cuid, int wf, int pc, int tid, int r, int addr, int value);
+extern "C" void PrintVgprLoadDS(int cuid, int wf, int pc, int tid, int r, int addr, int value);
+extern "C" void PrintSgprLoad(int cuid, int wf, int pc, int addr, int r, int value);
+extern "C" void PrintVgprStore(int cuid, int wf, int pc, int tid, int addr, int r, int value);
+extern "C" void PrintVgprStoreDS(int cuid, int wf, int pc, int tid, int addr, int r, int value);
+extern "C" void PrintExec(int cuid, int wf, int pc, int sel, int hival, int loval);
+extern "C" void PrintVcc(int cuid, int wf, int pc, int sel, int hival, int loval);
+extern "C" void PrintM0(int cuid, int wf, int pc, int val);
+extern "C" void PrintExecWithScc(int cuid, int wf, int pc, int sel, int hival, int loval, int scc);
+extern "C" void PrintVccWithScc(int cuid, int wf, int pc, int sel, int hival, int loval, int scc);
+extern "C" void PrintM0WithScc(int cuid, int wf, int pc, int val, int scc);
+extern "C" void PrintEndLine(int cuid, int wf, int pc);
+
+module tracemon(
+	issue2tracemon_barrier_retire_en,
+	issue2tracemon_barrier_retire_wf_bitmap,
+	issue2tracemon_barrier_retire_pc,
+	issue2tracemon_waitcnt_retire_en,
+	issue2tracemon_waitcnt_retire_wfid,
+	issue2tracemon_waitcnt_retire_pc,
+	simd0_2tracemon_retire_pc,
+	simd1_2tracemon_retire_pc,
+	simd2_2tracemon_retire_pc,
+	simd3_2tracemon_retire_pc,
+	simf0_2tracemon_retire_pc,
+	simf1_2tracemon_retire_pc,
+	simf2_2tracemon_retire_pc,
+	simf3_2tracemon_retire_pc,
+	lsu2tracemon_retire_pc,
+	salu2tracemon_retire_pc,
+	salu2tracemon_exec_word_sel,
+	salu2tracemon_vcc_word_sel,
+	wave2decode_instr_valid,
+	wave2decode_sgpr_base,
+	wave2decode_vgpr_base,
+	wave2decode_lds_base,
+	wave2decode_wfid,
+	salu2sgpr_instr_done,
+	salu2sgpr_instr_done_wfid,
+	salu2exec_wr_exec_en,
+	salu2exec_wr_exec_value,
+	salu2exec_wr_vcc_en,
+	salu2exec_wr_vcc_value,
+	salu2exec_wr_scc_en,
+	salu2exec_wr_scc_value,
+	salu2sgpr_dest_wr_en,
+	salu2sgpr_dest_addr,
+	salu2sgpr_dest_data,
+	salu2fetchwaveissue_branch_wfid,
+	salu2fetchwaveissue_branch_en,
+	salu2fetchwaveissue_branch_taken,
+	salu2fetch_branch_pc_value,
+	simd0_2vgpr_instr_done,
+	simd0_2vgpr_instr_done_wfid,
+	simd1_2vgpr_instr_done,
+	simd1_2vgpr_instr_done_wfid,
+	simd2_2vgpr_instr_done,
+	simd2_2vgpr_instr_done_wfid,
+	simd3_2vgpr_instr_done,
+	simd3_2vgpr_instr_done_wfid,
+	simd0_2exec_wr_vcc_en,
+	simd0_2exec_wr_vcc_value,
+	simd0_2vgpr_wr_en,
+	simd0_2vgpr_dest_addr,
+	simd0_2vgpr_dest_data,
+	simd0_2vgpr_wr_mask,
+	simd1_2exec_wr_vcc_en,
+	simd1_2exec_wr_vcc_value,
+	simd1_2vgpr_wr_en,
+	simd1_2vgpr_dest_addr,
+	simd1_2vgpr_dest_data,
+	simd1_2vgpr_wr_mask,
+	simd2_2exec_wr_vcc_en,
+	simd2_2exec_wr_vcc_value,
+	simd2_2vgpr_wr_en,
+	simd2_2vgpr_dest_addr,
+	simd2_2vgpr_dest_data,
+	simd2_2vgpr_wr_mask,
+	simd3_2exec_wr_vcc_en,
+	simd3_2exec_wr_vcc_value,
+	simd3_2vgpr_wr_en,
+	simd3_2vgpr_dest_addr,
+	simd3_2vgpr_dest_data,
+	simd3_2vgpr_wr_mask,
+	simf0_2vgpr_instr_done,
+	simf0_2vgpr_instr_done_wfid,
+	simf1_2vgpr_instr_done,
+	simf1_2vgpr_instr_done_wfid,
+	simf2_2vgpr_instr_done,
+	simf2_2vgpr_instr_done_wfid,
+	simf3_2vgpr_instr_done,
+	simf3_2vgpr_instr_done_wfid,
+	simf0_2exec_wr_vcc_en,
+	simf0_2exec_wr_vcc_value,
+	simf0_2vgpr_wr_en,
+	simf0_2vgpr_dest_addr,
+	simf0_2vgpr_dest_data,
+	simf0_2vgpr_wr_mask,
+	simf1_2exec_wr_vcc_en,
+	simf1_2exec_wr_vcc_value,
+	simf1_2vgpr_wr_en,
+	simf1_2vgpr_dest_addr,
+	simf1_2vgpr_dest_data,
+	simf1_2vgpr_wr_mask,
+	simf2_2exec_wr_vcc_en,
+	simf2_2exec_wr_vcc_value,
+	simf2_2vgpr_wr_en,
+	simf2_2vgpr_dest_addr,
+	simf2_2vgpr_dest_data,
+	simf2_2vgpr_wr_mask,
+	simf3_2exec_wr_vcc_en,
+	simf3_2exec_wr_vcc_value,
+	simf3_2vgpr_wr_en,
+	simf3_2vgpr_dest_addr,
+	simf3_2vgpr_dest_data,
+	simf3_2vgpr_wr_mask,
+	simd0_2sgpr_wr_addr,
+	simd0_2sgpr_wr_en,
+	simd0_2sgpr_wr_data,
+	simd1_2sgpr_wr_addr,
+	simd1_2sgpr_wr_en,
+	simd1_2sgpr_wr_data,
+	simd2_2sgpr_wr_addr,
+	simd2_2sgpr_wr_en,
+	simd2_2sgpr_wr_data,
+	simd3_2sgpr_wr_addr,
+	simd3_2sgpr_wr_en,
+	simd3_2sgpr_wr_data,
+	simf0_2sgpr_wr_addr,
+	simf0_2sgpr_wr_en,
+	simf0_2sgpr_wr_data,
+	simf1_2sgpr_wr_addr,
+	simf1_2sgpr_wr_en,
+	simf1_2sgpr_wr_data,
+	simf2_2sgpr_wr_addr,
+	simf2_2sgpr_wr_en,
+	simf2_2sgpr_wr_data,
+	simf3_2sgpr_wr_addr,
+	simf3_2sgpr_wr_en,
+	simf3_2sgpr_wr_data,
+	lsu2sgpr_instr_done,
+	lsu2sgpr_instr_done_wfid,
+	lsu2sgpr_dest_wr_en,
+	lsu2sgpr_dest_addr,
+	lsu2sgpr_dest_data,
+	lsu2vgpr_instr_done,
+	lsu2vgpr_dest_data,
+	lsu2vgpr_dest_addr,
+	lsu2vgpr_dest_wr_mask,
+	lsu2vgpr_instr_done_wfid,
+	lsu2vgpr_dest_wr_en,
+	issue2fetchwave_wf_done_en,
+	issue2fetchwave_wf_done_wf_id,
+	mem2tracemon_addr,
+	mem2tracemon_store_data,
+	mem2tracemon_store_en,
+	decode2tracemon_collinstr,
+	decode2tracemon_colldone,
+	decode2issue_instr_pc,
+	decode2issue_valid,
+	decode2issue_wfid,
+	rfa2execvgprsgpr_select_fu,
+	lsu2tracemon_gm_or_lds,
+	fetch2tracemon_dispatch,
+	fetch2tracemon_wf_tag,
+	fetch2tracemon_new_wfid,
+	salu2exec_wr_m0_en,
+	salu2exec_wr_m0_value,
+	decode2issue_barrier,
+	clk,
+	rst,
+	kernel_id
+ );
+
+parameter CUID = -1;
+
+input clk;
+
+input rst;
+
+input issue2tracemon_barrier_retire_en, wave2decode_instr_valid, salu2sgpr_instr_done,
+         salu2exec_wr_exec_en, salu2exec_wr_vcc_en, salu2exec_wr_scc_en, salu2exec_wr_scc_value,
+         salu2fetchwaveissue_branch_en, salu2fetchwaveissue_branch_taken, simd0_2vgpr_instr_done,
+         simd1_2vgpr_instr_done, simd2_2vgpr_instr_done, simd3_2vgpr_instr_done,
+         simd0_2exec_wr_vcc_en, simd0_2vgpr_wr_en, simd1_2exec_wr_vcc_en,
+         simd1_2vgpr_wr_en, simd2_2exec_wr_vcc_en, simd2_2vgpr_wr_en,
+         simd3_2exec_wr_vcc_en, simd3_2vgpr_wr_en, simf0_2vgpr_instr_done,
+         simf1_2vgpr_instr_done, simf2_2vgpr_instr_done, simf3_2vgpr_instr_done,
+         simf0_2exec_wr_vcc_en, simf0_2vgpr_wr_en, simf1_2exec_wr_vcc_en,
+         simf1_2vgpr_wr_en, simf2_2exec_wr_vcc_en, simf2_2vgpr_wr_en,
+         simf3_2exec_wr_vcc_en, simf3_2vgpr_wr_en, simd0_2sgpr_wr_en,
+         simd1_2sgpr_wr_en,simd2_2sgpr_wr_en, simd3_2sgpr_wr_en,
+         simf0_2sgpr_wr_en, simf1_2sgpr_wr_en, simf2_2sgpr_wr_en,
+         simf3_2sgpr_wr_en, lsu2sgpr_instr_done, lsu2vgpr_instr_done,
+         issue2fetchwave_wf_done_en, lsu2tracemon_gm_or_lds, issue2tracemon_waitcnt_retire_en,
+         salu2exec_wr_m0_en, decode2issue_barrier;
+input[1:0] salu2sgpr_dest_wr_en, salu2tracemon_exec_word_sel,
+         salu2tracemon_vcc_word_sel;
+input[3:0] lsu2vgpr_dest_wr_en, lsu2sgpr_dest_wr_en, mem2tracemon_store_en;
+input[5:0] wave2decode_wfid, salu2sgpr_instr_done_wfid, issue2tracemon_waitcnt_retire_wfid,
+         salu2fetchwaveissue_branch_wfid, simd0_2vgpr_instr_done_wfid, simd1_2vgpr_instr_done_wfid,
+         simd2_2vgpr_instr_done_wfid, simd3_2vgpr_instr_done_wfid, simf0_2vgpr_instr_done_wfid,
+         simf1_2vgpr_instr_done_wfid, simf2_2vgpr_instr_done_wfid, simf3_2vgpr_instr_done_wfid,
+         lsu2sgpr_instr_done_wfid, lsu2vgpr_instr_done_wfid, issue2fetchwave_wf_done_wf_id;
+input[8:0] wave2decode_sgpr_base, salu2sgpr_dest_addr, simd0_2sgpr_wr_addr,
+         simd1_2sgpr_wr_addr, simd2_2sgpr_wr_addr, simd3_2sgpr_wr_addr,
+         simf0_2sgpr_wr_addr, simf1_2sgpr_wr_addr, simf2_2sgpr_wr_addr,
+         simf3_2sgpr_wr_addr, lsu2sgpr_dest_addr;
+input[9:0] wave2decode_vgpr_base, simd0_2vgpr_dest_addr, simd1_2vgpr_dest_addr,
+         simd2_2vgpr_dest_addr, simd3_2vgpr_dest_addr, simf0_2vgpr_dest_addr,
+         simf1_2vgpr_dest_addr, simf2_2vgpr_dest_addr, simf3_2vgpr_dest_addr,
+         lsu2vgpr_dest_addr;
+input[15:0] rfa2execvgprsgpr_select_fu, wave2decode_lds_base;
+input[31:0] simd0_2tracemon_retire_pc, simd1_2tracemon_retire_pc, simd2_2tracemon_retire_pc,
+         simd3_2tracemon_retire_pc, simf0_2tracemon_retire_pc, simf1_2tracemon_retire_pc,
+         simf2_2tracemon_retire_pc, simf3_2tracemon_retire_pc, lsu2tracemon_retire_pc,
+         salu2tracemon_retire_pc, salu2fetch_branch_pc_value, issue2tracemon_barrier_retire_pc,
+         issue2tracemon_waitcnt_retire_pc, salu2exec_wr_m0_value;
+input[39:0] issue2tracemon_barrier_retire_wf_bitmap;
+input[63:0] salu2exec_wr_exec_value, salu2exec_wr_vcc_value, salu2sgpr_dest_data,
+         simd0_2exec_wr_vcc_value, simd0_2vgpr_wr_mask, simd1_2exec_wr_vcc_value,
+         simd1_2vgpr_wr_mask, simd2_2exec_wr_vcc_value, simd2_2vgpr_wr_mask,
+         simd3_2exec_wr_vcc_value, simd3_2vgpr_wr_mask, simf0_2exec_wr_vcc_value,
+         simf0_2vgpr_wr_mask, simf1_2exec_wr_vcc_value, simf1_2vgpr_wr_mask,
+         simf2_2exec_wr_vcc_value, simf2_2vgpr_wr_mask, simf3_2exec_wr_vcc_value,
+         simf3_2vgpr_wr_mask, simd0_2sgpr_wr_data, simd1_2sgpr_wr_data, simd2_2sgpr_wr_data,
+         simd3_2sgpr_wr_data, simf0_2sgpr_wr_data, simf1_2sgpr_wr_data, simf2_2sgpr_wr_data,
+         simf3_2sgpr_wr_data, lsu2vgpr_dest_wr_mask;
+input[127:0] lsu2sgpr_dest_data;
+input[2047:0] simd0_2vgpr_dest_data, simd1_2vgpr_dest_data, simd2_2vgpr_dest_data,
+         simd3_2vgpr_dest_data, simf0_2vgpr_dest_data, simf1_2vgpr_dest_data,
+         simf2_2vgpr_dest_data, simf3_2vgpr_dest_data, mem2tracemon_addr;
+input[8191:0] lsu2vgpr_dest_data, mem2tracemon_store_data;
+
+input[63:0] decode2tracemon_collinstr; // 64
+input decode2tracemon_colldone; // 0(32)/1(64)
+input[31:0] decode2issue_instr_pc; // 32
+input decode2issue_valid; // 1
+input[5:0] decode2issue_wfid; //6
+
+input [31:0] kernel_id;
+
+input fetch2tracemon_dispatch; //1
+input [14:0] fetch2tracemon_wf_tag; //15
+input [5:0] fetch2tracemon_new_wfid; //6
+
+integer salu_sgpr, lsu_sgpr, lsu_vgpr, simd1_vgpr, simd2_vgpr,
+	simd3_vgpr, simd0_vgpr, valu_sgpr, simf0_vgpr, simf1_vgpr,
+	simf2_vgpr, simf3_vgpr, lsu_lds;
+integer i, j, hi, hi_addr;
+integer wfid, pc;
+
+reg rst_buff;
+reg [5:0] lsu_wfid;
+
+// not doing anything with rst for now
+always @ (rst)
+	rst_buff = rst;
+
+initial begin
+	InitializeTraceMon(CUID);
+end
+
+always @ (kernel_id) begin
+	SetKernelId(kernel_id);
+end
+
+always @ (posedge clk) begin
+
+	if(fetch2tracemon_dispatch) begin
+		AddNewWavefront(CUID, fetch2tracemon_wf_tag, fetch2tracemon_new_wfid);
+	end
+
+	if(decode2issue_valid) begin
+		AddInstruction(CUID, decode2issue_wfid, decode2issue_instr_pc,decode2tracemon_colldone,
+			decode2tracemon_collinstr[31:0], decode2tracemon_collinstr[63:32],
+			decode2issue_barrier, $time);
+	end
+
+	if(wave2decode_instr_valid) begin
+		AddBases(CUID, wave2decode_wfid, wave2decode_sgpr_base, wave2decode_vgpr_base, wave2decode_lds_base);
+	end
+
+	if(issue2fetchwave_wf_done_en) begin
+		PrintAndDeleteAll(CUID, issue2fetchwave_wf_done_wf_id);
+	end
+
+	if(salu2fetchwaveissue_branch_en) begin
+		PrintAndDeleteOnBranch(CUID, salu2fetchwaveissue_branch_wfid,
+			salu2tracemon_retire_pc, salu2fetchwaveissue_branch_taken);
+	end
+
+	if(issue2tracemon_barrier_retire_en) begin
+		for(i = 0; i < 40; i++) begin
+			if(issue2tracemon_barrier_retire_wf_bitmap[i])
+				PrintAndDeleteBarrier(CUID, i);
+		end
+	end
+
+	if(issue2tracemon_waitcnt_retire_en) begin
+		PrintAndDelete(CUID, issue2tracemon_waitcnt_retire_wfid, issue2tracemon_waitcnt_retire_pc);
+	end
+
+
+	if(salu2sgpr_instr_done) begin
+		wfid = salu2sgpr_instr_done_wfid;
+		pc = salu2tracemon_retire_pc;
+
+		salu_sgpr = GetSgprBase(CUID, wfid);
+		salu_sgpr = salu2sgpr_dest_addr - salu_sgpr;
+
+		if(|salu2sgpr_dest_wr_en && salu2exec_wr_scc_en && salu2exec_wr_exec_en)
+			PrintSgprExecScc(CUID, wfid, pc, salu_sgpr, salu2sgpr_dest_data[63:32],
+				salu2sgpr_dest_data[31:0], salu2exec_wr_exec_value[63:32],
+				salu2exec_wr_exec_value[31:0], salu2exec_wr_scc_value);
+
+		else if(~|salu2sgpr_dest_wr_en && salu2exec_wr_exec_en && ~salu2exec_wr_scc_en) begin
+			PrintExec(CUID, wfid, pc, salu2tracemon_exec_word_sel,
+				salu2exec_wr_exec_value[63:32], salu2exec_wr_exec_value[31:0]);
+		end
+
+		else if(~|salu2sgpr_dest_wr_en && salu2exec_wr_vcc_en && ~salu2exec_wr_scc_en) begin
+			PrintVcc(CUID, wfid, pc, salu2tracemon_vcc_word_sel,
+				salu2exec_wr_vcc_value[63:32], salu2exec_wr_vcc_value[31:0]);
+		end
+
+		else if(~|salu2sgpr_dest_wr_en && salu2exec_wr_m0_en && ~salu2exec_wr_scc_en) begin
+			PrintM0(CUID, wfid, pc, salu2exec_wr_m0_value);
+		end
+
+		else if(~|salu2sgpr_dest_wr_en && salu2exec_wr_exec_en && salu2exec_wr_scc_en) begin
+			PrintExecWithScc(CUID, wfid, pc, salu2tracemon_exec_word_sel,
+				salu2exec_wr_exec_value[63:32], salu2exec_wr_exec_value[31:0], salu2exec_wr_scc_value);
+		end
+
+		else if(~|salu2sgpr_dest_wr_en && salu2exec_wr_vcc_en && salu2exec_wr_scc_en) begin
+			PrintVccWithScc(CUID, wfid, pc, salu2tracemon_vcc_word_sel,
+				salu2exec_wr_vcc_value[63:32], salu2exec_wr_vcc_value[31:0], salu2exec_wr_scc_value);
+		end
+
+		else if(~|salu2sgpr_dest_wr_en && salu2exec_wr_m0_en && salu2exec_wr_scc_en) begin
+			PrintM0WithScc(CUID, wfid, pc, salu2exec_wr_m0_value, salu2exec_wr_scc_value);
+		end
+
+		else if(|salu2sgpr_dest_wr_en && ~salu2exec_wr_scc_en) begin
+			PrintSgpr(CUID, wfid, pc, salu2sgpr_dest_wr_en, salu_sgpr,
+				salu2sgpr_dest_data[63:32], salu2sgpr_dest_data[31:0]);
+		end
+
+		else if(|salu2sgpr_dest_wr_en && salu2exec_wr_scc_en) begin
+			PrintSgprWithScc(CUID, wfid, pc, salu2sgpr_dest_wr_en, salu_sgpr,
+				salu2sgpr_dest_data[63:32], salu2sgpr_dest_data[31:0],
+				salu2exec_wr_scc_value);
+		end
+
+		else if(salu2exec_wr_scc_en) begin
+			PrintScc(CUID, wfid, pc, salu2exec_wr_scc_value);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(simd0_2vgpr_instr_done && rfa2execvgprsgpr_select_fu[0]) begin
+		wfid = simd0_2vgpr_instr_done_wfid;
+		pc = simd0_2tracemon_retire_pc;
+
+		simd0_vgpr = GetVgprBase(CUID, wfid);
+		simd0_vgpr = simd0_2vgpr_dest_addr - simd0_vgpr;
+
+		valu_sgpr = GetSgprBase(CUID, wfid);
+		valu_sgpr = simd0_2sgpr_wr_addr - valu_sgpr;
+
+		if(simd0_2vgpr_wr_en & simd0_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simd0_2vgpr_wr_mask[i])
+					PrintVgprWithVcc(CUID, wfid, pc, i, simd0_vgpr, simd0_2vgpr_dest_data[hi-:32], simd0_2exec_wr_vcc_value[i]);
+			end
+			if (|simd0_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd0_2vgpr_wr_en & ~simd0_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simd0_2vgpr_wr_mask[i])
+					PrintVgpr(CUID, wfid, pc, i, simd0_vgpr, simd0_2vgpr_dest_data[hi-:32]);
+			end
+			if (|simd0_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd0_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simd0_2vgpr_wr_mask[i])
+					PrintVVcc(CUID, wfid, pc, i, simd0_2exec_wr_vcc_value[i]);
+			end
+			if (|simd0_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd0_2sgpr_wr_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simd0_2vgpr_wr_mask[i])
+					PrintVSgpr(CUID, wfid, pc, i, valu_sgpr, simd0_2sgpr_wr_data[i]);
+			end
+			if (|simd0_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(simd1_2vgpr_instr_done && rfa2execvgprsgpr_select_fu[1]) begin
+		wfid = simd1_2vgpr_instr_done_wfid;
+		pc = simd1_2tracemon_retire_pc;
+
+		simd1_vgpr = GetVgprBase(CUID, wfid);
+		simd1_vgpr = simd1_2vgpr_dest_addr - simd1_vgpr;
+
+		valu_sgpr = GetSgprBase(CUID, wfid);
+		valu_sgpr = simd1_2sgpr_wr_addr - valu_sgpr;
+
+		if(simd1_2vgpr_wr_en & simd1_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simd1_2vgpr_wr_mask[i])
+					PrintVgprWithVcc(CUID, wfid, pc, i, simd1_vgpr, simd1_2vgpr_dest_data[hi-:32], simd1_2exec_wr_vcc_value[i]);
+			end
+			if (|simd1_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd1_2vgpr_wr_en & ~simd1_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simd1_2vgpr_wr_mask[i])
+					PrintVgpr(CUID, wfid, pc, i, simd1_vgpr, simd1_2vgpr_dest_data[hi-:32]);
+			end
+			if (|simd1_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd1_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simd1_2vgpr_wr_mask[i])
+					PrintVVcc(CUID, wfid, pc, i, simd1_2exec_wr_vcc_value[i]);
+			end
+			if (|simd1_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd1_2sgpr_wr_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simd1_2vgpr_wr_mask[i])
+					PrintVSgpr(CUID, wfid, pc, i, valu_sgpr, simd1_2sgpr_wr_data[i]);
+			end
+			if (|simd1_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(simd2_2vgpr_instr_done && rfa2execvgprsgpr_select_fu[2]) begin
+		wfid = simd2_2vgpr_instr_done_wfid;
+		pc = simd2_2tracemon_retire_pc;
+
+		simd2_vgpr = GetVgprBase(CUID, wfid);
+		simd2_vgpr = simd2_2vgpr_dest_addr - simd2_vgpr;
+
+		valu_sgpr = GetSgprBase(CUID, wfid);
+		valu_sgpr = simd2_2sgpr_wr_addr - valu_sgpr;
+
+		if(simd2_2vgpr_wr_en & simd2_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simd2_2vgpr_wr_mask[i])
+					PrintVgprWithVcc(CUID, wfid, pc, i, simd2_vgpr, simd2_2vgpr_dest_data[hi-:32], simd2_2exec_wr_vcc_value[i]);
+			end
+			if (|simd2_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd2_2vgpr_wr_en & ~simd2_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simd2_2vgpr_wr_mask[i])
+					PrintVgpr(CUID, wfid, pc, i, simd2_vgpr, simd2_2vgpr_dest_data[hi-:32]);
+			end
+			if (|simd2_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd2_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simd2_2vgpr_wr_mask[i])
+					PrintVVcc(CUID, wfid, pc, i, simd2_2exec_wr_vcc_value[i]);
+			end
+			if (|simd2_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd2_2sgpr_wr_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simd2_2vgpr_wr_mask[i])
+					PrintVSgpr(CUID, wfid, pc, i, valu_sgpr, simd2_2sgpr_wr_data[i]);
+			end
+			if (|simd2_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(simd3_2vgpr_instr_done && rfa2execvgprsgpr_select_fu[3]) begin
+		wfid = simd3_2vgpr_instr_done_wfid;
+		pc = simd3_2tracemon_retire_pc;
+
+		simd3_vgpr = GetVgprBase(CUID, wfid);
+		simd3_vgpr = simd3_2vgpr_dest_addr - simd3_vgpr;
+
+		valu_sgpr = GetSgprBase(CUID, wfid);
+		valu_sgpr = simd3_2sgpr_wr_addr - valu_sgpr;
+
+		if(simd3_2vgpr_wr_en & simd3_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simd3_2vgpr_wr_mask[i])
+					PrintVgprWithVcc(CUID, wfid, pc, i, simd3_vgpr, simd3_2vgpr_dest_data[hi-:32], simd3_2exec_wr_vcc_value[i]);
+			end
+			if (|simd3_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd3_2vgpr_wr_en & ~simd3_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simd3_2vgpr_wr_mask[i])
+					PrintVgpr(CUID, wfid, pc, i, simd3_vgpr, simd3_2vgpr_dest_data[hi-:32]);
+			end
+			if (|simd3_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd3_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simd3_2vgpr_wr_mask[i])
+					PrintVVcc(CUID, wfid, pc, i, simd3_2exec_wr_vcc_value[i]);
+			end
+			if (|simd3_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simd3_2sgpr_wr_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simd3_2vgpr_wr_mask[i])
+					PrintVSgpr(CUID, wfid, pc, i, valu_sgpr, simd3_2sgpr_wr_data[i]);
+			end
+			if (|simd3_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(simf0_2vgpr_instr_done && rfa2execvgprsgpr_select_fu[4]) begin
+		wfid = simf0_2vgpr_instr_done_wfid;
+		pc = simf0_2tracemon_retire_pc;
+
+		simf0_vgpr = GetVgprBase(CUID, wfid);
+		simf0_vgpr = simf0_2vgpr_dest_addr - simf0_vgpr;
+
+		valu_sgpr = GetSgprBase(CUID, wfid);
+		valu_sgpr = simf0_2sgpr_wr_addr - valu_sgpr;
+
+		if(simf0_2vgpr_wr_en & simf0_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simf0_2vgpr_wr_mask[i])
+					PrintVgprFWithVcc(CUID, wfid, pc, i, simf0_vgpr, simf0_2vgpr_dest_data[hi-:32], simf0_2exec_wr_vcc_value[i]);
+			end
+			if (|simf0_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf0_2vgpr_wr_en & ~simf0_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simf0_2vgpr_wr_mask[i])
+					PrintVgprF(CUID, wfid, pc, i, simf0_vgpr, simf0_2vgpr_dest_data[hi-:32]);
+			end
+			if (|simf0_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf0_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simf0_2vgpr_wr_mask[i])
+					PrintVVcc(CUID, wfid, pc, i, simf0_2exec_wr_vcc_value[i]);
+			end
+			if (|simf0_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf0_2sgpr_wr_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simf0_2vgpr_wr_mask[i])
+					PrintVSgpr(CUID, wfid, pc, i, valu_sgpr, simf0_2sgpr_wr_data[i]);
+			end
+			if (|simf0_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(simf1_2vgpr_instr_done && rfa2execvgprsgpr_select_fu[5]) begin
+		wfid = simf1_2vgpr_instr_done_wfid;
+		pc = simf1_2tracemon_retire_pc;
+
+		simf1_vgpr = GetVgprBase(CUID, wfid);
+		simf1_vgpr = simf1_2vgpr_dest_addr - simf1_vgpr;
+
+		valu_sgpr = GetSgprBase(CUID, wfid);
+		valu_sgpr = simf1_2sgpr_wr_addr - valu_sgpr;
+
+		if(simf1_2vgpr_wr_en & simf1_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simf1_2vgpr_wr_mask[i])
+					PrintVgprFWithVcc(CUID, wfid, pc, i, simf1_vgpr, simf1_2vgpr_dest_data[hi-:32], simf1_2exec_wr_vcc_value[i]);
+			end
+			if (|simf1_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf1_2vgpr_wr_en & ~simf1_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simf1_2vgpr_wr_mask[i])
+					PrintVgprF(CUID, wfid, pc, i, simf1_vgpr, simf1_2vgpr_dest_data[hi-:32]);
+			end
+			if (|simf1_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf1_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simf1_2vgpr_wr_mask[i])
+					PrintVVcc(CUID, wfid, pc, i, simf1_2exec_wr_vcc_value[i]);
+			end
+			if (|simf1_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf1_2sgpr_wr_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simf1_2vgpr_wr_mask[i])
+					PrintVSgpr(CUID, wfid, pc, i, valu_sgpr, simf1_2sgpr_wr_data[i]);
+			end
+			if (|simf1_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(simf2_2vgpr_instr_done && rfa2execvgprsgpr_select_fu[6]) begin
+		wfid = simf2_2vgpr_instr_done_wfid;
+		pc = simf2_2tracemon_retire_pc;
+
+		simf2_vgpr = GetVgprBase(CUID, wfid);
+		simf2_vgpr = simf2_2vgpr_dest_addr - simf2_vgpr;
+
+		valu_sgpr = GetSgprBase(CUID, wfid);
+		valu_sgpr = simf2_2sgpr_wr_addr - valu_sgpr;
+
+		if(simf2_2vgpr_wr_en & simf2_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simf2_2vgpr_wr_mask[i])
+					PrintVgprFWithVcc(CUID, wfid, pc, i, simf2_vgpr, simf2_2vgpr_dest_data[hi-:32], simf2_2exec_wr_vcc_value[i]);
+			end
+			if (|simf2_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf2_2vgpr_wr_en & ~simf2_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simf2_2vgpr_wr_mask[i])
+					PrintVgprF(CUID, wfid, pc, i, simf2_vgpr, simf2_2vgpr_dest_data[hi-:32]);
+			end
+			if (|simf2_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf2_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simf2_2vgpr_wr_mask[i])
+					PrintVVcc(CUID, wfid, pc, i, simf2_2exec_wr_vcc_value[i]);
+			end
+			if (|simf2_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf2_2sgpr_wr_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simf2_2vgpr_wr_mask[i])
+					PrintVSgpr(CUID, wfid, pc, i, valu_sgpr, simf2_2sgpr_wr_data[i]);
+			end
+			if (|simf2_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(simf3_2vgpr_instr_done && rfa2execvgprsgpr_select_fu[7]) begin
+		wfid = simf3_2vgpr_instr_done_wfid;
+		pc = simf3_2tracemon_retire_pc;
+
+		simf3_vgpr = GetVgprBase(CUID, wfid);
+		simf3_vgpr = simf3_2vgpr_dest_addr - simf3_vgpr;
+
+		valu_sgpr = GetSgprBase(CUID, wfid);
+		valu_sgpr = simf3_2sgpr_wr_addr - valu_sgpr;
+
+		if(simf3_2vgpr_wr_en & simf3_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simf3_2vgpr_wr_mask[i])
+					PrintVgprFWithVcc(CUID, wfid, pc, i, simf3_vgpr, simf3_2vgpr_dest_data[hi-:32], simf3_2exec_wr_vcc_value[i]);
+			end
+			if (|simf3_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf3_2vgpr_wr_en & ~simf3_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				hi = 32 * i + 31;
+				if(simf3_2vgpr_wr_mask[i])
+					PrintVgprF(CUID, wfid, pc, i, simf3_vgpr, simf3_2vgpr_dest_data[hi-:32]);
+			end
+			if (|simf3_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf3_2exec_wr_vcc_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simf3_2vgpr_wr_mask[i])
+					PrintVVcc(CUID, wfid, pc, i, simf3_2exec_wr_vcc_value[i]);
+			end
+			if (|simf3_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+		else if(simf3_2sgpr_wr_en) begin
+			for(i = 0; i < 64; i++) begin
+				if(simf3_2vgpr_wr_mask[i])
+					PrintVSgpr(CUID, wfid, pc, i, valu_sgpr, simf3_2sgpr_wr_data[i]);
+			end
+			if (|simf3_2vgpr_wr_mask) PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+
+	if(lsu2sgpr_instr_done | lsu2vgpr_instr_done) begin
+		wfid = lsu2sgpr_instr_done ? lsu2sgpr_instr_done_wfid : lsu2vgpr_instr_done_wfid;
+		pc = lsu2tracemon_retire_pc;
+
+		lsu_sgpr = GetSgprBase(CUID, wfid);
+		lsu_vgpr = GetVgprBase(CUID, wfid);
+		lsu_lds = GetLdsBase(CUID, wfid);
+		lsu_sgpr = lsu2sgpr_dest_addr - lsu_sgpr;
+
+		// load to sgpr
+		if(|lsu2sgpr_dest_wr_en) begin
+			for(i = 0; i < 4; i++) begin
+				if(lsu2sgpr_dest_wr_en[i]) begin
+					hi = 32 * i + 31;
+					PrintSgprLoad(CUID, wfid, pc, (mem2tracemon_addr[31:0] + 4*i), (lsu_sgpr + i), lsu2sgpr_dest_data[hi-:32]);
+				end
+			end
+			PrintEndLine(CUID, wfid, pc);
+		end
+		// load to vgpr
+		else if(lsu2vgpr_dest_wr_en) begin
+			lsu_vgpr = lsu2vgpr_dest_addr - lsu_vgpr;
+
+			for(i = 0; i < 64; i++) begin
+				if(lsu2vgpr_dest_wr_mask[i]) begin
+					hi_addr = 32 * i + 31;
+					for(j = 0; j < 4; j++) begin
+						hi = 128 * i + 32 * j + 31;
+						if(lsu2vgpr_dest_wr_en[j])
+							if(lsu2tracemon_gm_or_lds)
+								PrintVgprLoadDS(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr[hi_addr-:32] -lsu_lds + 4*j), lsu2vgpr_dest_data[hi-:32]);
+							else
+								PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr[hi_addr-:32] + 4*j), lsu2vgpr_dest_data[hi-:32]);
+					end
+				end
+			end
+			PrintEndLine(CUID, wfid, pc);
+		end
+		// store from vgpr
+		// correctness issue: reading from tracemon in the cycle after
+		// instruction retires from memory. This could lead to overwrite
+		// of mem2tracemon buses. Not a problem right now. since only
+		// one inflight instruction per wavefront to memory.
+		else begin
+			lsu_vgpr = lsu2vgpr_dest_addr - lsu_vgpr;
+
+			for(i = 0; i < 64; i++) begin
+				if(lsu2vgpr_dest_wr_mask[i]) begin
+					hi_addr = 32 * i + 31;
+					for(j = 0; j < 4; j++) begin
+						hi = 128 * i + 32 * j + 31;
+						if(mem2tracemon_store_en[j])
+							if(lsu2tracemon_gm_or_lds)
+								PrintVgprStoreDS(CUID, wfid, pc, i, (mem2tracemon_addr[hi_addr-:32] - lsu_lds + 4*j), (lsu_vgpr + j), mem2tracemon_store_data[hi-:32]);
+							else
+								PrintVgprStore(CUID, wfid, pc, i, (mem2tracemon_addr[hi_addr-:32] + 4*j), (lsu_vgpr + j), mem2tracemon_store_data[hi-:32]);
+					end
+				end
+			end
+			PrintEndLine(CUID, wfid, pc);
+		end
+
+		PrintAndDelete(CUID, wfid, pc);
+	end
+end
+
+endmodule

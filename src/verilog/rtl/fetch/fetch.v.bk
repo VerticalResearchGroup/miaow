@@ -1,0 +1,100 @@
+module fetch(
+      dispatch2cu_wf_dispatch,
+      dispatch2cu_wf_tag_dispatch,
+      dispatch2cu_start_pc_dispatch,
+      dispatch2cu_vgpr_base_dispatch,
+      dispatch2cu_sgpr_base_dispatch,
+      dispatch2cu_lds_base_dispatch,
+      dispatch2cu_wf_size_dispatch,
+      buff_ack,
+      wave_stop_fetch,
+      issue_wf_done_en,
+      issue_wf_done_wf_id,
+      cu2dispatch_wf_tag_done,
+      cu2dispatch_wf_done,
+      buff_addr,
+      buff_tag,
+      buff_rd_en,
+      wave_reserve_slotid,
+      wave_reserve_valid,
+      wave_basereg_wr,
+      wave_basereg_wfid,
+      wave_vgpr_base,
+      wave_sgpr_base,
+      wave_lds_base,
+	  exec_init_wf_en,
+      exec_init_wf_id,
+      exec_init_value,
+	  clk,
+	  rst
+ );
+
+input clk;
+
+input rst;
+
+input dispatch2cu_wf_dispatch, buff_ack, issue_wf_done_en;
+input[5:0] dispatch2cu_wf_size_dispatch, issue_wf_done_wf_id;
+input[8:0] dispatch2cu_sgpr_base_dispatch;
+input[9:0] dispatch2cu_vgpr_base_dispatch;
+input[10:0] dispatch2cu_wf_tag_dispatch;
+input[15:0] dispatch2cu_lds_base_dispatch;
+input[31:0] dispatch2cu_start_pc_dispatch;
+input[39:0] wave_stop_fetch;
+
+output cu2dispatch_wf_done, buff_rd_en, wave_reserve_valid, wave_basereg_wr,
+         exec_init_wf_en;
+output[5:0] wave_reserve_slotid, wave_basereg_wfid, exec_init_wf_id;
+output[8:0] wave_sgpr_base;
+output[9:0] wave_vgpr_base;
+output[10:0] cu2dispatch_wf_tag_done;
+output[15:0] wave_lds_base;
+output[31:0] buff_addr;
+output[38:0] buff_tag;
+output[63:0] exec_init_value;
+
+wire [39:0]vacant_next;
+wire dispatch2cu_wf_dispatch_i; // to controller
+wire wr;  //from controller
+wire [10:0]WF_tag;
+wire fetch_valid;
+wire [31:0]dispatch2cu_start_pc_dispatch_i;
+
+wire [5:0] buff_tag_wfid;
+wire first;
+
+wire [39:0]vacant;
+wire vacant_reg_wr;
+//wire [39:0]vacant_ff; //temp
+
+//dff check_temp [39:0](vacant_ff,vacant,clk,rst);// temp
+assign wave_basereg_wr = wr;
+assign cu2dispatch_wf_done = issue_wf_done_en; // 1 cycle halt
+assign wave_reserve_slotid = buff_tag_wfid;
+assign buff_tag = {first, buff_tag_wfid, buff_addr};
+assign vacant_reg_wr = (wr | issue_wf_done_en);
+
+assign exec_init_wf_en = wr;
+assign exec_init_wf_id = wave_basereg_wfid;
+
+special_decode spdec(dispatch2cu_wf_size_dispatch, exec_init_value);
+
+regfile #(.BITWIDTH(79)) wf_instr(
+	{dispatch2cu_wf_dispatch, dispatch2cu_wf_tag_dispatch, dispatch2cu_start_pc_dispatch, dispatch2cu_vgpr_base_dispatch, dispatch2cu_sgpr_base_dispatch, dispatch2cu_lds_base_dispatch}, 
+	1'b1, 
+	{dispatch2cu_wf_dispatch_i, WF_tag, dispatch2cu_start_pc_dispatch_i, wave_vgpr_base, wave_sgpr_base, wave_lds_base}, 
+	clk, rst);
+
+wf_generator wf1(
+	issue_wf_done_en, WF_tag, issue_wf_done_wf_id, vacant, vacant_next, 
+	wave_basereg_wfid, cu2dispatch_wf_tag_done, clk, wr, rst );
+
+regfile_clr #(.BITWIDTH(40)) vacant_reg(vacant_next, vacant_reg_wr, vacant, clk, rst);
+
+fetch_controller fcontrol(dispatch2cu_wf_dispatch_i, fetch_valid, wr, buff_rd_en, wave_reserve_valid); //fetch valid from RR
+
+round_robin scheduler(fetch_valid, buff_tag_wfid, wave_stop_fetch, buff_ack, vacant, clk, rst); //temp
+
+pc_block pcb1(dispatch2cu_start_pc_dispatch_i, wave_basereg_wfid, wr, buff_rd_en, buff_tag_wfid, buff_addr, first, clk, rst); //buff_tag from RR
+
+endmodule

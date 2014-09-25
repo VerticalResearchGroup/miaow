@@ -1,0 +1,5 @@
+ v_cmp_le_u32  vcc, s1, v7                                 // 00000000: 7D860E01
+wf_id0: vcc<=(1) wf_id1: vcc<=(0) wf_id2: vcc<=(1) wf_id3: vcc<=(0) wf_id4: vcc<=(0) wf_id5: vcc<=(1) wf_id6: vcc<=(0) wf_id7: vcc<=(1) wf_id8: vcc<=(0) wf_id9: vcc<=(0) 
+
+ s_endpgm                                                  // 00000004: BF810000
+

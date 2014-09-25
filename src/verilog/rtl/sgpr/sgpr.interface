@@ -1,0 +1,126 @@
+module sgpr( 
+      lsu_source1_addr,
+      lsu_source2_addr,
+      lsu_dest_addr,
+      lsu_dest_data,
+      lsu_dest_wr_en,
+      lsu_instr_done_wfid,
+      lsu_instr_done,
+      lsu_source1_rd_en,
+      lsu_source2_rd_en,
+      simd0_rd_addr,
+      simd0_rd_en,
+      simd1_rd_addr,
+      simd1_rd_en,
+      simd2_rd_addr,
+      simd2_rd_en,
+      simd3_rd_addr,
+      simd3_rd_en,
+      simd0_wr_addr,
+      simd0_wr_en,
+      simd0_wr_data,
+      simd1_wr_addr,
+      simd1_wr_en,
+      simd1_wr_data,
+      simd2_wr_addr,
+      simd2_wr_en,
+      simd2_wr_data,
+      simd3_wr_addr,
+      simd3_wr_en,
+      simd3_wr_data,
+      simd0_wr_mask,
+      simd1_wr_mask,
+      simd2_wr_mask,
+      simd3_wr_mask,
+      simf0_rd_addr,
+      simf0_rd_en,
+      simf1_rd_addr,
+      simf1_rd_en,
+      simf2_rd_addr,
+      simf2_rd_en,
+      simf3_rd_addr,
+      simf3_rd_en,
+      simf0_wr_addr,
+      simf0_wr_en,
+      simf0_wr_data,
+      simf1_wr_addr,
+      simf1_wr_en,
+      simf1_wr_data,
+      simf2_wr_addr,
+      simf2_wr_en,
+      simf2_wr_data,
+      simf3_wr_addr,
+      simf3_wr_en,
+      simf3_wr_data,
+      simf0_wr_mask,
+      simf1_wr_mask,
+      simf2_wr_mask,
+      simf3_wr_mask,
+      salu_dest_data,
+      salu_dest_addr,
+      salu_dest_wr_en,
+      salu_source2_addr,
+      salu_source1_addr,
+      salu_instr_done_wfid,
+      salu_instr_done,
+      salu_source1_rd_en,
+      salu_source2_rd_en,
+      rfa_select_fu,
+      lsu_source1_data,
+      lsu_source2_data,
+      simd_rd_data,
+      simf_rd_data,
+      salu_source2_data,
+      salu_source1_data,
+      issue_alu_wr_done_wfid,
+      issue_alu_wr_done,
+      issue_alu_dest_reg_addr,
+      issue_alu_dest_reg_valid,
+      issue_lsu_instr_done_wfid,
+      issue_lsu_instr_done,
+      issue_lsu_dest_reg_addr,
+      issue_lsu_dest_reg_valid,
+      issue_valu_dest_reg_valid,
+      issue_valu_dest_addr,
+      clk,
+      rst
+ );
+
+input clk;
+
+input rst;
+
+input lsu_instr_done, lsu_source1_rd_en, lsu_source2_rd_en, simd0_rd_en,
+         simd1_rd_en, simd2_rd_en, simd3_rd_en, simd0_wr_en, simd1_wr_en, simd2_wr_en,
+         simd3_wr_en, simf0_rd_en, simf1_rd_en, simf2_rd_en, simf3_rd_en, simf0_wr_en,
+         simf1_wr_en, simf2_wr_en, simf3_wr_en, salu_instr_done, salu_source1_rd_en,
+         salu_source2_rd_en;
+input[1:0] salu_dest_wr_en;
+input[3:0] lsu_dest_wr_en;
+input[5:0] lsu_instr_done_wfid, salu_instr_done_wfid;
+input[8:0] lsu_source1_addr, lsu_source2_addr, lsu_dest_addr, simd0_rd_addr,
+         simd1_rd_addr, simd2_rd_addr, simd3_rd_addr, simd0_wr_addr, simd1_wr_addr,
+         simd2_wr_addr, simd3_wr_addr, simf0_rd_addr, simf1_rd_addr, simf2_rd_addr,
+         simf3_rd_addr, simf0_wr_addr, simf1_wr_addr, simf2_wr_addr, simf3_wr_addr,
+         salu_dest_addr, salu_source2_addr, salu_source1_addr;
+input[15:0] rfa_select_fu;
+input[63:0] simd0_wr_data, simd1_wr_data, simd2_wr_data, simd3_wr_data,
+         simd0_wr_mask, simd1_wr_mask, simd2_wr_mask, simd3_wr_mask, simf0_wr_data,
+         simf1_wr_data, simf2_wr_data, simf3_wr_data, simf0_wr_mask, simf1_wr_mask,
+         simf2_wr_mask, simf3_wr_mask, salu_dest_data;
+input[127:0] lsu_dest_data;
+
+output issue_alu_wr_done, issue_lsu_instr_done, issue_valu_dest_reg_valid;
+output[1:0] issue_alu_dest_reg_valid;
+output[3:0] issue_lsu_dest_reg_valid;
+output[5:0] issue_alu_wr_done_wfid, issue_lsu_instr_done_wfid;
+output[8:0] issue_alu_dest_reg_addr, issue_lsu_dest_reg_addr, issue_valu_dest_addr;
+output[31:0] lsu_source2_data, simd_rd_data, simf_rd_data;
+output[63:0] salu_source2_data, salu_source1_data;
+output[127:0] lsu_source1_data;
+
+///////////////////////////////
+//Your code goes here - beware: script does not recognize changes
+// into files. It ovewrites everithing without mercy. Save your work before running the script
+///////////////////////////////
+endmodule

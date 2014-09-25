@@ -1,0 +1,33 @@
+module memory( 
+      rd_en,
+      wr_en,
+      addresses,
+      wr_data,
+      input_tag,
+      wr_mask,
+      rd_data,
+      output_tag,
+      ack,
+      clk,
+      rst
+ );
+
+input clk;
+
+input rst;
+
+input[3:0] rd_en, wr_en;
+input[6:0] input_tag;
+input[63:0] wr_mask;
+input[2047:0] addresses;
+input[8191:0] wr_data;
+
+output ack;
+output[6:0] output_tag;
+output[8191:0] rd_data;
+
+///////////////////////////////
+//Your code goes here - beware: script does not recognize changes
+// into files. It ovewrites everithing without mercy. Save your work before running the script
+///////////////////////////////
+endmodule

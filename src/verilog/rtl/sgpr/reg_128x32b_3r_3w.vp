@@ -1,0 +1,71 @@
+module reg_128x32b_3r_3w
+(
+  rd0_data, rd1_data, rd2_data,
+  clk,
+  rd0_addr, rd1_addr, rd2_addr,
+  wr0_addr, wr1_addr, wr2_addr,
+  wr0_en, wr1_en, wr2_en, wr0_data, wr1_data, wr2_data
+);
+input clk;
+
+output [31:0] rd0_data;
+output [31:0] rd1_data;
+output [31:0] rd2_data;
+
+input [6:0] rd0_addr;
+input [6:0] rd1_addr;
+input [6:0] rd2_addr;
+
+input [6:0] wr0_addr;
+input [6:0] wr1_addr;
+input [6:0] wr2_addr;
+
+input wr0_en;
+input wr1_en;
+input wr2_en;
+
+input [31:0] wr0_data;
+input [31:0] wr1_data;
+input [31:0] wr2_data;
+
+wire [4095:0] word_out;
+wire [4095:0] word_in;
+wire [127:0] wr_en_word;
+
+wire [127:0] wr0_word_select;
+wire [127:0] wr1_word_select;
+wire [127:0] wr2_word_select;
+wire [127:0] wr0_word_enable;
+wire [127:0] wr1_word_enable;
+wire [127:0] wr2_word_enable;
+
+//Register file
+flop_32b word[127:0](.out(word_out), .in(word_in), .wr_en(wr_en_word), .clk(clk));
+
+//Muxes for read ports
+mux_128x32b_to_1x32b mux_rd_port_0 (.out(rd0_data), .in(word_out), .select(rd0_addr));
+mux_128x32b_to_1x32b mux_rd_port_1 (.out(rd1_data), .in(word_out), .select(rd1_addr));
+mux_128x32b_to_1x32b mux_rd_port_2 (.out(rd2_data), .in(word_out), .select(rd2_addr));
+
+//Write port logic
+decoder_param #(7,128) decoder_wr_port_0 (.out(wr0_word_select), .in(wr0_addr));
+decoder_param #(7,128) decoder_wr_port_1 (.out(wr1_word_select), .in(wr1_addr));
+decoder_param #(7,128) decoder_wr_port_2 (.out(wr2_word_select), .in(wr2_addr));
+assign wr0_word_enable = {128{wr0_en}} & wr0_word_select;
+assign wr1_word_enable = {128{wr1_en}} & wr1_word_select;
+assign wr2_word_enable = {128{wr2_en}} & wr2_word_select;
+assign wr_en_word = wr0_word_enable | wr1_word_enable | wr2_word_enable;
+
+%%start_veriperl
+my $i;
+my $low_index;
+my $high_index;
+for($i=0; $i<128; $i=$i+1)
+{
+  $low_index = 32*$i;
+  $high_index = 32*$i+31;
+  print "assign word_in[$high_index:$low_index] = ({wr2_word_enable[$i],wr1_word_enable[$i],wr0_word_enable[$i]} == 3'b001) ? wr0_data : (({wr2_word_enable[$i],wr1_word_enable[$i],wr0_word_enable[$i]} == 3'b010) ? wr1_data : ( ({wr2_word_enable[$i],wr1_word_enable[$i],wr0_word_enable[$i]} == 3'b100)? wr2_data : {32{1'bx}}));\n";
+}
+%%stop_veriperl
+
+endmodule

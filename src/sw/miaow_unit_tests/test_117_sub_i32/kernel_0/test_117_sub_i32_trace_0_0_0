@@ -1,0 +1,5 @@
+ v_sub_i32     v0, vcc, s6, v6                             // 00000000: 4C000C06
+t0: V0<=(2) wf_id0: vcc<=(0) t1: V0<=(3) wf_id1: vcc<=(0) t2: V0<=(-11) wf_id2: vcc<=(1) t3: V0<=(9) wf_id3: vcc<=(0) t4: V0<=(3) wf_id4: vcc<=(0) t5: V0<=(37) wf_id5: vcc<=(0) t6: V0<=(11) wf_id6: vcc<=(0) t7: V0<=(35) wf_id7: vcc<=(0) t8: V0<=(3) wf_id8: vcc<=(0) t9: V0<=(37) wf_id9: vcc<=(0) 
+
+ s_endpgm                                                  // 00000004: BF810000
+

@@ -1,0 +1,24 @@
+module mux_40xX_to_1xX (out, in, select);
+
+  parameter WIDTH = 1;
+  output [WIDTH-1:0] out;
+  input [(40*WIDTH)-1:0] in;
+  input [5:0] select;
+
+  reg [WIDTH-1:0] out;
+
+  always @ (in or select) begin
+    casex(select)
+%%start_veriperl
+my $i;
+my $i_plus_one;
+for($i=0; $i<40; $i=$i+1)
+{
+  $i_plus_one = $i + 1;
+  print "      6'd$i : out <= in [(WIDTH*$i_plus_one)-1:WIDTH*$i];\n";
+}
+%%stop_veriperl
+      default: out <= {WIDTH{1'bx}};
+    endcase
+  end
+endmodule

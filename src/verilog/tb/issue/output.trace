@@ -1,0 +1,165 @@
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:00
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:00
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:1 wfid:01 pc:00000000 op:00000001 dest1:e01 dest2:000 src1:802 src2:803 src3:000 imm0:0010 imm1:00000020
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:02
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:1 wfid:02 pc:00000000 op:00000001 dest1:e11 dest2:000 src1:812 src2:813 src3:000 imm0:0010 imm1:00000020
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:1 wfid:03 pc:00000000 op:00000001 dest1:e21 dest2:000 src1:822 src2:823 src3:000 imm0:0010 imm1:00000020
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:02
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:1 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:01
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:1 wfid:01 pc:00000000 op:00000001 dest1:e01 dest2:000 src1:802 src2:803 src3:000 imm0:0010 imm1:00000020
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:02
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:1 wfid:02 pc:00000000 op:00000001 dest1:e11 dest2:000 src1:812 src2:813 src3:000 imm0:0010 imm1:00000020
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:1 wfid:03 pc:00000000 op:00000001 dest1:e21 dest2:000 src1:822 src2:823 src3:000 imm0:0010 imm1:00000020
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:1 wfid:03 pc:00000000 op:00000001 dest1:e21 dest2:000 src1:822 src2:823 src3:000 imm0:0010 imm1:00000020
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:0 wfid:00 pc:00000000 op:00000000 dest1:000 dest2:000 src1:000 src2:000 src3:000 imm0:0000 imm1:00000000
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+
+lsu valid:0 wfid:00 pc:00000000 op:00000000 dest:000 src1:000 src2:000 src3:000 src4:000 imm0:0000 imm1:00000000
+alu valid:1 wfid:03 pc:00000000 op:00000001 dest1:e21 dest2:000 src1:822 src2:823 src3:000 imm0:0010 imm1:00000020
+finished_wf valid:0 wfid:00
+retired_barrier valid:0 wfid:03
+

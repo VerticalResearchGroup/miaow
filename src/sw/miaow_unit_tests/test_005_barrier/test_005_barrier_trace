@@ -1,0 +1,46 @@
+local_size = 10 (10,1,1)
+global_size = 10 (10,1,1)
+group_count = 1 (1,1,1)
+wavefront_count = 1
+wavefronts_per_work_group = 1
+ tid tid2 tid1 tid0   gid gid2 gid1 gid0   lid lid2 lid1 lid0  wavefront            work-group
+   0    0    0    0     0    0    0    0     0    0    0    0      wavefront[i0-i9].0       work-group[i0-i10].0   
+   1    0    0    1     0    0    0    0     1    0    0    1      wavefront[i0-i9].1       work-group[i0-i10].1   
+   2    0    0    2     0    0    0    0     2    0    0    2      wavefront[i0-i9].2       work-group[i0-i10].2   
+   3    0    0    3     0    0    0    0     3    0    0    3      wavefront[i0-i9].3       work-group[i0-i10].3   
+   4    0    0    4     0    0    0    0     4    0    0    4      wavefront[i0-i9].4       work-group[i0-i10].4   
+   5    0    0    5     0    0    0    0     5    0    0    5      wavefront[i0-i9].5       work-group[i0-i10].5   
+   6    0    0    6     0    0    0    0     6    0    0    6      wavefront[i0-i9].6       work-group[i0-i10].6   
+   7    0    0    7     0    0    0    0     7    0    0    7      wavefront[i0-i9].7       work-group[i0-i10].7   
+   8    0    0    8     0    0    0    0     8    0    0    8      wavefront[i0-i9].8       work-group[i0-i10].8   
+   9    0    0    9     0    0    0    0     9    0    0    9      wavefront[i0-i9].9       work-group[i0-i10].9   
+
+###0_0_0
+ s_barrier                                                 // 00000000: BF8A0001
+wavefront[i0-i9] (gid=0) reached barrier (1 reached, 0 left)
+work-group[i0-i10] completed barrier, waking up wavefronts
+
+
+###0_0_0
+ s_mov_b32     s3, s7                                      // 00000004: BE830307
+S3<=(46) 
+
+###0_0_0
+ s_mov_b32     s2, s0                                      // 00000008: BE820300
+S2<=(40) 
+
+###0_0_0
+ s_mov_b32     s8, s7                                      // 0000000C: BE880307
+S8<=(46) 
+
+###0_0_0
+ s_mov_b32     s2, s9                                      // 00000010: BE820309
+S2<=(20) 
+
+###0_0_0
+ s_mov_b32     s9, s1                                      // 00000014: BE890301
+S9<=(8) 
+
+###0_0_0
+ s_endpgm                                                  // 00000018: BF810000
+

@@ -1,0 +1,36 @@
+local_size = 10 (10,1,1)
+global_size = 10 (10,1,1)
+group_count = 1 (1,1,1)
+wavefront_count = 1
+wavefronts_per_work_group = 1
+ tid tid2 tid1 tid0   gid gid2 gid1 gid0   lid lid2 lid1 lid0  wavefront            work-group
+   0    0    0    0     0    0    0    0     0    0    0    0      wavefront[i0-i9].0       work-group[i0-i10].0   
+   1    0    0    1     0    0    0    0     1    0    0    1      wavefront[i0-i9].1       work-group[i0-i10].1   
+   2    0    0    2     0    0    0    0     2    0    0    2      wavefront[i0-i9].2       work-group[i0-i10].2   
+   3    0    0    3     0    0    0    0     3    0    0    3      wavefront[i0-i9].3       work-group[i0-i10].3   
+   4    0    0    4     0    0    0    0     4    0    0    4      wavefront[i0-i9].4       work-group[i0-i10].4   
+   5    0    0    5     0    0    0    0     5    0    0    5      wavefront[i0-i9].5       work-group[i0-i10].5   
+   6    0    0    6     0    0    0    0     6    0    0    6      wavefront[i0-i9].6       work-group[i0-i10].6   
+   7    0    0    7     0    0    0    0     7    0    0    7      wavefront[i0-i9].7       work-group[i0-i10].7   
+   8    0    0    8     0    0    0    0     8    0    0    8      wavefront[i0-i9].8       work-group[i0-i10].8   
+   9    0    0    9     0    0    0    0     9    0    0    9      wavefront[i0-i9].9       work-group[i0-i10].9   
+
+###0_0_0
+ s_movk_i32    s12, 0x0000                                 // 00000000: B00C0000
+S12<=(0) 
+
+###0_0_0
+ s_mov_b32     s13, 0x001e0000                             // 00000004: BE8D03FF 001E0000
+S13<=(1966080) 
+
+###0_0_0
+ s_movk_i32    s2, 0x002d                                  // 0000000C: B002002D
+S2<=(45) 
+
+###0_0_0
+ s_load_dwordx4  s[0:3], s[12:13], 0x02                    // 00000010: C0800D02
+S0<=(8)(-1493746768,-1.71552e-15f) S1<=(12)(-1974556247,-9.95045e-33f) S2<=(16)(-152325906,-2.39019e+33f) S3<=(20)(-1359198418,-1.14723e-10f) 
+
+###0_0_0
+ s_endpgm                                                  // 00000014: BF810000
+

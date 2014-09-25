@@ -1,0 +1,92 @@
+module reg_40xX_2r_2w (
+  rd0_addr,
+  rd0_data,
+
+  rd1_addr,
+  rd1_data,
+
+  wr0_en,
+  wr0_addr,
+  wr0_data,
+
+  wr1_en,
+  wr1_addr,
+  wr1_data,
+
+  clk,
+  rst
+);
+
+parameter WIDTH = 64;
+
+output [WIDTH-1:0] rd0_data;
+input [5:0] rd0_addr;
+
+output [WIDTH-1:0] rd1_data;
+input [5:0] rd1_addr;
+
+input wr0_en;
+input [5:0] wr0_addr;
+input [WIDTH-1:0] wr0_data;
+
+input wr1_en;
+input [5:0] wr1_addr;
+input [WIDTH-1:0] wr1_data;
+
+input clk;
+input rst;
+
+wire [(40*WIDTH)-1:0] word_out;
+wire [(40*WIDTH)-1:0] word_in;
+wire [39:0] wr_en_word;
+wire [39:0] wr0_word_select;
+wire [39:0] wr1_word_select;
+wire [39:0] wr0_word_enable;
+wire [39:0] wr1_word_enable;
+
+mux_40xX_to_1xX #(WIDTH) mux_rd_port_0(
+  .out(rd0_data),
+  .in(word_out),
+  .select(rd0_addr)
+);
+
+mux_40xX_to_1xX #(WIDTH) mux_rd_port_1(
+  .out(rd1_data),
+  .in(word_out),
+  .select(rd1_addr)
+);
+
+decoder_6_to_40 decoder_wr_port_0(
+  .out(wr0_word_select),
+  .in(wr0_addr)
+);
+
+decoder_6_to_40 decoder_wr_port_1(
+  .out(wr1_word_select),
+  .in(wr1_addr)
+);
+
+register #(WIDTH) word[39:0](
+  .out(word_out),
+  .in(word_in),
+  .wr_en(wr_en_word),
+  .clk(clk),
+  .rst(rst)
+);
+
+assign wr0_word_enable = {40{wr0_en}} & wr0_word_select;
+assign wr1_word_enable = {40{wr1_en}} & wr1_word_select;
+assign wr_en_word = wr0_word_enable | wr1_word_enable;
+
+%%start_veriperl
+my $i;
+my $i_plus_one;
+for($i=0; $i<40; $i=$i+1)
+{
+  $i_plus_one = $i + 1;
+  print "  assign word_in[(WIDTH*$i_plus_one)-1:WIDTH*$i] = ({wr1_word_enable[$i],wr0_word_enable[$i]} == 2'b01) ? wr0_data : (({wr1_word_enable[$i],wr0_word_enable[$i]} == 2'b10) ? wr1_data : {WIDTH{1'bx}});\n";
+}
+%%stop_veriperl
+
+endmodule
+

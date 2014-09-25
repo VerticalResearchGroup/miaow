@@ -1,0 +1,25 @@
+module mux_40x35b_to_1x35b (out, in, select);
+
+  output [34:0] out;
+  input [1399:0] in;
+  input [5:0] select;
+
+  reg [34:0] out;
+
+  always @ (in or select) begin
+    casex(select)
+%%start_veriperl
+my $i;
+my $low_index;
+my $high_index;
+for($i=0; $i<40; $i=$i+1)
+{
+  $low_index = 35*$i;
+  $high_index = 35*$i+34;
+  print "      6'd$i : out <= in [$high_index:$low_index];\n";
+}
+%%stop_veriperl
+      default: out <= 32'hxxxxxxxx;
+    endcase
+  end
+endmodule

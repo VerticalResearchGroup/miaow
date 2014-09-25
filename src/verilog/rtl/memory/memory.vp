@@ -1,0 +1,209 @@
+extern "C" void Init_cache(int a, int c, int b);
+extern "C" int RunTraceWrapper(int write, int read, int address, int data);
+
+module memory(
+      gm_or_lds,
+      rd_en,
+      wr_en,
+      addresses,
+      wr_data,
+      input_tag,
+      wr_mask,
+      rd_data,
+      output_tag,
+      ack,
+      tracemon_addr,
+      tracemon_store_data,
+      tracemon_store_en,
+      clk,
+      rst
+ );
+
+parameter NUMOFCU = 1;
+parameter DELAY = 100;
+
+input clk;
+input rst;
+
+input [(NUMOFCU - 1):0] gm_or_lds;
+input [(NUMOFCU*4 - 1):0] rd_en, wr_en;
+input [(NUMOFCU*7 - 1):0] input_tag;
+input [(NUMOFCU*64 - 1):0] wr_mask;
+input [(NUMOFCU*2048 - 1):0] addresses;
+input [(NUMOFCU*8192 - 1):0] wr_data;
+
+output [(NUMOFCU - 1):0] ack;
+output [(NUMOFCU*4 - 1):0] tracemon_store_en;
+output [(NUMOFCU*7 - 1):0] output_tag;
+output [(NUMOFCU*2048 - 1):0] tracemon_addr;
+output [(NUMOFCU*8192 - 1):0] rd_data, tracemon_store_data;
+
+reg [(NUMOFCU - 1):0] ack;
+reg [(NUMOFCU*4 - 1):0] tracemon_store_en, tracemon_store_en_buff;
+reg [(NUMOFCU*7 - 1):0] output_tag;
+reg [(NUMOFCU*2048 - 1):0] tracemon_addr, tracemon_addr_buff;
+reg [(NUMOFCU*8192 - 1):0] rd_data, tracemon_store_data, tracemon_store_data_buff;
+
+///////////////////////////////
+//Your code goes here - beware: script does not recognize changes
+// into files. It ovewrites everithing without mercy. Save your work before running the script
+///////////////////////////////
+
+// input buffering to introduce delay
+reg [(NUMOFCU - 1):0] gm_or_lds_dbuff [DELAY];
+reg [(NUMOFCU*4 - 1):0] rd_en_dbuff [DELAY], wr_en_dbuff [DELAY];
+reg [(NUMOFCU*7 - 1):0] input_tag_dbuff [DELAY];
+reg [(NUMOFCU*64 - 1):0] wr_mask_dbuff [DELAY];
+reg [(NUMOFCU*2048 - 1):0] addresses_dbuff [DELAY];
+reg [(NUMOFCU*8192 - 1):0] wr_data_dbuff [DELAY];
+
+// memory registers
+reg[7:0] data_memory[50000:0];
+reg[7:0] lds_memory[(NUMOFCU*65536 -1):0];
+
+reg hit;
+int reth;
+integer i, j, k, m, d;
+integer locrd = 16; // num of loc to read
+integer addr_index, data_index;
+
+initial begin
+  Init_cache(2, 262144, 128);
+end
+
+always @ (posedge clk) begin
+    hit = 1'b1;
+
+    if (~rst) begin
+        tracemon_addr = tracemon_addr_buff;
+        tracemon_store_en = tracemon_store_en_buff;
+        tracemon_store_data = tracemon_store_data_buff;
+
+        for(d = DELAY-2; d >=0; d--) begin
+          gm_or_lds_dbuff[d+1] = gm_or_lds_dbuff[d];
+          rd_en_dbuff[d+1] = rd_en_dbuff[d];
+          wr_en_dbuff[d+1] = wr_en_dbuff[d];
+          input_tag_dbuff[d+1] = input_tag_dbuff[d];
+          wr_mask_dbuff[d+1] = wr_mask_dbuff[d];
+          addresses_dbuff[d+1] = addresses_dbuff[d];
+          wr_data_dbuff[d+1] = wr_data_dbuff[d];
+        end
+
+        // if no memory access treat as miss
+        if(~(|rd_en[3:0]) & ~(|wr_en[3:0])) begin
+          hit = 1'b0;
+        end
+        // if global memory access, check for hit
+        // treat lds as a cache hit
+        else if (~gm_or_lds) begin
+          for(k = 0; k < 64; k++) begin
+              if(wr_mask[k]) begin
+                  addr_index = k*32 + 31;
+
+                  if ((|wr_en[3:0]) | (|rd_en[3:0])) begin
+                      reth = RunTraceWrapper(|wr_en[3:0], |rd_en[3:0], addresses[addr_index-:32], 0);
+                      if (reth == 1'b0) hit = 1'b0;
+                  end
+              end
+          end
+        end
+
+        // if hit placing at the lowest free delay slot
+        if(hit == 1'd1) begin
+          for(d = DELAY-1; d > 0; d--) begin
+            if(~(|rd_en_dbuff[d]) & ~(|wr_en_dbuff[d])) break;
+          end
+
+          gm_or_lds_dbuff[d] = gm_or_lds;
+          rd_en_dbuff[d] = rd_en;
+          wr_en_dbuff[d] = wr_en;
+          input_tag_dbuff[d] = input_tag;
+          wr_mask_dbuff[d] = wr_mask;
+          addresses_dbuff[d] = addresses;
+          wr_data_dbuff[d] = wr_data;
+
+          // clearing the rd/wr signals in the highest delay slot
+          if(d != 0) begin
+            rd_en_dbuff[0] = 'b0;
+            wr_en_dbuff[0] = 'b0;
+          end
+        end
+        // else setting DELAY cycle delay
+        else begin
+          gm_or_lds_dbuff[0] = gm_or_lds;
+          rd_en_dbuff[0] = rd_en;
+          wr_en_dbuff[0] = wr_en;
+          input_tag_dbuff[0] = input_tag;
+          wr_mask_dbuff[0] = wr_mask;
+          addresses_dbuff[0] = addresses;
+          wr_data_dbuff[0] = wr_data;
+        end
+
+        #1;
+
+        // accessing memory for request to be serviced
+        for(i = 0; i < NUMOFCU; i++) begin
+            if (rd_en_dbuff[DELAY-1][(4*i+3)-:4]) begin
+
+                for(k=0; k<64; k=k+1) begin
+                    addr_index = i*2048 + k*32 +31;
+
+                    for(j=0; j<locrd; j=j+1) begin
+                        data_index = i*8192 + k*locrd*8 + j*8 + 7; // 8 bits per location
+                        if(gm_or_lds_dbuff[DELAY-1][i])
+                            rd_data[data_index-:8] =
+                                lds_memory[i*65536 + (addresses_dbuff[DELAY-1][addr_index-:32]) + j];
+                        else
+                            rd_data[data_index-:8] =
+                                data_memory[(addresses_dbuff[DELAY-1][addr_index-:32]) + j];
+                    end
+                end
+
+                output_tag[(i*7 + 6)-:7] = input_tag_dbuff[DELAY-1][(i*7 + 6)-:7];
+                tracemon_addr_buff[(i*2048 + 2047)-:2048] = addresses_dbuff[DELAY-1][(i*2048 + 2047)-:2048];
+                ack[i] = 1'b1;
+            end
+
+            if (|wr_en_dbuff[DELAY-1][(i*4+3)-:4]) begin
+                for(k=0; k<64; k=k+1) begin
+                    if(wr_mask_dbuff[DELAY-1][i*64 + k]) begin
+                        addr_index = i*2048 + k*32 + 31;
+
+                        for(j=0; j<locrd; j=j+1) begin
+                            data_index = i*8192 + k*locrd*8 + j*8 + 7; // 8 bits per location
+                            m = int(j / 4);
+                            if (wr_en_dbuff[DELAY-1][4*i + m]) begin
+                                if(gm_or_lds_dbuff[DELAY-1][i])
+                                    lds_memory[i*65536 + (addresses_dbuff[DELAY-1][addr_index-:32]) + j] =
+                                        wr_data_dbuff[DELAY-1][data_index-:8];
+                                else
+                                    data_memory[(addresses_dbuff[DELAY-1][addr_index-:32]) + j] =
+                                        wr_data_dbuff[DELAY-1][data_index-:8];
+                            end
+                        end
+                    end
+                end
+
+                output_tag[(i*7 + 6)-:7] = input_tag_dbuff[DELAY-1][(i*7 + 6)-:7];
+                tracemon_addr_buff[(i*2048 + 2047)-:2048] = addresses_dbuff[DELAY-1][(i*2048 + 2047)-:2048];
+                tracemon_store_en_buff[(i*4 + 3)-:4] = wr_en_dbuff[DELAY-1][(i*4 + 3)-:4];
+                tracemon_store_data_buff[(i*8192 + 8191)-:8192] = wr_data_dbuff[DELAY-1][(i*8192 + 8191)-:8192];
+                ack[i] = 1'b1;
+            end
+        end
+    end
+end
+
+always @ (posedge clk) begin
+  #1;
+
+	for(i = 0; i < NUMOFCU; i++) begin
+		if (rst | (~(|rd_en_dbuff[DELAY-1][(i*4+3)-:4]) & ~(|wr_en_dbuff[DELAY-1][(i*4+3)-:4]))) begin
+			output_tag[(i*7 + 6)-:7] = 7'bx;
+			ack[i] = 1'b0;
+		end
+	end
+
+end
+
+endmodule

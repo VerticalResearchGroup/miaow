@@ -1,0 +1,481 @@
+module issue_scoreboard(
+              // Inputs
+	      decode_cc_write,
+	      decode_cc_read,
+	      decode_instr_pc,
+	      decode_wf_halt,
+	      decode_fu,
+	      decode_wfid,
+	      decode_opcode,
+	      decode_source_reg1,
+	      decode_source_reg2,
+	      decode_source_reg3,
+	      decode_dest_reg,
+	      decode_imm_value0,
+	      decode_imm_value1,
+	      decode_scalar_mem_sgpr,
+	      decode_vector_mem_sgpr,
+	      decode_valid,
+	      lsu_mem_done_wfid,
+	      lsu_mem_done,
+	      vgpr_wr_done_wfid,
+	      vgpr_wr_done,
+	      vgpr_dest_reg_addr,
+	      vgpr_dest_reg_valid,
+	      sgpr_wr_done_wfid,
+	      sgpr_wr_done,
+	      sgpr_dest_reg_addr,
+	      sgpr_dest_reg_valid,
+	      exec_salu_wr_vcc_wfid,
+	      exec_salu_wr_vcc_en,
+              exec_salu_wr_exec_en,
+	      exec_valu_wr_vcc_wfid,
+	      exec_valu_wr_vcc_en,
+              salu_wr_scc_wfid,
+	      salu_wr_scc_en,
+              arbiter_instr_issued_alu_valid,
+	      arbiter_instr_issued_alu_wfid,
+              arbiter_instr_issued_lsu_valid,
+              arbiter_instr_issued_lsu_wfid,
+              
+              // Outputs
+              arbiter_salu_wf_ready,
+              arbiter_valu_wf_ready,
+              arbiter_lsu_wf_ready,
+              lsu_source_reg1,
+	      lsu_source_reg2,
+	      lsu_source_reg3,
+	      lsu_dest_reg,
+	      lsu_imm_value0,
+	      lsu_imm_value1,
+	      lsu_opcode,
+	      lsu_mem_sgpr,
+	      alu_source_reg1,
+	      alu_source_reg2,
+	      alu_dest_reg,
+	      alu_imm_value,
+	      alu_opcode,
+	      alu_instr_pc,
+	      lsu_instr_pc,
+	      fetchwave_wf_done_en,
+	      fetchwave_wf_done_wf_id,
+	      clk,
+	      rst
+);
+
+   input clk;
+
+   input rst;
+
+   input decode_cc_write, decode_cc_read, decode_wf_halt, decode_valid,
+         lsu_mem_done, vgpr_wr_done, vgpr_dest_reg_valid, sgpr_wr_done, sgpr_dest_reg_valid, exec_salu_wr_vcc_en, exec_valu_wr_exec_en, exec_valu_wr_vcc_en,
+         salu_wr_scc_en;
+   input [1:0] decode_fu;
+   input [5:0] decode_wfid, lsu_mem_done_wfid, vgpr_wr_done_wfid, sgpr_wr_done_wfid,
+               exec_salu_wr_vcc_wfid, exec_valu_wr_vcc_wfid, salu_wr_scc_wfid;
+   input [7:0] decode_imm_value1;
+   input [8:0] sgpr_dest_reg_addr;
+   input [9:0] vgpr_dest_reg_addr;
+   input [11:0] decode_source_reg1, decode_source_reg2, decode_source_reg3,
+		decode_dest_reg, decode_scalar_mem_sgpr, decode_vector_mem_sgpr;
+   input [15:0] decode_opcode, decode_imm_value0;
+   input [31:0] decode_instr_pc;
+   input 	arbiter_instr_issued_alu_valid, arbiter_instr_issued_lsu_valid;
+   
+   input [5:0] 	arbiter_instr_issued_alu_wfid, arbiter_instr_issued_lsu_wfid;
+   
+   output 	fetchwave_wf_done_en;
+   output [5:0] fetchwave_wf_done_wf_id;
+   output [7:0] lsu_imm_value1;
+   output [11:0] lsu_source_reg1, lsu_source_reg2, lsu_source_reg3, lsu_dest_reg,
+		 lsu_mem_sgpr, alu_source_reg1, alu_source_reg2, alu_dest_reg;
+   output [15:0] lsu_imm_value0, lsu_opcode, alu_imm_value, alu_opcode;
+   output [31:0] alu_instr_pc, lsu_instr_pc;
+
+   output [39:0] arbiter_salu_wf_ready, arbiter_valu_wf_ready, arbiter_lsu_wf_ready;
+ 
+   wire [39:0] 	 wf_fu_is_simd, wf_fu_is_salu, wf_fu_is_lsu;
+
+   wire [39:0] 	 dst_ready_arry, src1_ready_arry, src2_ready_arry, src3_ready_arry;
+   wire [39:0] 	 scalar_mem_sgpr_ready0,scalar_mem_sgpr_ready1, vector_mem_sgpr_ready0, vector_mem_sgpr_ready1, vector_mem_sgpr_ready2, vector_mem_sgpr_ready3;
+   wire [39:0] 	 exec_ready_arry, vcc_ready_arry;
+   wire [39:0] 	 valid_entry_arry, mem_wait_arry;
+
+   wire [39:0] 	 simd_ready_to_issue, salu_ready_to_issue, lsu_ready_to_issue;
+   wire 	 decode_dest_reg_busy_bit, decode_source_reg1_busy_bit, decode_source_reg2_busy_bit,
+		 decode_source_reg3_busy_bit;
+
+   wire 	 alu_valid_issue, arbiter_lsu_valid_issue;
+
+   wire 	 arbiter_salu_choosen_valid, arbiter_simd_choosen_valid;
+   wire [5:0] 	 arbiter_salu_choosen_wf_id, arbiter_simd_choosen_wf_id;
+   wire [11:0] 	 lsu_mem_scalar_sgpr, lsu_mem_vector_sgpr;
+   wire [1:0] 	 decode_scalar_mem_sgpr_busy_bits;
+   wire [3:0] 	 decode_vector_mem_sgpr_busy_bits;
+
+
+   functional_unit_reg_bank fu_table(
+				     .clk(clk),
+				     .rst(rst),
+				     .init_valid(flopped_decode_valid),
+				     .init_fu_value(flopped_decode_fu),
+				     .init_wf_id(flopped_decode_wfid),
+				     .fu_simd(wf_fu_is_simd),
+				     .fu_salu(wf_fu_is_salu),
+				     .fu_lsu(wf_fu_is_lsu)
+				     );
+   
+
+   reg_40xPARAMb_2r_1w #(32) instr_pc_table(
+					    .clk(clk),
+					    .rst(rst),
+					    .rd_addr0(wavealu_wfid),
+					    .rd_addr1(wavelsu_wfid),
+					    .rd_value0(alu_instr_pc),
+					    .rd_value1(lsu_instr_pc),
+					    .wr_en(flopped_decode_valid),
+					    .wr_addr(flopped_decode_wfid),
+					    .wr_value(flopped_decode_instr_pc)
+					    );
+
+   reg_40xPARAMb_2r_1w #(16) instr_opcode_table(
+						.clk(clk),
+						.rst(rst),
+						.rd_addr0(wavealu_wfid),
+						.rd_addr1(wavelsu_wfid),
+						.rd_value0(alu_opcode),
+						.rd_value1(lsu_opcode),
+						.wr_en(flopped_decode_valid),
+						.wr_addr(flopped_decode_wfid),
+						.wr_value(flopped_decode_opcode)
+						);
+
+   reg_40xPARAMb_2r_1w #(16) instr_imm_value0_table(
+						    .clk(clk),
+						    .rst(rst),
+						    .rd_addr0(wavealu_wfid),
+						    .rd_addr1(wavelsu_wfid),
+						    .rd_value0(alu_imm_value),
+						    .rd_value1(lsu_imm_value0),
+						    .wr_en(flopped_decode_valid),
+						    .wr_addr(flopped_decode_wfid),
+						    .wr_value(flopped_decode_imm_value0)
+						    );
+
+   reg_40xPARAMb_1r_1w #(8) instr_imm_value1(
+					     .clk(clk),
+					     .rst(rst),
+					     .rd_addr0(wavelsu_wfid),
+					     .rd_value0(lsu_imm_value1),
+					     .wr_en(flopped_decode_valid),
+					     .wr_addr(flopped_decode_wfid),
+					     .wr_value(flopped_decode_imm_value1)
+					     );
+
+   busy_array busy_array(
+			 .clk(clk),
+			 .rst(rst),
+			 .vgpr_wr_en(flopped_vgpr_dest_reg_valid),
+			 .sgpr_wr_en(flopped_sgpr_dest_reg_valid),
+			 .vgpr_wr_reg_addr({flopped_vgpr_dest_reg_valid, 1'b0 ,flopped_vgpr_dest_reg_addr}),
+			 .sgpr_wr_reg_addr({flopped_sgpr_dest_reg_valid, 2'b10 ,flopped_sgpr_dest_reg_addr}),
+
+			 .issue_alu_dst_addr(alu_dest_reg),
+			 .issue_lsu_dst_addr(lsu_dest_reg),
+			 .issue_alu_valid(alu_valid_issue),
+			 .issue_lsu_valid(lsu_lsu_select),
+
+			 .dst_reg_addr(flopped_decode_dest_reg),
+			 .src1_reg_addr(flopped_decode_source_reg1),
+			 .src2_reg_addr(flopped_decode_source_reg2),
+			 .src3_reg_addr(flopped_decode_source_reg3),
+			 .mul2_reg_addr(flopped_decode_scalar_mem_sgpr),
+			 .mul4_reg_addr(flopped_decode_vector_mem_sgpr),
+
+			 .dst_busy_bit(decode_dest_reg_busy_bit),
+			 .src1_busy_bit(decode_source_reg1_busy_bit),
+			 .src2_busy_bit(decode_source_reg2_busy_bit),
+			 .src3_busy_bit(decode_source_reg3_busy_bit),
+			 .mul2_busy_bits(decode_scalar_mem_sgpr_busy_bits),
+			 .mul4_busy_bits(decode_vector_mem_sgpr_busy_bits)
+			 );
+
+   sb_instr_operand sb_dest_operand(
+				    .clk(clk),
+				    .rst(rst),
+				    .init_en(flopped_decode_valid),
+				    .init_busy_bit(decode_dest_reg_busy_bit),
+				    .init_reg_addr(flopped_decode_dest_reg),
+				    .init_wf_id(flopped_decode_wfid),
+
+				    .sgpr_cmp_en(flopped_sgpr_dest_reg_valid),
+				    .vgpr_cmp_en(flopped_vgpr_dest_reg_valid),
+				    .sgpr_cmp_reg_addr({flopped_sgpr_dest_reg_valid, 2'b10 ,flopped_sgpr_dest_reg_addr}),
+				    .vgpr_cmp_reg_addr({flopped_vgpr_dest_reg_valid, 1'b0 ,flopped_vgpr_dest_reg_addr}),
+				    .sgpr_cmp_wf_id(flopped_sgpr_wr_done_wfid),
+				    .vgpr_cmp_wf_id(flopped_vgpr_wr_done_wfid),
+
+				    .issue_alu_reg_addr(alu_dest_reg),
+				    .issue_lsu_reg_addr(lsu_dest_reg),
+				    .issue_wf_alu_id(wavealu_wfid),
+				    .issue_wf_lsu_id(wavelsu_wfid),
+
+				    .ready_arry(dst_ready_arry)
+				    );
+
+   sb_instr_operand sb_src1_operand(
+				    .clk(clk),
+				    .rst(rst),
+				    .init_en(flopped_decode_valid),
+				    .init_busy_bit(decode_source_reg1_busy_bit),
+				    .init_reg_addr(flopped_decode_source_reg1),
+				    .init_wf_id(flopped_decode_wfid),
+
+				    .sgpr_cmp_en(flopped_sgpr_dest_reg_valid),
+				    .vgpr_cmp_en(flopped_vgpr_dest_reg_valid),
+				    .sgpr_cmp_reg_addr({flopped_sgpr_dest_reg_valid, 2'b10 ,flopped_sgpr_dest_reg_addr}),
+				    .vgpr_cmp_reg_addr({flopped_vgpr_dest_reg_valid, 1'b0 ,flopped_vgpr_dest_reg_addr}),
+				    .sgpr_cmp_wf_id(flopped_sgpr_wr_done_wfid),
+				    .vgpr_cmp_wf_id(flopped_vgpr_wr_done_wfid),
+
+				    .issue_alu_reg_addr(alu_source_reg1),
+				    .issue_lsu_reg_addr(lsu_source_reg1),
+				    .issue_wf_alu_id(wavealu_wfid),
+				    .issue_wf_lsu_id(wavelsu_wfid),
+
+				    .ready_arry(src1_ready_arry)
+				    );
+
+   sb_instr_operand sb_src2_operand(
+				    .clk(clk),
+				    .rst(rst),
+				    .init_en(flopped_decode_valid),
+				    .init_busy_bit(decode_source_reg2_busy_bit),
+				    .init_reg_addr(flopped_decode_source_reg2),
+				    .init_wf_id(flopped_decode_wfid),
+
+    .sgpr_cmp_en(flopped_sgpr_dest_reg_valid),
+    .vgpr_cmp_en(flopped_vgpr_dest_reg_valid),
+    .sgpr_cmp_reg_addr({flopped_sgpr_dest_reg_valid, 2'b10 ,flopped_sgpr_dest_reg_addr}),
+    .vgpr_cmp_reg_addr({flopped_vgpr_dest_reg_valid, 1'b0 ,flopped_vgpr_dest_reg_addr}),
+    .sgpr_cmp_wf_id(flopped_sgpr_wr_done_wfid),
+    .vgpr_cmp_wf_id(flopped_vgpr_wr_done_wfid),
+
+    .issue_alu_reg_addr(alu_source_reg2),
+    .issue_lsu_reg_addr(lsu_source_reg2),
+    .issue_wf_alu_id(wavealu_wfid),
+    .issue_wf_lsu_id(wavelsu_wfid),
+
+    .ready_arry(src2_ready_arry)
+);
+
+sb_instr_operand_1r sb_src3_operand(
+    .clk(clk),
+    .rst(rst),
+    .init_en(flopped_decode_valid),
+    .init_busy_bit(decode_source_reg3_busy_bit),
+    .init_reg_addr(flopped_decode_source_reg3),
+    .init_wf_id(flopped_decode_wfid),
+
+    .sgpr_cmp_en(flopped_sgpr_dest_reg_valid),
+    .vgpr_cmp_en(flopped_vgpr_dest_reg_valid),
+    .sgpr_cmp_reg_addr({flopped_sgpr_dest_reg_valid, 2'b10 ,flopped_sgpr_dest_reg_addr}),
+    .vgpr_cmp_reg_addr({flopped_vgpr_dest_reg_valid, 1'b0 ,flopped_vgpr_dest_reg_addr}),
+    .sgpr_cmp_wf_id(flopped_sgpr_wr_done_wfid),
+    .vgpr_cmp_wf_id(flopped_vgpr_wr_done_wfid),
+
+    .issue_lsu_reg_addr(lsu_source_reg3),
+    .issue_wf_lsu_id(wavelsu_wfid),
+
+    .ready_arry(src3_ready_arry)
+);
+
+sb_instr_source_multiple_4w sb_mem_sgpr_vector(
+	.clk(clk),
+	.rst(rst),
+
+	.init_en(flopped_decode_valid),
+    .init_value(flopped_decode_vector_mem_sgpr),
+    .init_wf_id(flopped_decode_wfid),
+
+    .init_busy_bit0(decode_vector_mem_sgpr_busy_bits[0]),
+    .init_busy_bit1(decode_vector_mem_sgpr_busy_bits[1]),
+    .init_busy_bit2(decode_vector_mem_sgpr_busy_bits[2]),
+    .init_busy_bit3(decode_vector_mem_sgpr_busy_bits[3]),
+
+
+	.sgpr_cmp_en(flopped_sgpr_dest_reg_valid),
+	.sgpr_cmp_value({flopped_sgpr_dest_reg_valid, 2'b10 ,flopped_sgpr_dest_reg_addr}),
+	.sgpr_cmp_wf_id(flopped_sgpr_wr_done_wfid),
+
+    .issue_wf_lsu_id(wavelsu_wfid),
+	.issue_lsu_data(lsu_mem_vector_sgpr),
+
+	.ready_arry0(vector_mem_sgpr_ready0),
+	.ready_arry1(vector_mem_sgpr_ready1),
+	.ready_arry2(vector_mem_sgpr_ready2),
+	.ready_arry3(vector_mem_sgpr_ready3)
+);
+
+sb_instr_source_multiple_2w sb_mem_sgpr_scalar(
+    .clk(clk),
+    .rst(rst),
+
+    .init_en(flopped_decode_valid),
+    .init_value(flopped_decode_scalar_mem_sgpr),
+    .init_wf_id(flopped_decode_wfid),
+
+    .init_busy_bit0(decode_scalar_mem_sgpr_busy_bits[0]),
+    .init_busy_bit1(decode_scalar_mem_sgpr_busy_bits[1]),
+
+
+    .sgpr_cmp_en(flopped_sgpr_dest_reg_valid),
+    .sgpr_cmp_value({flopped_sgpr_dest_reg_valid, 2'b10 ,flopped_sgpr_dest_reg_addr}),
+    .sgpr_cmp_wf_id(flopped_sgpr_wr_done_wfid),
+
+    .issue_wf_lsu_id(wavelsu_wfid),
+    .issue_lsu_data(lsu_mem_scalar_sgpr),
+
+    .ready_arry0(scalar_mem_sgpr_ready0),
+    .ready_arry1(scalar_mem_sgpr_ready1)
+);
+
+// Select scalar SGPR if it is valid
+assign lsu_mem_sgpr = (lsu_mem_scalar_sgpr[11])? lsu_mem_scalar_sgpr : lsu_mem_vector_sgpr;
+
+mem_wait mem_wait(
+	.clk(clk),
+	.rst(rst),
+	
+	.issue_valid(lsu_lsu_select),
+    .issue_wf_id(wavelsu_wfid),
+
+	.retire_valid(flopped_lsu_mem_done),
+	.retire_wf_id(flopped_lsu_mem_done_wfid),
+
+	.mem_wait_arry(mem_wait_arry)
+);
+
+vcc_exec_sb vcc_exec_sb(
+	.clk(clk),
+	.rst(rst),
+
+    .decode_valid(flopped_decode_valid),
+    .decode_wf_id(flopped_decode_wfid),
+    .decode_dst_reg_addr(flopped_decode_dest_reg),
+    .decode_src1_reg_addr(flopped_decode_source_reg1),
+    .decode_src2_reg_addr(flopped_decode_source_reg2),
+    .decode_src3_reg_addr(flopped_decode_source_reg3),
+    .decode_cc_read(flopped_decode_cc_read),
+    .decode_cc_write(flopped_decode_cc_write),
+
+    .issue_lsu_valid(lsu_lsu_select),
+    .issue_lsu_wf_id(wavelsu_wfid),
+    .issue_lsu_dst_reg_addr(lsu_dest_reg),
+
+    .issue_alu_valid(alu_valid_issue),
+    .issue_alu_wf_id(wavealu_wfid),
+    .issue_alu_dst_reg_addr(alu_dest_reg),
+
+
+	.valu_wr_wf_id(flopped_exec_valu_wr_vcc_wfid),
+	.salu_wr_wf_id(flopped_exec_salu_wr_vcc_wfid),
+
+    .vcc_valu_wr_en(flopped_exec_valu_wr_vcc_en),
+    .vcc_salu_wr_en(flopped_exec_salu_wr_vcc_en),
+
+    .exec_salu_wr_en(exec_salu_wr_exec_en),
+
+    .exec_ready_arry(exec_ready_arry),
+    .vcc_ready_arry(vcc_ready_arry)
+
+);
+
+ready_alu_logic ready_salu_logic(
+    .fu_alu(wf_fu_is_salu),
+
+    .valid_arry(valid_entry_arry),
+	.src1_ready_arry(src1_ready_arry),
+	.src2_ready_arry(src2_ready_arry),
+	.dst_ready_arry(dst_ready_arry),
+    .vcc_ready_arry(vcc_ready_arry),
+    .exec_ready_arry(exec_ready_arry),
+	.ready_arry(salu_ready_to_issue)
+);
+
+ready_alu_logic ready_simd_logic(
+    .fu_alu(wf_fu_is_simd),
+
+    .valid_arry(valid_entry_arry),
+    .src1_ready_arry(src1_ready_arry),
+    .src2_ready_arry(src2_ready_arry),
+    .dst_ready_arry(dst_ready_arry),
+    .vcc_ready_arry(vcc_ready_arry),
+    .exec_ready_arry(exec_ready_arry),
+
+    .ready_arry(simd_ready_to_issue)
+);
+
+
+ready_lsu_logic ready_lsu_logic(
+    .fu_lsu(wf_fu_is_lsu),
+
+	.valid_arry(valid_entry_arry),
+	.mem_wait_arry(mem_wait_arry),
+	.src1_ready_arry(src1_ready_arry),
+	.src2_ready_arry(src2_ready_arry),
+	.src3_ready_arry(src3_ready_arry),
+	.mul2_ready_arry0(scalar_mem_sgpr_ready0),
+    .mul2_ready_arry1(scalar_mem_sgpr_ready1),
+	.mul4_ready_arry0(vector_mem_sgpr_ready0),
+    .mul4_ready_arry1(vector_mem_sgpr_ready1),
+    .mul4_ready_arry2(vector_mem_sgpr_ready2),
+    .mul4_ready_arry3(vector_mem_sgpr_ready3),
+	.dst_ready_arry(dst_ready_arry),
+    .vcc_ready_arry(vcc_ready_arry),
+    .exec_ready_arry(exec_ready_arry),
+
+	.ready_arry(lsu_ready_to_issue)
+);
+
+finished_wf finished_wf(
+	.clk(clk),
+	.rst(rst),
+	
+	.decode_wf_id(flopped_decode_wfid),
+    .decode_instr_valid(flopped_decode_valid),
+    .decode_halt(flopped_decode_wf_halt),
+
+	.sgpr_instr_retired_wfid(flopped_sgpr_wr_done_wfid),
+	.vgpr_instr_retired_wfid(flopped_vgpr_wr_done_wfid),
+	.sgpr_instr_retired_valid(flopped_sgpr_wr_done),
+	.vgpr_instr_retired_valid(flopped_vgpr_wr_done),
+
+    .mem_wait(mem_wait_arry),
+    .issue_valu_wf_id(wavealu_wfid),
+	.issue_valu_valid(alu_valid_issue),
+	
+	.wf_done_en(fetchwave_wf_done_en),
+	.wf_done_wf_id(fetchwave_wf_done_wf_id)
+);
+
+valid_entry valid_entry(
+	.clk(clk),
+	.rst(rst),
+
+	.init_inst_wf_en(flopped_decode_valid),
+	.init_instr_halt(flopped_decode_wf_halt),
+    .init_inst_wf_id(flopped_decode_wfid),
+
+	.alu_issue_en(alu_valid_issue),
+    .alu_issue_wf_id(wavealu_wfid),
+
+    .lsu_issue_en(lsu_lsu_select),
+	.lsu_issue_wf_id(wavelsu_wfid),
+
+	.valid_entry_out(valid_entry_arry)
+);
+
+endmodule
+
+

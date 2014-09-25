@@ -1,0 +1,74 @@
+module salu( 
+      issue_source_reg1,
+      issue_source_reg2,
+      issue_dest_reg,
+      issue_imm_value0,
+      issue_imm_value1,
+      issue_opcode,
+      issue_wfid,
+      issue_alu_select,
+      exec_rd_exec_value,
+      exec_rd_vcc_value,
+      exec_rd_m0_value,
+      exec_rd_scc_value,
+      sgpr_source2_data,
+      sgpr_source1_data,
+      issue_instr_pc,
+      exec_wr_exec_en,
+      exec_wr_vcc_en,
+      exec_wr_m0_en,
+      exec_wr_scc_en,
+      exec_wr_exec_value,
+      exec_wr_vcc_value,
+      exec_wr_m0_value,
+      exec_wr_scc_value,
+      exec_wr_wfid,
+      exec_rd_en,
+      exec_rd_wfid,
+      sgpr_dest_data,
+      sgpr_dest_addr,
+      sgpr_dest_wr_en,
+      sgpr_source2_addr,
+      sgpr_source1_addr,
+      sgpr_source1_rd_en,
+      sgpr_source2_rd_en,
+      issue_alu_ready,
+      sgpr_instr_done_wfid,
+      sgpr_instr_done,
+      fetchwaveissue_branch_wfid,
+      fetchwaveissue_branch_en,
+      fetchwaveissue_branch_taken,
+      fetch_branch_pc_value,
+      tracemon_retire_pc,
+      tracemon_exec_word_sel,
+      tracemon_vcc_word_sel,
+      clk,
+      rst
+ );
+
+input clk;
+
+input rst;
+
+input issue_alu_select, exec_rd_scc_value;
+input[5:0] issue_wfid;
+input[11:0] issue_source_reg1, issue_source_reg2, issue_dest_reg;
+input[15:0] issue_imm_value0;
+input[31:0] issue_imm_value1, issue_opcode, exec_rd_m0_value, issue_instr_pc;
+input[63:0] exec_rd_exec_value, exec_rd_vcc_value, sgpr_source2_data,
+         sgpr_source1_data;
+
+output exec_wr_exec_en, exec_wr_vcc_en, exec_wr_m0_en, exec_wr_scc_en,
+         exec_wr_scc_value, exec_rd_en, sgpr_source1_rd_en, sgpr_source2_rd_en,
+         issue_alu_ready, sgpr_instr_done, fetchwaveissue_branch_en, fetchwaveissue_branch_taken;
+output[1:0] sgpr_dest_wr_en, tracemon_exec_word_sel, tracemon_vcc_word_sel;
+output[5:0] exec_wr_wfid, exec_rd_wfid, sgpr_instr_done_wfid, fetchwaveissue_branch_wfid;
+output[8:0] sgpr_dest_addr, sgpr_source2_addr, sgpr_source1_addr;
+output[31:0] exec_wr_m0_value, fetch_branch_pc_value, tracemon_retire_pc;
+output[63:0] exec_wr_exec_value, exec_wr_vcc_value, sgpr_dest_data;
+
+///////////////////////////////
+//Your code goes here - beware: script does not recognize changes
+// into files. It ovewrites everithing without mercy. Save your work before running the script
+///////////////////////////////
+endmodule

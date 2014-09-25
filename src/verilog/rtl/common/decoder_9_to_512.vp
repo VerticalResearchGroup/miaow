@@ -1,0 +1,11 @@
+module decoder_9_to_512 (out,in);
+  output [511:0] out;
+  input [8:0] in;
+%%start_veriperl
+my $i;
+for($i=0; $i<512; $i=$i+1)
+{
+  print "  assign out[$i] = (in == 9'd$i) ? 1'b1 : 1'b0;\n";
+}
+%%stop_veriperl
+endmodule

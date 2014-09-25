@@ -1,0 +1,85 @@
+module vector_alu_tb();
+   /*AUTOWIRE*/
+   // Beginning of automatic wires (for undeclared instantiated-module outputs)
+   wire [31:0]		alu_dest_data;		// From DUT of vector_alu.v
+   wire			alu_dest_vcc_value;	// From DUT of vector_alu.v
+   // End of automatics
+
+   /*AUTOREGINPUT*/
+   // Beginning of automatic reg inputs (for undeclared instantiated-module inputs)
+   reg [4:0]		alu_control;		// To DUT of vector_alu.v
+   reg [31:0]		alu_source1_data;	// To DUT of vector_alu.v
+   reg [31:0]		alu_source2_data;	// To DUT of vector_alu.v
+   reg			alu_source_exec_value;	// To DUT of vector_alu.v
+   reg			alu_source_vcc_value;	// To DUT of vector_alu.v
+   // End of automatics
+
+   reg [20:0] 		counter;
+   reg 			clk;
+   reg 			rst;
+   
+   vector_alu DUT(
+		  /*AUTOINST*/
+		  // Outputs
+		  .alu_dest_data	(alu_dest_data[31:0]),
+		  .alu_dest_vcc_value	(alu_dest_vcc_value),
+		  // Inputs
+		  .clk(clk),
+		  .rst(rst),
+		  .alu_source1_data	(alu_source1_data[31:0]),
+		  .alu_source2_data	(alu_source2_data[31:0]),
+		  .alu_source_vcc_value	(alu_source_vcc_value),
+		  .alu_source_exec_value(alu_source_exec_value),
+		  .alu_control		(alu_control[4:0]));
+
+
+      // clock
+      initial begin
+	 clk = 0;
+	 while (1) begin
+	    #40;
+	    clk = ~clk;
+	 end
+      end
+
+      // reset
+      initial begin
+	 rst = 1;
+	 #200;
+	 rst = 0;
+      end
+
+   always @(posedge clk or posedge rst)
+     begin
+	if (rst)
+	  counter <= 0;
+	else
+	  counter <= counter + 'd1;
+     end
+
+   always @(posedge clk or posedge rst)
+     begin
+	if (rst)
+	  begin
+	     alu_source1_data <= 'd0;
+	     alu_source2_data <= 'd0;
+	     alu_source_vcc_value <= 1'b0;
+	     alu_source_exec_value <= 1'b0;
+	     alu_control <= 'd0;
+	  end
+	else
+	  begin
+	     if (counter[3:0] == 'd0)
+	       begin
+		  alu_source1_data <= $random;
+		  alu_source2_data <= $random;
+		  alu_source_exec_value <= 1'b1;
+		  alu_control <= 5'b01011;
+		  
+	       end
+	  end
+     end
+endmodule
+   
+
+  

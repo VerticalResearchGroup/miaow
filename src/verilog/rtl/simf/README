@@ -1,0 +1,16 @@
+Raghu Balasubramanian
+2013 02 05
+
+top level : fpu_arith.v
+
+FPU adapted from FPU100. 
+Verilog translation by Julius Baxter OR1200.
+
+Changes made : 
+1) reset wiring
+2) Added i2f and f2i modules to fpu_arith.v
+
+To Do : 
+1) testbench
+2) move sqrt from VHDL to Verilog
+3) implement rcp.

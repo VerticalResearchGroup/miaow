@@ -1,0 +1,5 @@
+ v_add_i32     v3, vcc, s5, v2                             // 00000000: 4A060405
+t0: V3<=(31) wf_id0: vcc<=(0) t1: V3<=(46) wf_id1: vcc<=(0) t2: V3<=(43) wf_id2: vcc<=(0) t3: V3<=(37) wf_id3: vcc<=(0) t4: V3<=(32) wf_id4: vcc<=(0) t5: V3<=(29) wf_id5: vcc<=(0) t6: V3<=(62) wf_id6: vcc<=(0) t7: V3<=(47) wf_id7: vcc<=(0) t8: V3<=(63) wf_id8: vcc<=(0) t9: V3<=(38) wf_id9: vcc<=(0) 
+
+ s_endpgm                                                  // 00000004: BF810000
+

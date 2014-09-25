@@ -1,0 +1,26 @@
+module mux_256x32b_to_1x32b (out, in, select);
+
+  output [31:0] out;
+  input [8191:0] in;
+  input [7:0] select;
+
+  reg [31:0] out;
+
+  always @ (in or select) begin
+    casex(select)
+%%start_veriperl
+my $i;
+my $low_index;
+my $high_index;
+for($i=0; $i<256; $i=$i+1)
+{
+  $low_index = 32*$i;
+  $high_index = 32*$i+31;
+  print "      8'd$i : out <= in [$high_index:$low_index];\n";
+}
+%%stop_veriperl
+      default: out <= 32'hxxxxxxxx;
+    endcase
+  end
+endmodule
+

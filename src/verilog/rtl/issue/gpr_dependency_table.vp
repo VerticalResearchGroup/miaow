@@ -1,0 +1,128 @@
+module gpr_dependency_table
+  (/*AUTOARG*/
+   // Outputs
+   ready_arry_gpr,
+   // Inputs
+   clk, rst, vgpr_alu_set_data, vgpr_lsu_set_data, sgpr_alu_set_data,
+   sgpr_lsu_set_data, sgpr_valu_set_data, decode_instr_data,
+   f_vgpr_alu_wr_done_wfid, f_vgpr_lsu_wr_done_wfid,
+   f_sgpr_alu_wr_done_wfid, f_sgpr_lsu_instr_done_wfid, f_decode_wfid,
+   f_decode_valid
+   );
+
+/**********************************************************************
+ * The dependency table works this way:                               *
+ * Ready bits are set whenever a operand that was not ready retires   *
+ * or a operand that does not depends on a inflight instruction       *
+ * destination is decoded                                             *
+ * Ready bits are cleared whenever a operand that reads or writes to    *
+ * the destination of a inflight instruction is decoded.              *
+ **********************************************************************/
+   input clk, rst;
+   
+   input [`ISSUE_GPR_RD_BITS_LENGTH-1:0] vgpr_alu_set_data, vgpr_lsu_set_data, 
+					 sgpr_alu_set_data, sgpr_lsu_set_data,
+					 sgpr_valu_set_data, decode_instr_data;
+   input [`WF_ID_LENGTH-1:0]   f_vgpr_alu_wr_done_wfid, f_vgpr_lsu_wr_done_wfid, 
+			      f_sgpr_alu_wr_done_wfid, f_sgpr_lsu_instr_done_wfid, 
+			      f_decode_wfid;
+   
+   input 		      f_decode_valid;
+   
+
+   output [`WF_PER_CU-1:0]     ready_arry_gpr;
+   wire [`WF_PER_CU*`ISSUE_GPR_RD_BITS_LENGTH-1:0] reg_out, reg_in;
+   wire [`WF_PER_CU*`ISSUE_GPR_RD_BITS_LENGTH-1:0] 
+						   vgpr_alu_set_demuxed, vgpr_lsu_set_demuxed,
+						   sgpr_alu_set_demuxed, sgpr_lsu_set_demuxed,
+						   sgpr_valu_set_demuxed,
+						   decoded_instr_set_demuxed, decoded_instr_clear_demuxed,
+						   issue_clear_demuxed;
+   
+   wire [`WF_PER_CU-1:0] 			 reg_wr_en;
+   
+   ready_bits_demux vgpr_alu_set_demux
+     (
+      .in(vgpr_alu_set_data),
+      .addr(f_vgpr_alu_wr_done_wfid),
+      .out(vgpr_alu_set_demuxed),
+      .en(|vgpr_alu_set_data)
+      );
+
+   ready_bits_demux vgpr_lsu_set_demux
+     (
+      .in(vgpr_lsu_set_data),
+      .addr(f_vgpr_lsu_wr_done_wfid),
+      .out(vgpr_lsu_set_demuxed),
+      .en(|vgpr_lsu_set_data)
+      );
+
+   ready_bits_demux sgpr_alu_set_demux
+     (
+      .in(sgpr_alu_set_data),
+      .addr(f_sgpr_alu_wr_done_wfid),
+      .out(sgpr_alu_set_demuxed),
+      .en(|sgpr_alu_set_data)
+      );
+
+   ready_bits_demux sgpr_valu_set_demux
+     (
+      .in(sgpr_valu_set_data),
+      .addr(f_vgpr_alu_wr_done_wfid),
+      .out(sgpr_valu_set_demuxed),
+      .en(|sgpr_valu_set_data)
+      );
+   
+   ready_bits_demux sgpr_lsu_set_demux
+     (
+      .in(sgpr_lsu_set_data),
+      .addr(f_sgpr_lsu_instr_done_wfid),
+      .out(sgpr_lsu_set_demuxed),
+      .en(|sgpr_lsu_set_data)
+      );
+
+   ready_bits_demux decode_instr_set_demux
+     (
+      .in(~decode_instr_data),
+      .addr(f_decode_wfid),
+      .out(decoded_instr_set_demuxed),
+      .en(f_decode_valid)
+      );
+
+   ready_bits_demux decode_instr_clear_demux
+     (
+      .in(decode_instr_data),
+      .addr(f_decode_wfid),
+      .out(decoded_instr_clear_demuxed),
+      .en(f_decode_valid)
+      );
+   
+		
+   assign reg_wr_en = {`WF_PER_CU{1'b1}};			  
+   reg_param #(`ISSUE_GPR_RD_BITS_LENGTH) data_bank[`WF_PER_CU-1:0] 
+     ( 
+       .out(reg_out), 
+       .in(reg_in), 
+       .wr_en(reg_wr_en),
+       .clk(clk), 
+       .rst(rst) );
+
+// Generate the ready bits, that are ready only when all depoendency bits are set 
+%%start_veriperl
+my $i;
+for($i=0; $i<40; $i=$i+1)
+{
+  print "assign ready_arry_gpr[$i] = &reg_out[`ISSUE_GPR_RD_BITS_LENGTH*($i+1)-1:`ISSUE_GPR_RD_BITS_LENGTH*$i];\n";
+}
+%%stop_veriperl
+
+// Generate updated dependencies, giving priority to sets over clears
+assign reg_in = (   reg_out &
+		    // Clear ready bits of all issued and non-ready decoded instructions 
+		    ( ~decoded_instr_clear_demuxed   ) |
+		    // Set ready bits of all retired and ready decoded instructions
+		    ( vgpr_alu_set_demuxed | vgpr_lsu_set_demuxed | 
+		    sgpr_alu_set_demuxed | sgpr_lsu_set_demuxed | 
+		    sgpr_valu_set_demuxed | decoded_instr_set_demuxed) );
+
+endmodule

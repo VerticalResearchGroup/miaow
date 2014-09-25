@@ -1,0 +1,5 @@
+ v_cmp_gt_i32  vcc, v2, v2                                 // 00000000: 7D080502
+wf_id0: vcc<=(0) wf_id1: vcc<=(0) wf_id2: vcc<=(0) wf_id3: vcc<=(0) wf_id4: vcc<=(0) wf_id5: vcc<=(0) wf_id6: vcc<=(0) wf_id7: vcc<=(0) wf_id8: vcc<=(0) wf_id9: vcc<=(0) 
+
+ s_endpgm                                                  // 00000004: BF810000
+
