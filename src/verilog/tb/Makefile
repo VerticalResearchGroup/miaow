@@ -24,13 +24,16 @@ VCS_OPTIONS += +define+SAIF
 VCS_OPTIONS += +vcs+saif_libcell
 endif
 
+ifdef HARD_DISPATCHER
+VCS_OPTIONS += +define+HARD_DISPATCHER
+endif
 
 build:
 	cd ../rtl && make build
 
 ifndef GATES
 compile: build
-	vcs $(VCS_OPTIONS) ../rtl/common/global_definitions.v ../rtl/common/issue_definitions.v ../rtl/alu/alu_definitions.v ../rtl/lsu/lsu_definitions.v ../rtl/decode/decode_definitions.v *.v *.c ../rtl/compute_unit/build/*.v ../rtl/decode/build/*.v ../rtl/exec/build/*.v ../rtl/fetch/build/*.v ../rtl/instr_buffer/build/*.v ../rtl/issue/build/*.v ../rtl/lsu/build/*.v ../rtl/memory/build/*.v ../rtl/memory/*.c ../rtl/salu/build/*.v ../rtl/sgpr/build/*.v ../rtl/alu/build/*.v ../rtl/simd/build/*.v ../rtl/simf/build/*.v ../rtl/rfa/build/*.v ../rtl/tracemon/build/*.v ../rtl/tracemon/*.c ../rtl/vgpr/build/*.v ../rtl/wavepool/build/*.v -y ../rtl/common/build/
+	vcs $(VCS_OPTIONS) ../rtl/common/global_definitions.v ../rtl/common/issue_definitions.v ../rtl/alu/alu_definitions.v ../rtl/lsu/lsu_definitions.v ../rtl/decode/decode_definitions.v *.v *.c ./dispatcher_wrapper/*.v  ../rtl/compute_unit/build/*.v ../rtl/decode/build/*.v ../rtl/exec/build/*.v ../rtl/fetch/build/*.v ../rtl/instr_buffer/build/*.v ../rtl/issue/build/*.v ../rtl/lsu/build/*.v ../rtl/memory/build/*.v ../rtl/memory/*.c ../rtl/salu/build/*.v ../rtl/sgpr/build/*.v ../rtl/alu/build/*.v ../rtl/simd/build/*.v ../rtl/simf/build/*.v ../rtl/rfa/build/*.v ../rtl/tracemon/build/*.v ../rtl/tracemon/*.c ../rtl/vgpr/build/*.v ../rtl/wavepool/build/*.v ../rtl/dispatcher/build/*.v -y ../rtl/common/build/
 else
 compile: build
 	vcs $(VCS_OPTIONS) *.v *.c ../../../syn/synopsys/synth/*.syn.v ../rtl/common/global_definitions.v ../rtl/vgpr/build/*.v ../rtl/sgpr/build/*.v ../rtl/instr_buffer/build/*.v ../rtl/memory/build/*.v ../rtl/tracemon/build/*.v ../rtl/tracemon/*.c -y ../rtl/common/build/ -v ../lib/saed32nm_modified.v

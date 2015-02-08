@@ -17,6 +17,7 @@ build:
 	cd simf && make my_build
 	cd rfa && make my_build
 	cd alu && make my_build
+	cd dispatcher && make my_build
 
 fpga: build
 	mkdir -p fpga_core
@@ -34,7 +35,7 @@ fpga: build
 	cp simf/build/* fpga_core/
 	cp rfa/build/* fpga_core/
 	cp alu/build/* fpga_core/
-  cp fpga/* fpga_core/
+	cp fpga/* fpga_core/
 
 compile: build
 	vcs -full64 +libext+.v compute_unit/build/*.v decode/build/*.v exec/build/*.v fetch/build/*.v instr_buffer/build/*.v issue/build/*.v lsu/build/*.v memory/build/*.v salu/build/*.v sgpr/build/*.v simd/build/*.v tracemon/build/*.v tracemon/*.c vgpr/build/*.v wavepool/build/*.v -y common/build/ +lint=all -timescale=1ns/1ns -l compile.log -debug_all +v2k -sverilog
@@ -94,6 +95,7 @@ uncheck:
 	cd wavepool && make clean
 	cd simf && make clean
 	cd rfa && make clean
+	cd dispatcher && make clean
 	#cd alu && make clean
 
 clean: unbuild uncheck

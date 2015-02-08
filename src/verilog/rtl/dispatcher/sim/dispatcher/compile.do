@@ -1,0 +1,17 @@
+vlog -work work ../../ram_2_port.v  -lint -quiet
+vlog -work work ../../inflight_wg_buffer.v  -lint -quiet
+vlog -work work ../../gds_resource_table.v  -lint -quiet
+vlog -work work ../../wg_resource_table.v  -lint -quiet
+vlog -work work ../../resource_table.v  -lint -quiet
+vlog -work work ../../resource_update_buffer.v   -lint -quiet
+vlog -work work ../../global_resource_table.v  -lint -quiet
+vlog -work work ../../cam_allocator.v  -lint -quiet
+vlog -work work ../../allocator.v  -lint -quiet
+vlog -work work ../../dis_controller.v  -lint -quiet
+vlog -work work ../../cu_handler.v  -lint -quiet
+vlog -work work ../../gpu_interface.v  -lint -quiet
+vlog -work work ../../dispatcher.v  -lint -quiet
+vlog -work work ../src/cu_simulator.v  -lint -quiet
+vlog -work work ../src/dispatcher_checker.v  -lint -quiet
+vlog -work work ../src/host_test.v  -lint -quiet
+vlog -work work src/dispatcher_tb.v  -lint -quiet

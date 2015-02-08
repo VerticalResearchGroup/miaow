@@ -6,6 +6,11 @@ ComputeUnit allCUs[MAX_NUM_OF_CU];
 Wavefront lastSchldWavefront;
 
 Resources toSchedule[MAX_WFS_IN_TEST];
+
+Resources workgroups[MAX_WFS_IN_TEST];
+int maxWorkgroup = 0;
+int currWorkgroup = 0;
+
 int maxToSch = -1;
 int curToSch = 0;
 
@@ -59,9 +64,9 @@ int readConfigFile(int fno)
 		
 		tok = strtok(NULL, ";");
 		toSchedule[maxToSch].sregCnt = atoi(tok);
-		if(toSchedule[maxToSch].sregCnt % 4 != 0) {
+		if(toSchedule[maxToSch].sregCnt % 8 != 0) {
 			toSchedule[maxToSch].sregCnt = 
-				(toSchedule[maxToSch].sregCnt/4 + 1) * 4;
+				(toSchedule[maxToSch].sregCnt/8 + 1) * 8;
 		}
 		
 		tok = strtok(NULL, ";");
@@ -114,6 +119,30 @@ void copyDataAndInstr(int fno)
 	copyFile(fileName, "instr.mem");
 }
 
+int lookupWorkgroup(int wgId) {
+  int i;
+  for(i =0; i <maxWorkgroup; i++){
+    if(workgroups[i].wgId == wgId) return 1;
+  }
+
+  return 0;
+}
+// get workgroups
+void updateWorkgroups(void) {
+  // For each item in toSchedule, lookup if the workgroup id is known
+  // if not, add new workgroup
+
+
+  int i;
+  for(i =0; i<maxToSch+1; i++){
+    // we dont have this workgroup yet
+    if(!lookupWorkgroup(toSchedule[i].wgId)){
+      workgroups[maxWorkgroup] = toSchedule[i];
+      maxWorkgroup++;
+    }
+  }
+}
+
 // initialize the system
 int Initialize(int num_of_cu, int iter)
 {
@@ -153,6 +182,7 @@ int Initialize(int num_of_cu, int iter)
 	int ret = readConfigFile(iter);
 	if (ret == 0) return 0;
 
+    updateWorkgroups();
 	copyDataAndInstr(iter);
 	return 1;
 }
@@ -479,6 +509,76 @@ int getTotalWavefronts()
 {
 	return (maxToSch + 1);
 }
+
+
+/************************************************************************/
+/*       Region: Get functions to for the hardaware dispatcher          */
+/************************************************************************/
+
+#define VREG_ALLOC_UNIT 4
+#define SREG_ALLOC_UNIT 8
+#define LDS_ALLOC_UNIT 64
+
+int checkWgAvailable(void){
+  return (currWorkgroup<maxWorkgroup)? 1:0;
+}
+
+void prepareNextWg(void){
+  currWorkgroup++;
+}
+
+int hardDisGetWgId()
+{
+  return workgroups[currWorkgroup].wgId;
+}
+
+int hardDisGetWfCnt()
+{
+  return workgroups[currWorkgroup].wfCnt;
+}
+
+int hardDisGetWfNumThrds()
+{
+  return workgroups[currWorkgroup].numOfThrds;
+}
+
+int hardDisGetVregSize()
+{
+  return (workgroups[currWorkgroup].vregCnt/VREG_ALLOC_UNIT)*
+    workgroups[currWorkgroup].wfCnt;
+}
+
+int hardDisGetVregSizePerWf()
+{
+  return workgroups[currWorkgroup].vregCnt/VREG_ALLOC_UNIT;
+}
+
+int hardDisGetSregSize()
+{
+  return (workgroups[currWorkgroup].sregCnt/SREG_ALLOC_UNIT)*
+    workgroups[currWorkgroup].wfCnt;
+    
+}
+
+int hardDisGetSregSizePerWf()
+{
+  return workgroups[currWorkgroup].sregCnt/SREG_ALLOC_UNIT;
+}
+
+int hardDisGetLdsSize()
+{
+  return workgroups[currWorkgroup].ldsCnt/LDS_ALLOC_UNIT;
+}
+
+int hardDisGetGdsSize() {
+  return 0;
+}
+
+
+int hardDisGetPc(){
+  return workgroups[currWorkgroup].pc;
+}
+
 
 /************************************************************************/
 /*       Region: Get functions to access the scheduled wavefront        */
