@@ -49,22 +49,28 @@ module simd_alu
 
    wire [31:0]     twos_compliment_inp0_s;
    wire [31:0]     twos_compliment_inp1_s;
+	 wire [31:0]		 twos_compliment_inp2_s; //VIN
 
    //TODO check logic
 
    reg [31:0] abs_signed_source1_data;
    reg [31:0] abs_signed_source2_data;
+   reg [31:0] abs_signed_source3_data;
    reg [31:0] abs_unsigned_source1_data;
    reg [31:0] abs_unsigned_source2_data;
+   reg [31:0] abs_unsigned_source3_data;
    reg [31:0] final_signed_source1_data;
    reg [31:0] final_signed_source2_data;
+   reg [31:0] final_signed_source3_data;
    reg [31:0] final_unsigned_source1_data;
    reg [31:0] final_unsigned_source2_data;
-
-   assign twos_compliment_inp0_s = ~alu_source1_data + 32'd1;
+   reg [31:0] final_unsigned_source3_data;
+   
+	 assign twos_compliment_inp0_s = ~alu_source1_data + 32'd1;
    assign twos_compliment_inp1_s = ~alu_source2_data + 32'd1;
-
-   assign alu_sgpr_dest_data = alu_dest_vcc_value;
+   assign twos_compliment_inp2_s = ~alu_source3_data + 32'd1;
+   
+	 assign alu_sgpr_dest_data = alu_dest_vcc_value;
 
    always @* begin
       casex(alu_control[31:24])
@@ -76,11 +82,15 @@ module simd_alu
                abs_signed_source2_data <= alu_control[`ALU_VOP3A_ABS2_POS]
                                           ? (alu_source2_data[31] ? twos_compliment_inp1_s : alu_source2_data)
                                           : alu_source2_data;
+               abs_signed_source3_data <= alu_control[`ALU_VOP3A_ABS3_POS]
+                                          ? (alu_source3_data[31] ? twos_compliment_inp2_s : alu_source3_data)
+                                          : alu_source3_data;
             end
          default : //VOP1, VOP2 and VOPC
             begin
               abs_signed_source1_data <= alu_source1_data;
               abs_signed_source2_data <= alu_source2_data;
+              abs_signed_source3_data <= alu_source3_data;
             end
       endcase
    end // always @ (...
@@ -91,22 +101,28 @@ module simd_alu
             begin
                final_signed_source1_data <= alu_control[`ALU_VOP3A_NEG1_POS] ? (~abs_signed_source1_data + 32'd1) : abs_signed_source1_data;
                final_signed_source2_data <= alu_control[`ALU_VOP3A_NEG2_POS] ? (~abs_signed_source2_data + 32'd1) : abs_signed_source2_data;
-               final_unsigned_source1_data <= alu_control[`ALU_VOP3A_NEG1_POS] ? twos_compliment_inp0_s : alu_source1_data;
+               final_signed_source3_data <= alu_control[`ALU_VOP3A_NEG3_POS] ? (~abs_signed_source3_data + 32'd1) : abs_signed_source3_data;
+							 final_unsigned_source1_data <= alu_control[`ALU_VOP3A_NEG1_POS] ? twos_compliment_inp0_s : alu_source1_data;
                final_unsigned_source2_data <= alu_control[`ALU_VOP3A_NEG2_POS] ? twos_compliment_inp1_s : alu_source2_data;
+               final_unsigned_source3_data <= alu_control[`ALU_VOP3A_NEG3_POS] ? twos_compliment_inp2_s : alu_source3_data;
             end
          {`ALU_VOP3B_FORMAT} :
             begin
                final_signed_source1_data <= alu_control[`ALU_VOP3B_NEG1_POS] ? (~abs_signed_source1_data + 32'd1) : abs_signed_source1_data;
                final_signed_source2_data <= alu_control[`ALU_VOP3B_NEG2_POS] ? (~abs_signed_source2_data + 32'd1) : abs_signed_source2_data;
+               final_signed_source3_data <= alu_control[`ALU_VOP3B_NEG3_POS] ? (~abs_signed_source3_data + 32'd1) : abs_signed_source3_data;
                final_unsigned_source1_data <= alu_control[`ALU_VOP3B_NEG1_POS] ? twos_compliment_inp0_s : alu_source1_data;
                final_unsigned_source2_data <= alu_control[`ALU_VOP3B_NEG2_POS] ? twos_compliment_inp1_s : alu_source2_data;
+               final_unsigned_source3_data <= alu_control[`ALU_VOP3B_NEG3_POS] ? twos_compliment_inp2_s : alu_source3_data;
             end
          default : //VOP1, VOP2 and VOPC
             begin
               final_signed_source1_data <= abs_signed_source1_data;
               final_signed_source2_data <= abs_signed_source2_data;
+              final_signed_source3_data <= abs_signed_source3_data;
               final_unsigned_source1_data <= alu_source1_data;
               final_unsigned_source2_data <= alu_source2_data;
+              final_unsigned_source3_data <= alu_source3_data;
             end
       endcase
    end // always @ (...
@@ -128,12 +144,12 @@ module simd_alu
          {1'b1, `ALU_VOP2_FORMAT, 12'h025} : //VOP2: V_ADD_I32
             begin
                alu_done <= 1'b1;
-               {alu_dest_vcc_value, alu_vgpr_dest_data} <= alu_source1_data + alu_source2_data;
+               {alu_dest_vcc_value, alu_vgpr_dest_data} <= final_signed_source1_data + final_signed_source2_data;
            end
          {1'b1, `ALU_VOP2_FORMAT, 12'h026} : //VOP2: V_SUB_I32
             begin
                alu_done <= 1'b1;
-               {alu_dest_vcc_value, alu_vgpr_dest_data} <= alu_source1_data - alu_source2_data;
+               {alu_dest_vcc_value, alu_vgpr_dest_data} <= final_signed_source1_data - final_signed_source2_data;
            end
          {1'b1, `ALU_VOP2_FORMAT, 12'h01B} : //VOP2: V_AND_B32
             begin
@@ -165,28 +181,40 @@ module simd_alu
                alu_vgpr_dest_data <= alu_source2_data >> alu_source1_data[4:0];
                alu_dest_vcc_value <= alu_source_vcc_value;
            end
+         {1'b1, `ALU_VOP2_FORMAT, 12'h018} : //VOP2: V_ASHRREV_I32 - VIN
+            begin
+               alu_done <= 1'b1;
+               alu_vgpr_dest_data <= final_signed_source2_data >> final_signed_source1_data[4:0];
+               alu_dest_vcc_value <= alu_source_vcc_value;
+           end
          {1'b1, `ALU_VOP2_FORMAT, 12'h014} : //VOP2: V_MAX_U32
             begin
                alu_done <= 1'b1;
-               alu_vgpr_dest_data <= (alu_source1_data >= alu_source2_data) ? alu_source1_data : alu_source2_data;
+               alu_vgpr_dest_data <= (final_unsigned_source1_data >= final_unsigned_source2_data) ? final_unsigned_source1_data : final_unsigned_source2_data;
                alu_dest_vcc_value <= alu_source_vcc_value;
            end
-         {1'b1, `ALU_VOP2_FORMAT, 12'h0114} : //VOP3A: V_MAX_U32
+         {1'b1, `ALU_VOP2_FORMAT, 12'h012} : //VOP2: V_MAX_I32 - VIN
             begin
                alu_done <= 1'b1;
-               alu_vgpr_dest_data <= (alu_source1_data >= alu_source2_data) ? alu_source1_data : alu_source2_data;
+               alu_vgpr_dest_data <= (final_signed_source1_data >= final_signed_source2_data) ? final_signed_source1_data : final_signed_source2_data;
+               alu_dest_vcc_value <= alu_source_vcc_value;
+						end
+         {1'b1, `ALU_VOP3A_FORMAT, 12'h114} : //VOP3A: V_MAX_U32
+            begin
+               alu_done <= 1'b1;
+               alu_vgpr_dest_data <= (final_unsigned_source1_data >= final_unsigned_source2_data) ? final_unsigned_source1_data : final_unsigned_source2_data;
                alu_dest_vcc_value <= alu_source_vcc_value;
            end
          {1'b1, `ALU_VOP2_FORMAT, 12'h013} : //VOP2: V_MIN_U32
             begin
                alu_done <= 1'b1;
-               alu_vgpr_dest_data <= (alu_source1_data <= alu_source2_data) ? alu_source1_data : alu_source2_data;
+               alu_vgpr_dest_data <= (final_unsigned_source1_data <= final_unsigned_source2_data) ? final_unsigned_source1_data : final_unsigned_source2_data;
                alu_dest_vcc_value <= alu_source_vcc_value;
            end
-         {1'b1, `ALU_VOP2_FORMAT, 12'h0113} : //VOP3A: V_MIN_U32
+         {1'b1, `ALU_VOP2_FORMAT, 12'h113} : //VOP3A: V_MIN_U32
             begin
                alu_done <= 1'b1;
-               alu_vgpr_dest_data <= (alu_source1_data <= alu_source2_data) ? alu_source1_data : alu_source2_data;
+               alu_vgpr_dest_data <= (final_unsigned_source1_data <= final_unsigned_source2_data) ? final_unsigned_source1_data : final_unsigned_source2_data;
                alu_dest_vcc_value <= alu_source_vcc_value;
            end
          {1'b1, `ALU_VOP2_FORMAT, 12'h000} : //VOP2: V_CNDMASK_B32
@@ -205,37 +233,37 @@ module simd_alu
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data < alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data < final_signed_source2_data);
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h082} : //VOPC: V_CMP_EQ_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data == alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data == final_signed_source2_data);
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h083} : //VOPC: V_CMP_LE_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data <= alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data <= final_signed_source2_data);
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h084} : //VOPC: V_CMP_GT_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data > alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data > final_signed_source2_data);
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h085} : //VOPC: V_CMP_LG_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data != alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data != final_signed_source2_data);
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h086} : //VOPC: V_CMP_GE_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data >= alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data >= final_signed_source2_data);
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h087} : //VOPC: V_CMP_TRU_I32
             begin
@@ -253,37 +281,37 @@ module simd_alu
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} < {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} < {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h0C2} : //VOPC: V_CMP_EQ_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} == {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} == {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h0C3} : //VOPC: V_CMP_LE_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} <= {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} <= {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h0C4} : //VOPC: V_CMP_GT_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} > {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} > {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h0C5} : //VOPC: V_CMP_LG_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} != {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} != {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h0C6} : //VOPC: V_CMP_GE_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} >= {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} >= {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOPC_FORMAT, 12'h0C7} : //VOPC: V_CMP_TRU_U_32
             begin
@@ -301,37 +329,37 @@ module simd_alu
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data < alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data < final_signed_source2_data);
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h082} : //VOP3a: V_CMP_EQ_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data == alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data == final_signed_source2_data);
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h083} : //VOP3a: V_CMP_LE_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data <= alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data <= final_signed_source2_data);
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h084} : //VOP3a: V_CMP_GT_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data > alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data > final_signed_source2_data);
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h085} : //VOP3a: V_CMP_LG_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data != alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data != final_signed_source2_data);
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h086} : //VOP3a: V_CMP_GE_I32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= (alu_source1_data >= alu_source2_data);
+               alu_dest_vcc_value <= (final_signed_source1_data >= final_signed_source2_data);
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h087} : //VOP3a: V_CMP_TRU_I32
             begin
@@ -349,37 +377,37 @@ module simd_alu
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} < {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} < {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h0C2} : //VOP3a: V_CMP_EQ_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} == {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} == {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h0C3} : //VOP3a: V_CMP_LE_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} <= {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} <= {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h0C4} : //VOP3a: V_CMP_GT_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} > {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} > {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h0C5} : //VOP3a: V_CMP_LG_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} != {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} != {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h0C6} : //VOP3a: V_CMP_GE_U32
             begin
                alu_done <= 1'b1;
                alu_vgpr_dest_data <= {32{1'bx}};
-               alu_dest_vcc_value <= ({1'b0, alu_source1_data} >= {1'b0, alu_source2_data});
+               alu_dest_vcc_value <= ({1'b0, final_unsigned_source1_data} >= {1'b0, final_unsigned_source2_data});
             end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h0C7} : //VOP3a: V_CMP_TRU_U_32
             begin
@@ -422,7 +450,13 @@ module simd_alu
          {1'b1, `ALU_VOP3A_FORMAT, 12'h148} : //VOP3A: V_BFE_U32
             begin
                alu_done <= 1'b1;
-               alu_vgpr_dest_data <= (alu_source1_data >> alu_source2_data[4:0]) & ((1<<alu_source3_data[4:0])-1);
+               alu_vgpr_dest_data <= (final_unsigned_source1_data >> final_unsigned_source2_data[4:0]) & ((1<<final_unsigned_source3_data[4:0])-1);
+               alu_dest_vcc_value <= alu_source_vcc_value;
+           end
+         {1'b1, `ALU_VOP3A_FORMAT, 12'h149} : //VOP3A: V_BFE_I32 - VIN //needs correct implmentation
+            begin
+               alu_done <= 1'b1;
+               alu_vgpr_dest_data <= (final_signed_source1_data >>> final_signed_source2_data[4:0]) & ((1 <<< final_signed_source3_data[4:0])-1);
                alu_dest_vcc_value <= alu_source_vcc_value;
            end
          {1'b1, `ALU_VOP3A_FORMAT, 12'h14A} : //VOP3A: V_BFI_B32
@@ -431,6 +465,16 @@ module simd_alu
                alu_vgpr_dest_data <= (alu_source1_data & alu_source2_data) | (~alu_source1_data & alu_source3_data);
                alu_dest_vcc_value <= alu_source_vcc_value;
            end
+         {1'b1, `ALU_VOP2_FORMAT, 12'h028} : //VOP2: V_ADDC_U32 - VIN
+            begin
+               alu_done <= 1'b1;
+               {alu_dest_vcc_value, alu_vgpr_dest_data} <= final_unsigned_source1_data + final_unsigned_source2_data + alu_source_vcc_value;
+						end
+         {1'b1, `ALU_VOP2_FORMAT, 12'h027} : //VOP2: V_SUBREV_I32 - VIN
+            begin
+               alu_done <= 1'b1;
+               {alu_dest_vcc_value, alu_vgpr_dest_data} <= final_signed_source2_data - final_signed_source1_data;
+						end
          default :
             begin
                alu_done <= 1'b0;
@@ -447,8 +491,8 @@ module simd_alu
          {1'b1, `ALU_VOP3A_FORMAT, 12'h16A} : // V_MUL_HI_U32 => /* D.u = (S0.u * S1.u)>>32 */ VCC not used
             begin
                mul_op_s <= 1'b1;
-               mul_inp0_s <= alu_source1_data;
-               mul_inp1_s <= alu_source2_data;
+               mul_inp0_s <= final_unsigned_source1_data;
+               mul_inp1_s <= final_unsigned_source2_data;
             end
          {1'b1, `ALU_VOP2_FORMAT, 12'h009} : // V_MUL_I32_I24 => /* D.i = S0.i[23:0] * S1.i[23:0]. */ VCC not used
             begin

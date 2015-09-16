@@ -1,3 +1,12 @@
+`define LSU_SMRD_FORMAT 8'h01
+`define LSU_DS_FORMAT 8'h02
+`define LSU_MTBUF_FORMAT 8'h04
+
+`define LSU_SMRD_IMM_POS 23
+`define LSU_DS_GDS_POS 23
+`define LSU_MTBUF_IDXEN_POS 12
+`define LSU_MTBUF_OFFEN_POS 11
+
 module lsu_rd_stage_router
   (/*AUTOARG*/
    // Outputs
@@ -12,7 +21,7 @@ module lsu_rd_stage_router
    in_mem_sgpr, in_lsu_select_flopped, in_source_reg2_flopped,
    in_dest_reg, in_opcode, in_opcode_flopped, in_imm_value0,
    in_imm_value1, in_vgpr_source1_data, in_vgpr_source2_data,
-   in_sgpr_source1_data, in_sgpr_source2_data
+   in_sgpr_source1_data, in_sgpr_source2_data, addr_incre_amt
    );
 
    input in_lsu_select;
@@ -27,20 +36,24 @@ module lsu_rd_stage_router
    input [31:0] in_opcode_flopped;
    input [15:0] in_imm_value0;
    input [31:0] in_imm_value1;
-   input [8191:0] in_vgpr_source1_data;
+   /////////////////////////////////////////////CHANGE
+   input [2047:0] in_vgpr_source1_data;
    input [2047:0] in_vgpr_source2_data;
    input [127:0]  in_sgpr_source1_data;
    input [31:0]   in_sgpr_source2_data;
+   input [1:0] addr_incre_amt; // address offset for multiple cycle read from
+                               // VGPR Port 1
 
-   output 	  out_vgpr_source1_rd_en;
-   output 	  out_vgpr_source2_rd_en;
-   output 	  out_sgpr_source1_rd_en;
-   output 	  out_sgpr_source2_rd_en;
+   output     out_vgpr_source1_rd_en;
+   output     out_vgpr_source2_rd_en;
+   output     out_sgpr_source1_rd_en;
+   output     out_sgpr_source2_rd_en;
    output [9:0]   out_vgpr_source1_addr;
    output [9:0]   out_vgpr_source2_addr;
    output [8:0]   out_sgpr_source1_addr;
    output [8:0]   out_sgpr_source2_addr;
-   output [8191:0] out_vector_source_a;
+   ////////////////////////////////////////////CHANGE
+   output [2047:0] out_vector_source_a;
    output [2047:0] out_vector_source_b;
    output [127:0]  out_scalar_source_a;
    output [31:0]   out_scalar_source_b;
@@ -48,15 +61,15 @@ module lsu_rd_stage_router
    output [3:0]    out_wr_en;
    output [11:0]   out_lddst_stsrc_addr;
 
-   reg [9:0] 	   out_vgpr_source1_addr;
-   reg [9:0] 	   out_vgpr_source2_addr;
-   reg [8:0] 	   out_sgpr_source1_addr;
-   reg [8:0] 	   out_sgpr_source2_addr;
-   reg [3:0] 	   out_rd_en;
-   reg [3:0] 	   out_wr_en;
+   reg [9:0]     out_vgpr_source1_addr;
+   reg [9:0]     out_vgpr_source2_addr;
+   reg [8:0]     out_sgpr_source1_addr;
+   reg [8:0]     out_sgpr_source2_addr;
+   reg [3:0]     out_rd_en;
+   reg [3:0]     out_wr_en;
 
-   wire [15:0] 	   dummy0;
-   wire [31:0] 	   dummy1;
+   wire [15:0]     dummy0;
+   wire [31:0]     dummy1;
    assign dummy0 = in_imm_value0;
    assign dummy1 = in_imm_value1;
 
@@ -76,39 +89,40 @@ module lsu_rd_stage_router
    assign out_sgpr_source1_rd_en = in_lsu_select;
    assign out_sgpr_source2_rd_en = in_lsu_select;
 
-
+/////////////////////////////////////////////////CHANGE
+// add offset for vgpr source1 addr
    always @*
      begin
-	casex(in_opcode[31:24])
+  casex(in_opcode[31:24])
           `LSU_SMRD_FORMAT:
             begin
-               out_vgpr_source1_addr <= 10'bx;
+               out_vgpr_source1_addr <= 10'bx + addr_incre_amt;
                out_vgpr_source2_addr <= 10'bx;
                out_sgpr_source1_addr <= `LSU_SMRD_SBASE;
                out_sgpr_source2_addr <= `LSU_SMRD_OFFSET;
             end
           `LSU_DS_FORMAT:
             begin
-               out_vgpr_source1_addr <= `LSU_DS_DATA0;
+               out_vgpr_source1_addr <= `LSU_DS_DATA0 + addr_incre_amt;
                out_vgpr_source2_addr <= `LSU_DS_ADDR;
                out_sgpr_source1_addr <= 9'bx;
                out_sgpr_source2_addr <= 9'bx;
             end
           `LSU_MTBUF_FORMAT:
             begin
-               out_vgpr_source1_addr <= `LSU_MTBUF_VDATA;
+               out_vgpr_source1_addr <= `LSU_MTBUF_VDATA + addr_incre_amt;
                out_vgpr_source2_addr <= `LSU_MTBUF_VADDR;
                out_sgpr_source1_addr <= `LSU_MTBUF_SRSRC;
                out_sgpr_source2_addr <= `LSU_MTBUF_SOFFSET;
             end
           default:
             begin
-               out_vgpr_source1_addr <= 10'bx;
+               out_vgpr_source1_addr <= 10'bx + addr_incre_amt;
                out_vgpr_source2_addr <= 10'bx;
                out_sgpr_source1_addr <= 9'bx;
                out_sgpr_source2_addr <= 9'bx;
             end
-	endcase
+  endcase
      end
 
    assign out_vector_source_a = in_vgpr_source1_data;
@@ -122,8 +136,8 @@ module lsu_rd_stage_router
 
    always @*
      begin
-	casex({in_lsu_select_flopped, in_opcode_flopped[31:24], 
-	       in_opcode_flopped[7:0]})
+  casex({in_lsu_select_flopped, in_opcode_flopped[31:24], 
+         in_opcode_flopped[7:0]})
           {1'b0, 8'b?, 8'b?}: //inactive
             begin
                out_rd_en <= 4'b0000;
@@ -190,6 +204,6 @@ module lsu_rd_stage_router
                out_wr_en <= 4'bxxxx;
                out_lddst_stsrc_addr <= {1'b0,{11{1'bx}}};
             end
-	endcase
+  endcase
      end
 endmodule

@@ -11,30 +11,30 @@ module reg_256x32b_3r_1w
    output [31:0] rd1_data;
    output [31:0] rd2_data;
 
-   input [7:0] 	 rd0_addr;
-   input [7:0] 	 rd1_addr;
-   input [7:0] 	 rd2_addr;
+   input [9:0]   rd0_addr;
+   input [9:0]   rd1_addr;
+   input [9:0]   rd2_addr;
 
-   input [7:0] 	 wr0_addr;
+   input [9:0]   wr0_addr;
 
-   input 	 wr0_en;
+   input   wr0_en;
 
    input [31:0]  wr0_data;
 
-   wire [8191:0] word_out;
-   wire [8191:0] word_in;
-   wire [255:0]  wr_en_word;
+   wire [32767:0] word_out; //32 x 1024 depth is 32768 - 1
+   wire [32767:0] word_in;
+   wire [1023:0]  wr_en_word;
 
-   wire [255:0]  wr0_word_select;
+   wire [1023:0]  wr0_word_select; //changed from 255 to 1023 (1024 select)
 
-   wire [31:0] 	 rd0_data_i;
-   wire [31:0] 	 rd1_data_i;
-   wire [31:0] 	 rd2_data_i;
+   wire [31:0]   rd0_data_i;
+   wire [31:0]   rd1_data_i;
+   wire [31:0]   rd2_data_i;
    
    //Register file
-   flop_32b word[255:0](.out(word_out), .in(word_in), .wr_en(wr_en_word), .clk(clk));
+   flop_32b word[1023:0](.out(word_out), .in(word_in), .wr_en(wr_en_word), .clk(clk)); //actually 1024 flops
 
-   //Muxes for read ports
+   //Muxes for read ports ***ALL 1024 x 32b MUX
    mux_256x32b_to_1x32b mux_rd_port_0 
      (.out(rd0_data_i), 
       .in(word_out), 
@@ -51,12 +51,12 @@ module reg_256x32b_3r_1w
       .select(rd2_addr));
 
    //Write port logic
-   decoder_param #(8,256) decoder_wr_port_0 
+   decoder_param #(10,1024) decoder_wr_port_0 
      (.out(wr0_word_select), 
       .in(wr0_addr));
 
-   assign wr_en_word = {256{wr0_en}} & wr0_word_select;
-   assign word_in = {256{wr0_data}};
+   assign wr_en_word = {1024{wr0_en}} & wr0_word_select;
+   assign word_in = {1024{wr0_data}};
    
    // Output flop on the read ports.
    dff_en rd_port_0_out_flop[31:0]

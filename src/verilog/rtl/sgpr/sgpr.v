@@ -83,16 +83,10 @@ module sgpr(
 	     issue_valu_dest_reg_valid,
 	     issue_valu_dest_addr,
 	     clk,
-`ifdef FPGA
-             clk_double,
-`endif
 	     rst
 	     );
 
    input clk;
-`ifdef FPGA
-   input clk_double;
-`endif
 
    input rst;
    input salu_source1_rd_en,
@@ -244,13 +238,14 @@ module sgpr(
       .wr0_en(simxlsu_muxed_wr_en_i),
       .wr0_addr(simxlsu_muxed_wr_addr_i),
       .wr0_data(simxlsu_wr_merged_data),
-      .wr1_en(salu_dest_wr_en),
+      //**CHANGE [PSP]
+      //**pretend we have one single port only
+      //so keep wr1_en low [disable wr1 port write]
+      .wr1_en(2'b00),//salu_dest_wr_en),
       .wr1_addr(salu_dest_addr),
       .wr1_data(salu_dest_data),
+      //**
       .clk(clk)
-`ifdef FPGA
-      ,.clk_double(clk_double)
-`endif
       );
 
    sgpr_simx_rd_port_mux simx_rd_port_mux
@@ -311,6 +306,8 @@ module sgpr(
    assign salu_source2_data = port1_distribute_data[63:0];
 
    ///////////////////////////////////////////
+   //**CHANGE [PSP]**
+   //simxlsu will now also take in the salu ports
    sgpr_simxlsu_wr_port_mux simx_wr_port_mux
      (
       .wr_port_select(rfa_select_fu),
@@ -350,6 +347,14 @@ module sgpr(
       .port8_wr_addr(lsu_dest_addr),
       .port8_wr_data(lsu_dest_data),
       .port8_wr_mask({128{1'b1}}),
+
+      //**
+      .port9_wr_en(salu_dest_wr_en),
+      .port9_wr_addr(salu_dest_addr),
+      .port9_wr_data(salu_dest_data),
+      .port9_wr_mask({128{1'b1}}),
+      //**
+
       .muxed_port_wr_en(simxlsu_muxed_wr_en),
       .muxed_port_wr_addr(simxlsu_muxed_wr_addr),
       .muxed_port_wr_data(simxlsu_muxed_wr_data),

@@ -6,26 +6,44 @@ module PS_flops_mem_wb_lsu(
   out_ack,
   out_tag,
   clk,
-  rst
+  rst,
+  shift_wb,
+  load_wb
 );
 
-input [8191:0] in_rd_data;
+input [31:0] in_rd_data;
 input in_ack;
 input [6:0] in_tag;
+input shift_wb, load_wb;
 
-output [8191:0] out_rd_data;
+output [2047:0] out_rd_data;
 output out_ack;
 output [6:0] out_tag;
 
 input clk;
 input rst;
 
-dff flop_rd_data[8191:0](
-  .q(out_rd_data),
-  .d(in_rd_data),
-  .clk(clk),
-  .rst(rst)
-);
+reg [2047:0] flop_rd_data;
+always @(posedge clk, posedge rst) begin
+  if(rst) begin
+    flop_rd_data <= 0;
+  end
+  // else if(shift_wb) begin
+    
+  // end
+  else if(load_wb) begin
+    flop_rd_data[2047:2016] <= in_rd_data;
+    flop_rd_data[2015:0] <= flop_rd_data[2047:32];
+  end
+end
+assign out_rd_data = flop_rd_data;
+
+// dff flop_rd_data[8191:0](
+//   .q(out_rd_data),
+//   .d(in_rd_data),
+//   .clk(clk),
+//   .rst(rst)
+// );
 
 dff flop_ack(
   .q(out_ack),

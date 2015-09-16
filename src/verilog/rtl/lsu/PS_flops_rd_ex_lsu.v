@@ -26,12 +26,15 @@ module PS_flops_rd_ex_lsu(
   out_lds_base,
   out_exec_value,
   clk,
-  rst
+  rst,
+  shift_src_a,
+  load_src_a
 );
 
 input clk;
 input rst;
-input [8191:0] in_vector_source_a;
+/////////////////////////////////////////CHANGE
+input [2047:0] in_vector_source_a;
 input [2047:0] in_vector_source_b;
 input [127:0] in_scalar_source_a;
 input [31:0] in_scalar_source_b;
@@ -44,8 +47,10 @@ input [5:0] in_wfid;
 input [31:0] in_instr_pc;
 input [15:0] in_lds_base;
 input [63:0] in_exec_value;
+input load_src_a, shift_src_a;
 
-output [8191:0] out_vector_source_a;
+/////////////////////////////////////////CHANGE
+output [31:0] out_vector_source_a;
 output [2047:0] out_vector_source_b;
 output [127:0] out_scalar_source_a;
 output [31:0] out_scalar_source_b;
@@ -59,12 +64,28 @@ output [31:0] out_instr_pc;
 output [15:0] out_lds_base;
 output [63:0] out_exec_value;
 
-dff flop_vector_source_a[8191:0](
-  .q(out_vector_source_a),
-  .d(in_vector_source_a),
-  .clk(clk),
-  .rst(rst)
-);
+//////////////////////////////////////////////CHANGE 
+// change to shift register
+// dff flop_vector_source_a[8191:0](
+//   .q(out_vector_source_a),
+//   .d(in_vector_source_a),
+//   .clk(clk),
+//   .rst(rst)
+// );
+
+reg [2047:0] vec_src_a;
+always @(posedge clk, posedge rst) begin
+  if(rst) begin
+    vec_src_a <= 0;
+  end
+  else if(shift_src_a) begin
+    vec_src_a[2015:0] <= vec_src_a[2047:32];
+  end
+  else if(load_src_a) begin
+    vec_src_a <= in_vector_source_a;
+  end
+end
+assign out_vector_source_a = vec_src_a[31:0];
 
 dff flop_vector_source_b[2047:0](
   .q(out_vector_source_b),

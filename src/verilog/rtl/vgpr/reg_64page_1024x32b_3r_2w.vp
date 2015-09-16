@@ -1,0 +1,73 @@
+module reg_64page_1024x32b_3r_2w (
+  rd0_addr,
+  rd0_data,
+
+  rd1_addr,
+  rd1_data,
+
+  rd2_addr,
+  rd2_data,
+
+  wr0_en,
+  wr0_addr,
+  wr0_data,
+
+  wr1_en,
+  wr1_en_xoutof4,
+  wr1_addr,
+  wr1_data,
+
+  clk
+);
+
+  output [8191:0] rd0_data;
+  output [2047:0] rd1_data;
+  output [2047:0] rd2_data;
+
+  input [9:0] rd0_addr;
+  input [9:0] rd1_addr;
+  input [9:0] rd2_addr;
+
+  input [9:0] wr0_addr;
+  input [9:0] wr1_addr;
+
+  input [63:0] wr0_en;
+  input [63:0] wr1_en;
+  input [3:0] wr1_en_xoutof4;
+
+  input [2047:0] wr0_data;
+  input [8191:0] wr1_data;
+
+  input clk;
+
+  wire [255:0] effective_wr1_en;
+
+  reg_1024x32b_3r_2w page[63:0] (
+    .rd0_addr(rd0_addr),
+    .rd0_data(rd0_data),
+    .rd1_addr(rd1_addr),
+    .rd1_data(rd1_data),
+    .rd2_addr(rd2_addr),
+    .rd2_data(rd2_data),
+    .wr0_en(wr0_en),
+    .wr0_addr(wr0_addr),
+    .wr0_data(wr0_data),
+    .wr1_en(effective_wr1_en),
+    .wr1_addr(wr1_addr),
+    .wr1_data(wr1_data),
+    .clk(clk)
+  );
+
+%%start_veriperl
+my $i;
+my $low_index;
+my $high_index;
+for($i=0; $i<64; $i=$i+1)
+{
+  $low_index = 4*$i;
+  $high_index = 4*$i+3;
+  print "assign effective_wr1_en[$high_index:$low_index] = {4{wr1_en[$i]}} & wr1_en_xoutof4;\n";
+}
+%%stop_veriperl
+
+endmodule

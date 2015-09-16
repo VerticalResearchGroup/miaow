@@ -1,0 +1,27 @@
+module sgpr_busy_table_mux
+  (
+   in,
+   select,
+   out
+   );
+   parameter MAX_NUMBER_WORDS = 4;
+   
+   input[`NUMBER_SGPR-1:0] in;
+   wire [`NUMBER_SGPR+4-1:0] in_rotated;
+   input [`SGPR_ADDR_LENGTH-1:0] select;
+
+   output [MAX_NUMBER_WORDS-1:0] out;
+   reg [MAX_NUMBER_WORDS-1:0] out;
+
+   assign in_rotated = {in[3:0],in};
+   always @(in or select) begin
+      case({select[`SGPR_ADDR_LENGTH-1:0]})
+%%start_veriperl
+	  for( $i = 0; $i < 512; $i++ ){
+	     print "         9'd$i : out <= in_rotated[MAX_NUMBER_WORDS-1+$i:$i];";
+          }
+%%stop_veriperl
+	default: out <= {MAX_NUMBER_WORDS{1'b0}};
+      endcase
+   end
+endmodule

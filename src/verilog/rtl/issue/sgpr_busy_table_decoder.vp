@@ -1,0 +1,33 @@
+module sgpr_busy_table_decoder
+(
+ sgpr_addr,
+ sgpr_valid,
+
+ output_decoded
+);
+   parameter MAX_NUMBER_WORDS = 4;
+   
+   input[`SGPR_ADDR_LENGTH-1:0] sgpr_addr;
+   input [MAX_NUMBER_WORDS-1:0] sgpr_valid;
+
+   output [`NUMBER_SGPR-1:0] 	output_decoded;
+   reg [`NUMBER_SGPR+4-1:0] 	output_decoded_2;
+
+   assign output_decoded = output_decoded_2[`NUMBER_SGPR-1:0] | { {(`NUMBER_SGPR-4){1'b0}},output_decoded_2[`NUMBER_SGPR+4-1:`NUMBER_SGPR]};
+
+   always @( sgpr_addr or sgpr_valid ) begin
+      output_decoded_2 <= {(`NUMBER_SGPR+4){1'b0}};
+      case(sgpr_addr)
+%%start_veriperl
+    my $i;
+    for($i = 0; $i < 512; $i = $i +1)
+    {
+     print "         9'd$i : output_decoded_2[MAX_NUMBER_WORDS-1+$i:$i] <= sgpr_valid;";
+    }    
+%%stop_veriperl
+	default:       output_decoded_2 <= {(`NUMBER_SGPR+4){1'b0}};
+ 
+      endcase
+   end
+   
+endmodule

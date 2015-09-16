@@ -5,16 +5,28 @@ module rfa(/*AUTOARG*/
    simf0_queue_entry_serviced, simf1_queue_entry_serviced,
    simf2_queue_entry_serviced, simf3_queue_entry_serviced,
    execvgprsgpr_select_fu,
+   //**CHANGE [PSP]
+   //add req_sat_output and lsu_wait signal
+   lsu_wait, //
    // Inputs
    clk, rst, simd0_queue_entry_valid, simd1_queue_entry_valid,
    simd2_queue_entry_valid, simd3_queue_entry_valid,
    simf0_queue_entry_valid, simf1_queue_entry_valid,
-   simf2_queue_entry_valid, simf3_queue_entry_valid, lsu_dest_wr_req
+   simf2_queue_entry_valid, simf3_queue_entry_valid, lsu_dest_wr_req,
+   //**CHANGE [PSP]
+   //add salu_req input
+   salu_req
    );
 
    input clk;
 
    input rst;
+
+   //**CHANGE [PSP]
+   input salu_req;
+
+   output lsu_wait;
+   //**
 
    input simd0_queue_entry_valid, simd1_queue_entry_valid, simd2_queue_entry_valid,
          simd3_queue_entry_valid, simf0_queue_entry_valid, simf1_queue_entry_valid,
@@ -36,12 +48,27 @@ module rfa(/*AUTOARG*/
    wire [31:0] 	 dummy_entry_serviced;
    wire [31:0] 	 dummy_next_highest_priority;
 
+   //**change [psp]
+   reg lsu_wait;
+   reg lsu_wr_req_lp;
+
    // If lsu requests writes, it bypasses the priority encoder
-   assign entry_valid = {8'b0, simf3_queue_entry_valid, simf2_queue_entry_valid,
+   // but if salu request writes, it bypasses both
+   assign entry_valid = salu_req ? {'b0, simf3_queue_entry_valid, simf2_queue_entry_valid,
                          simf1_queue_entry_valid, simf0_queue_entry_valid,
                          simd3_queue_entry_valid, simd2_queue_entry_valid,
                          simd1_queue_entry_valid, simd0_queue_entry_valid} &
-			{16{~lsu_dest_wr_req}};
+			{16{~salu_req}}:{'b0, simf3_queue_entry_valid, simf2_queue_entry_valid,
+                         simf1_queue_entry_valid, simf0_queue_entry_valid,
+                         simd3_queue_entry_valid, simd2_queue_entry_valid,
+                         simd1_queue_entry_valid, simd0_queue_entry_valid} &
+			{16{~lsu_dest_wr_req}}
+                        ;
+
+   
+   assign lsu_wr_req_lp = salu_req ? 1'b0:lsu_dest_wr_req;
+   assign lsu_wait = salu_req;
+   //**
 
    assign {simf3_queue_entry_serviced, simf2_queue_entry_serviced,
            simf1_queue_entry_serviced, simf0_queue_entry_serviced,
@@ -49,8 +76,12 @@ module rfa(/*AUTOARG*/
            simd1_queue_entry_serviced, simd0_queue_entry_serviced} 
    = entry_serviced[7:0];
 
+
+   //**CHANGE lsu_dest_wr_req to lsu_wr_req_lp
+   //and add in the salu_req signal
    // If lsu requested, then entry_serviced will be 0 
-   assign execvgprsgpr_select_fu = { {7{1'b0}}, lsu_dest_wr_req, entry_serviced[7:0]};
+   assign execvgprsgpr_select_fu = { {6{1'b0}}, salu_req, lsu_wr_req_lp, entry_serviced[7:0]};
+   //**
 
    dff_en high_pr_flop[3:0] 
      (highest_priority, 

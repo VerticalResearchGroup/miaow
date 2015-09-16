@@ -120,6 +120,13 @@ begin
                     partial_sum = 32'bx;
                     out_hi = 32'bx;
                 end
+                // s_max_i32    0x08
+                24'h000008 : begin
+                    out_low     = (s1_low > s2_low) ? s1_low : s2_low;
+                    infogen     = s1_low > s2_low;
+                    partial_sum = 32'bx;
+                    out_hi = 32'bx;
+                end
                 // s_max_u32    0x09
                 24'h000009 : begin
                     out_low     = (s1_low > s2_low) ? s1_low : s2_low;
@@ -137,6 +144,12 @@ begin
                 // s_and_b64    0x0F
                 24'h00000f : begin
                     {out_hi, out_low} = s1 & s2;
+                    infogen           = 1'bx;
+                    partial_sum       = 32'bx;
+                end
+                // s_or_b64    0x11
+                24'h000011 : begin
+                    {out_hi, out_low} = s1 | s2;
                     infogen           = 1'bx;
                     partial_sum       = 32'bx;
                 end
@@ -200,7 +213,80 @@ begin
                 24'h000000 : begin infogen = s1_low == s2_low;
                                    out_hi = 32'bx;
                              end
-                // s_cmp_le_i32 0x05
+                // s_cmp_lg_i32 0x01 - VIN
+                24'h000001 : begin infogen = s1_low != s2_low;
+                                   out_hi = 32'bx;
+                             end
+                // s_cmp_gt_i32 0x02 - VIN
+                24'h000002 : begin
+										if(s1_low[31] == 1'b1 & s2_low[31] == 1'b1)
+											begin
+												infogen = s1_low < s2_low;
+                        out_hi = 32'bx;
+                      end
+										else if(s1_low[31] == 1'b1)
+											begin
+												infogen = 1'b0;
+                        out_hi = 32'bx;
+										  end
+										else if(s2_low[31] == 1'b1)
+											begin
+												infogen = 1'b1;
+                        out_hi = 32'bx;
+											end
+										else
+											begin
+												infogen = s1_low > s2_low;
+                        out_hi = 32'bx;
+											end
+								end
+                // s_cmp_ge_i32 0x03 - VIN
+                24'h000003 : begin
+										if(s1_low[31] == 1'b1 & s2_low[31] == 1'b1)
+											begin
+												infogen = s1_low <= s2_low;
+                        out_hi = 32'bx;
+                      end
+										else if(s1_low[31] == 1'b1)
+											begin
+												infogen = 1'b0;
+                        out_hi = 32'bx;
+										  end
+										else if(s2_low[31] == 1'b1)
+											begin
+												infogen = 1'b1;
+                        out_hi = 32'bx;
+											end
+										else
+											begin
+												infogen = s1_low >= s2_low;
+                        out_hi = 32'bx;
+											end
+								end
+                // s_cmp_lt_i32 0x04 - VIN
+                24'h000004 : begin
+                    if (s1_low[31] == 1'b1 & s2_low[31] == 1'b1)
+                      begin
+                        infogen = s1_low > s2_low;
+                        out_hi = 32'bx;
+                      end
+                    else if (s1_low[31] == 1'b1)
+                      begin
+                        infogen = 1'b1;
+                        out_hi = 32'bx;
+                      end
+                    else if (s2_low[31] == 1'b1)
+                      begin
+                        infogen = 1'b0;
+                        out_hi = 32'bx;
+                      end
+                    else
+                      begin
+                        infogen = s1_low < s2_low;
+                        out_hi = 32'bx;
+                      end
+                end
+                // s_cmp_le_i32 0x05 - VIN
                 24'h000005 : begin
                     if (s1_low[31] == 1'b1 & s2_low[31] == 1'b1)
                       begin
@@ -223,8 +309,24 @@ begin
                         out_hi = 32'bx;
                       end
                 end
-                // s_cmp_ge_u32 0x09
+								// s_cmp_eq_u32 0x06 - VIN
+                24'h000006 : begin infogen = s1_low == s2_low;
+                                   out_hi = 32'bx;
+														 end
+								// s_cmp_lg_u32 0x07 - VIN
+                24'h000007 : begin infogen = s1_low != s2_low;
+                                   out_hi = 32'bx;
+														 end
+								// s_cmp_gt_u32 0x08 - VIN
+                24'h000008 : begin infogen = s1_low > s2_low;
+                                   out_hi = 32'bx;
+														 end
+								// s_cmp_ge_u32 0x09
                 24'h000009 : begin infogen = s1_low >= s2_low;
+                                   out_hi = 32'bx;
+														 end
+								// s_cmp_lt_u32 0x0A - VIN
+                24'h00000A : begin infogen = s1_low < s2_low;
                                    out_hi = 32'bx;
                              end
                 // s_cmp_le_u32 0x0B
@@ -312,6 +414,8 @@ begin
                 24'h000003 : begin scc_val = partial_sum[31] ^ infogen; end
                 // s_min_u32    0x07
                 24'h000007 : begin scc_val = infogen; end
+                // s_max_i32    0x08
+                24'h000008 : begin scc_val = infogen; end
                 // s_max_u32    0x09
                 24'h000009 : begin scc_val = infogen; end
                 // s_and_b32    0x0E
@@ -320,6 +424,8 @@ begin
                 24'h00000F : begin scc_val = |out; end
                 // s_or_b32     0x10
                 24'h000010 : begin scc_val = |out_low; end
+                // s_or_b64     0x11
+                24'h000011 : begin scc_val = |out; end
                 // s_andn2_b64  0x15
                 24'h000015 : begin scc_val = |out; end
                 // s_lshl_b32   0x1E
@@ -338,10 +444,26 @@ begin
             casex(control[23:0])
                 // s_cmp_eq_i32 0x00
                 24'h000000 : begin scc_val = infogen; end
+                // s_cmp_lg_i32 0x01
+                24'h000001 : begin scc_val = infogen; end
+                // s_cmp_gt_i32 0x02
+                24'h000002 : begin scc_val = infogen; end
+                // s_cmp_ge_i32 0x03
+                24'h000003 : begin scc_val = infogen; end
+                // s_cmp_lt_i32 0x04
+                24'h000004 : begin scc_val = infogen; end
                 // s_cmp_le_i32 0x05
                 24'h000005 : begin scc_val = infogen; end
-                // s_cmp_ge_u32 0x09
+                // s_cmp_eq_u32 0x06
+                24'h000006 : begin scc_val = infogen; end
+                // s_cmp_lg_u32 0x07
+                24'h000007 : begin scc_val = infogen; end
+								// s_cmp_gt_u32 0x08
+                24'h000008 : begin scc_val = infogen; end
+								// s_cmp_ge_u32 0x09
                 24'h000009 : begin scc_val = infogen; end
+                // s_cmp_lt_u32 0x0A
+                24'h00000A : begin scc_val = infogen; end
                 // s_cmp_le_u32 0x0B
                 24'h00000B : begin scc_val = infogen; end
                 // default

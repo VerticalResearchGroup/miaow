@@ -20,8 +20,33 @@ module salu_controller(
 	exec_sgpr_cpy,
 	snd_src_imm,
 	bit64_op,
-	rst
+	rst,
+        //**CHANGE
+        //**add 2 signals
+        //one is output which is 
+        //a signal to flag a SGPR write request pending
+        //one is input to flag request satisfied, unlock request
+        clk,
+        salu2sgpr_req,
+        rfa2salu_req_hold,
+
+        //**change for port forwarding
+        control_en_fw,
+        dst_reg_fw
+        //**
 );
+
+//**change [psp]
+input rfa2salu_req_hold;
+input clk;
+
+input control_en_fw;
+input [11:0] dst_reg_fw;
+//**
+
+//**change [psp]
+output salu2sgpr_req;
+//**
 
 input [11:0] dst_reg;
 input [31:0] opcode;
@@ -38,6 +63,35 @@ reg exec_en_dreg, vcc_en, scc_en, m0_en, exec_sgpr_cpy,
 reg [1:0] vcc_ws_dreg, exec_ws_dreg, vcc_ws_op, exec_ws_op, sgpr_en;
 reg [5:0] branch_on_cc;
 reg [31:0] alu_control;
+
+//**change [psp]
+reg salu2sgpr_req;
+reg salu2sgpr_req_trig;
+
+reg sgpr_fw_check;
+assign sgpr_fw_check = {control_en_fw, dst_reg_fw[11:9]} && 4'b1110;
+//**
+
+//**change [psp]
+//create a lock mechanism that locks the request line
+//until rfa notifies its been satisfied
+
+//this is simply the unlocker
+//line is locked below where it determines destination registers
+always@ (control_en or dst_reg or bit64_op or clk or rst) begin
+        if(~control_en | rst ) begin
+              salu2sgpr_req <= 1'b0; //satisfied   
+           end
+        else
+        if(salu2sgpr_req_trig | sgpr_fw_check) begin
+              salu2sgpr_req <= 1'b1; //not satisfied
+        end
+        else
+        begin
+              salu2sgpr_req <= salu2sgpr_req;
+        end
+   end
+//**
 
 // setting scc_en, alu_control, vcc_ws_op, exec_ws_op
 always@ (control_en or opcode or rst) begin
@@ -183,6 +237,12 @@ always@ (control_en or opcode or rst) begin
 						scc_en <= 1'b1;
 						bit64_op <= 1'b0;
 					end
+					// s_max_i32	0x08 - VIN
+					24'h000008 : begin
+						//sgpr_en[1] <= 1'b0;
+						scc_en <= 1'b1;
+						bit64_op <= 1'b0;
+					end
 					// s_and_b32	0x0E
 					24'h00000E : begin
 						//sgpr_en[1] <= 1'b0;
@@ -191,6 +251,12 @@ always@ (control_en or opcode or rst) begin
 					end
 					// s_and_b64	0x0F
 					24'h00000F : begin
+						//sgpr_en[1] <= 1'b1;
+						scc_en <= 1'b1;
+						bit64_op <= 1'b1;
+					end
+					// s_or_b64	0x11
+					24'h000011 : begin
 						//sgpr_en[1] <= 1'b1;
 						scc_en <= 1'b1;
 						bit64_op <= 1'b1;
@@ -253,10 +319,26 @@ always@ (control_en or opcode or rst) begin
 				casex(opcode[23:0])
 					// s_cmp_eq_i32	0x00
 					24'h000000 : begin scc_en <= 1'b1; end
+					// s_cmp_lg_i32	0x01 - VIN
+					24'h000001 : begin scc_en <= 1'b1; end
+					// s_cmp_gt_i32	0x02 - VIN
+					24'h000002 : begin scc_en <= 1'b1; end
+					// s_cmp_ge_i32	0x03 - VIN
+					24'h000003 : begin scc_en <= 1'b1; end
+					// s_cmp_lt_i32	0x04 - VIN
+					24'h000004 : begin scc_en <= 1'b1; end
 					// s_cmp_le_i32	0x05
 					24'h000005 : begin scc_en <= 1'b1; end
-					// s_cmp_ge_u32	0x09
+					// s_cmp_eq_u32	0x06 - VIN
+					24'h000006 : begin scc_en <= 1'b1; end
+					// s_cmp_lg_u32	0x07 - VIN
+					24'h000007 : begin scc_en <= 1'b1; end
+					// s_cmp_gt_u32	0x08 - VIN
+					24'h000008 : begin scc_en <= 1'b1; end
+					// s_cmp_ge_u32	0x09 - VIN
 					24'h000009 : begin scc_en <= 1'b1; end
+					// s_cmp_lt_u32	0x0A - VIN
+					24'h00000A : begin scc_en <= 1'b1; end
 					// s_cmp_le_u32	0x0B
 					24'h00000B : begin scc_en <= 1'b1; end
 					// default
@@ -311,6 +393,11 @@ always@(control_en or dst_reg or bit64_op) begin
 			vcc_en  <= 1'b0;
 			vcc_ws_dreg  <= 2'b00;
 			m0_en   <= 1'b0;
+
+                                
+                        //**change [psp]
+                        salu2sgpr_req_trig <= 1'b1; //request pending
+                        //**
 		end
 		// VCC_LO
 		{1'b1, 12'b111000000001} : begin

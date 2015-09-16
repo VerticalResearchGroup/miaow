@@ -159,7 +159,8 @@ input[63:0] simd0_wr_mask, simd1_wr_mask, simd2_wr_mask, simd3_wr_mask,
          simf0_wr_mask, simf1_wr_mask, simf2_wr_mask, simf3_wr_mask, lsu_dest_wr_mask;
 input[2047:0] simd0_dest_data, simd1_dest_data, simd2_dest_data, simd3_dest_data,
          simf0_dest_data, simf1_dest_data, simf2_dest_data, simf3_dest_data;
-input[8191:0] lsu_dest_data;
+// S:changed to 2k         
+input[2047:0] lsu_dest_data;
 
 output issue_alu_wr_done, issue_alu_dest_reg_valid, issue_lsu_wr_done;
 output[3:0] issue_lsu_dest_reg_valid;
@@ -167,7 +168,8 @@ output[5:0] issue_alu_wr_done_wfid, issue_lsu_wr_done_wfid;
 output[9:0] issue_alu_dest_reg_addr, issue_lsu_dest_reg_addr;
 output[2047:0] simd_source1_data, simd_source2_data, simd_source3_data,
          simf_source1_data, simf_source2_data, simf_source3_data, lsu_source2_data;
-output[8191:0] lsu_source1_data;
+// S: changed to 2k         
+output[2047:0] lsu_source1_data;
 
 ///////////////////////////////
 //Your code goes here - beware: script does not recognize changes

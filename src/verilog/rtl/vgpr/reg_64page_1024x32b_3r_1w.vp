@@ -7,7 +7,7 @@ module reg_64page_1024x32b_3r_1w
    wr0_data, clk
    );
 
-   output [8191:0] rd0_data;
+   output [2047:0] rd0_data;
    output [2047:0] rd1_data;
    output [2047:0] rd2_data;
 
@@ -21,7 +21,7 @@ module reg_64page_1024x32b_3r_1w
    input [3:0] 	   wr0_en_xoutof4;
 
 
-   input [8191:0]  wr0_data;
+   input [2047:0]  wr0_data;
 
    input 	   clk;
 

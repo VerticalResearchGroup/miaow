@@ -4,6 +4,9 @@ module sgpr_simxlsu_wr_port_mux
    muxed_port_wr_en, muxed_port_wr_addr, muxed_port_wr_data,
    muxed_port_wr_mask,
    // Inputs
+
+   //**CHANGE [PSP]
+   //**add ports 9 for SALU integration
    wr_port_select, port0_wr_en, port0_wr_addr, port0_wr_data,
    port0_wr_mask, port1_wr_en, port1_wr_addr, port1_wr_data,
    port1_wr_mask, port2_wr_en, port2_wr_addr, port2_wr_data,
@@ -13,7 +16,9 @@ module sgpr_simxlsu_wr_port_mux
    port5_wr_mask, port6_wr_en, port6_wr_addr, port6_wr_data,
    port6_wr_mask, port7_wr_en, port7_wr_addr, port7_wr_data,
    port7_wr_mask, port8_wr_en, port8_wr_addr, port8_wr_data,
-   port8_wr_mask
+   port8_wr_mask, port9_wr_en, port9_wr_addr, port9_wr_data,
+   port9_wr_mask
+   //**
    );
 
   output [3:0] muxed_port_wr_en;
@@ -73,6 +78,14 @@ module sgpr_simxlsu_wr_port_mux
   reg [127:0] muxed_port_wr_data;
   reg [127:0] muxed_port_wr_mask;
 
+  //**CHANGE [PSP]
+  //** add extra SALU port
+  input [3:0] port9_wr_en;
+  input [8:0] port9_wr_addr;
+  input [127:0] port9_wr_data;
+  input [127:0] port9_wr_mask;
+  //**
+
   always @ (
     wr_port_select or
     port0_wr_en or
@@ -110,7 +123,14 @@ module sgpr_simxlsu_wr_port_mux
     port8_wr_en or
     port8_wr_addr or
     port8_wr_data or
-    port8_wr_mask
+    port8_wr_mask or
+
+    //**CHANGE
+    port9_wr_en or
+    port9_wr_addr or
+    port9_wr_data or
+    port9_wr_mask 
+    //**
 	    
   ) begin
     casex(wr_port_select)
@@ -177,6 +197,20 @@ module sgpr_simxlsu_wr_port_mux
           muxed_port_wr_data <= port8_wr_data;
           muxed_port_wr_mask <= port8_wr_mask;
         end
+
+
+      //**CHANGE [PSP]
+      //**actual port assigning for SALU
+      16'h0200:
+        begin
+          muxed_port_wr_en <= port9_wr_en;
+          muxed_port_wr_addr <= port9_wr_addr;
+          muxed_port_wr_data <= port9_wr_data;
+          muxed_port_wr_mask <= port9_wr_mask;
+        end
+      //**
+
+
       16'b0000:
         begin
           muxed_port_wr_en <= 1'b0;

@@ -95,7 +95,7 @@ module compute_unit
    input [15:0] dispatch2cu_lds_base_dispatch;
    input [31:0] dispatch2cu_start_pc_dispatch, buff2wave_instr;
    input [38:0] buff2wave_tag;
-   input [8191:0] mem2lsu_rd_data;
+   input [31:0] mem2lsu_rd_data;//**CHANGE
 
    output 	  cu2dispatch_wf_done, lsu2mem_gm_or_lds, fetch2buff_rd_en, issue2tracemon_barrier_retire_en,
 		  issue2tracemon_waitcnt_retire_en, wave2decode_instr_valid, salu2sgpr_instr_done,
@@ -150,10 +150,12 @@ module compute_unit
 		  simf1_2sgpr_wr_data, simf2_2sgpr_wr_data, simf3_2sgpr_wr_data, lsu2vgpr_dest_wr_mask,
 		  decode2tracemon_collinstr;
    output [127:0] lsu2sgpr_dest_data;
-   output [2047:0] lsu2mem_addr, simd0_2vgpr_dest_data, simd1_2vgpr_dest_data,
+   output [2047:0] simd0_2vgpr_dest_data, simd1_2vgpr_dest_data,
 		   simd2_2vgpr_dest_data, simd3_2vgpr_dest_data, simf0_2vgpr_dest_data,
 		   simf1_2vgpr_dest_data, simf2_2vgpr_dest_data, simf3_2vgpr_dest_data;
-   output [8191:0] lsu2mem_wr_data, lsu2vgpr_dest_data;
+   output [2047:0] lsu2vgpr_dest_data; //**CHANGE
+
+   output [31:0] lsu2mem_wr_data, lsu2mem_addr; //**CHANGE
 
    ///////////////////////////////
 		   //Signals for submodules 
@@ -291,14 +293,19 @@ module compute_unit
 		   simf2_2sgpr_wr_data, simf2_2sgpr_wr_mask, simf2_2vgpr_wr_mask, simf3_2exec_wr_vcc_value,
 		   simf3_2sgpr_wr_data, simf3_2sgpr_wr_mask, simf3_2vgpr_wr_mask;
    wire [127:0]    lsu2sgpr_dest_data, sgpr2lsu_source1_data;
-   wire [2047:0]   lsu2mem_addr, simd0_2vgpr_dest_data, simd1_2vgpr_dest_data,
+   wire [2047:0]   simd0_2vgpr_dest_data, simd1_2vgpr_dest_data,
 		   simd2_2vgpr_dest_data, simd3_2vgpr_dest_data, simf0_2vgpr_dest_data,
 		   simf1_2vgpr_dest_data, simf2_2vgpr_dest_data, simf3_2vgpr_dest_data,
 		   vgpr2lsu_source2_data, vgpr2simd_source1_data, vgpr2simd_source2_data,
 		   vgpr2simd_source3_data, vgpr2simf_source1_data, vgpr2simf_source2_data,
 		   vgpr2simf_source3_data;
-   wire [8191:0]   lsu2mem_wr_data, lsu2vgpr_dest_data, mem2lsu_rd_data, vgpr2lsu_source1_data;
 
+   //**CHANGE
+   wire [2047:0]   lsu2vgpr_dest_data, vgpr2lsu_source1_data;
+   wire [31:0]     lsu2mem_wr_data, mem2lsu_rd_data, lsu2mem_addr;
+
+
+   wire salu_request, lsu_stall;
 
    ///////////////////////////////
    //Submodule instantiation
@@ -677,30 +684,31 @@ module compute_unit
 
    lsu lsu0 (
 	     // unit to handle loads and stores
-	     .clk(clk),
-	     .rst(rst),
+	     .clk(clk),//
+	     .rst(rst),//
 	     //  Inputs
-	     .issue_lsu_select(issue2lsu_lsu_select),
-	     .issue_source_reg1(issue2lsu_source_reg1),
-	     .issue_source_reg2(issue2lsu_source_reg2),
-	     .issue_source_reg3(issue2lsu_source_reg3),
-	     .issue_dest_reg(issue2lsu_dest_reg),
-	     .issue_imm_value0(issue2lsu_imm_value0),
-	     .issue_imm_value1(issue2lsu_imm_value1),
-	     .issue_opcode(issue2lsu_opcode),
-	     .issue_mem_sgpr(issue2lsu_mem_sgpr),
-	     .issue_wfid(issue2lsu_wfid),
-	     .issue_lds_base(issue2lsu_lds_base),
-	     .vgpr_source1_data(vgpr2lsu_source1_data),
-	     .vgpr_source2_data(vgpr2lsu_source2_data),
-	     .mem_rd_data(mem2lsu_rd_data),
-	     .mem_tag_resp(mem2lsu_tag_resp),
-	     .mem_ack(mem2lsu_ack),
-	     .sgpr_source1_data(sgpr2lsu_source1_data),
-	     .sgpr_source2_data(sgpr2lsu_source2_data),
-	     .exec_exec_value(exec2lsu_exec_value),
-	     .exec_rd_m0_value(exec2lsu_rd_m0_value),
-	     .issue_instr_pc(issue2lsu_instr_pc),
+	     .issue_lsu_select(issue2lsu_lsu_select),//
+	     .issue_source_reg1(issue2lsu_source_reg1),//
+	     .issue_source_reg2(issue2lsu_source_reg2),//
+	     .issue_source_reg3(issue2lsu_source_reg3),//
+	     .issue_dest_reg(issue2lsu_dest_reg),//
+	     .issue_imm_value0(issue2lsu_imm_value0),//
+	     .issue_imm_value1(issue2lsu_imm_value1),//
+	     .issue_opcode(issue2lsu_opcode),//
+	     .issue_mem_sgpr(issue2lsu_mem_sgpr),//
+	     .issue_wfid(issue2lsu_wfid),//
+	     .issue_lds_base(issue2lsu_lds_base),//
+	     .vgpr_source1_data(vgpr2lsu_source1_data),//
+	     .vgpr_source2_data(vgpr2lsu_source2_data),//
+	     .mem_rd_data(mem2lsu_rd_data),//
+	     .mem_tag_resp(mem2lsu_tag_resp),//
+	     .mem_ack(mem2lsu_ack),//
+	     .sgpr_source1_data(sgpr2lsu_source1_data),//
+	     .sgpr_source2_data(sgpr2lsu_source2_data),//
+	     .exec_exec_value(exec2lsu_exec_value),//
+	     .exec_rd_m0_value(exec2lsu_rd_m0_value),//
+	     .issue_instr_pc(issue2lsu_instr_pc),//
+             .lsu_stall(lsu_stall),//**CHANGE
 	     //  Outputs
 	     .issue_ready(lsu2issue_ready),
 	     .vgpr_source1_addr(lsu2vgpr_source1_addr),
@@ -758,7 +766,9 @@ module compute_unit
 	     .simf1_queue_entry_serviced(rfa2simf1_queue_entry_serviced),
 	     .simf2_queue_entry_serviced(rfa2simf2_queue_entry_serviced),
 	     .simf3_queue_entry_serviced(rfa2simf3_queue_entry_serviced),
-	     .execvgprsgpr_select_fu(rfa2execvgprsgpr_select_fu)
+	     .execvgprsgpr_select_fu(rfa2execvgprsgpr_select_fu),
+             .lsu_wait(lsu_stall), //**change,
+             .salu_req(salu_request) //**change
 	     );
 
    salu salu0 (
@@ -809,7 +819,8 @@ module compute_unit
 	       .fetch_branch_pc_value(salu2fetch_branch_pc_value),
 	       .tracemon_retire_pc(salu2tracemon_retire_pc),
 	       .tracemon_exec_word_sel(salu2tracemon_exec_word_sel),
-	       .tracemon_vcc_word_sel(salu2tracemon_vcc_word_sel)
+	       .tracemon_vcc_word_sel(salu2tracemon_vcc_word_sel),
+               .rfa2sgpr_request(salu_request)//**change
 	       );
 
    sgpr sgpr0 (

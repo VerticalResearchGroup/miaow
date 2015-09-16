@@ -10,8 +10,8 @@ module vgpr_2to1_rd_port_mux (
   rd_addr,
   rd_data
 );
-
-  parameter DATAWIDTH = 8192;
+// S: changed to 2k (parameter passed)
+  parameter DATAWIDTH = 2048;
 
   input         port0_rd_en;
   input [9:0]   port0_rd_addr;

@@ -165,14 +165,16 @@ input[63:0] simd0_wr_mask, simd1_wr_mask, simd2_wr_mask, simd3_wr_mask,
          simf0_wr_mask, simf1_wr_mask, simf2_wr_mask, simf3_wr_mask, lsu_dest_wr_mask;
 input[2047:0] simd0_dest_data, simd1_dest_data, simd2_dest_data, simd3_dest_data,
          simf0_dest_data, simf1_dest_data, simf2_dest_data, simf3_dest_data;
-input[8191:0] lsu_dest_data;
+// S: changed from 8k to 2k for lsu bus
+input[2047:0] lsu_dest_data;
 output issue_alu_wr_done, issue_alu_dest_reg_valid, issue_lsu_wr_done;
 output[3:0] issue_lsu_dest_reg_valid;
 output[5:0] issue_alu_wr_done_wfid, issue_lsu_wr_done_wfid;
 output[9:0] issue_alu_dest_reg_addr, issue_lsu_dest_reg_addr;
 output[2047:0] simd_source1_data, simd_source2_data, simd_source3_data,
          simf_source1_data, simf_source2_data, simf_source3_data,lsu_source2_data;
-output[8191:0] lsu_source1_data;
+// S: changed from 8k to 2k for lsu bus
+output[2047:0] lsu_source1_data;
 ///////////////////////////////
 //Your code goes here - beware: script does not recognize changes
 // into files. It ovewrites everithing without mercy. Save your work before running the script
@@ -190,6 +192,7 @@ wire [9:0] muxed_simx_source3_rd_addr;
 wire muxed_simx_source3_rd_en;
 wire [2047:0] muxed_simx_source3_rd_data;
 
+// simd/simf rdport 0 mux level 1
 rd_port_mux_8to1 port_mux_simx_source1 (
   .port0_rd_en(simd0_source1_rd_en),
   .port0_rd_addr(simd0_source1_addr),
@@ -214,6 +217,7 @@ rd_port_mux_8to1 port_mux_simx_source1 (
 );
 assign simf_source1_data = simd_source1_data;
 
+// simd/simf rdport 1 mux
 rd_port_mux_8to1 port_mux_simx_source2 (
   .port0_rd_en(simd0_source2_rd_en),
   .port0_rd_addr(simd0_source2_addr),
@@ -238,6 +242,7 @@ rd_port_mux_8to1 port_mux_simx_source2 (
 );
 assign simf_source2_data = simd_source2_data;
 
+// simd/simf rdport 2 mux
 rd_port_mux_8to1 port_mux_simx_source3 (
   .port0_rd_en(simd0_source3_rd_en),
   .port0_rd_addr(simd0_source3_addr),
@@ -262,10 +267,12 @@ rd_port_mux_8to1 port_mux_simx_source3 (
 );
 assign simf_source3_data = simd_source3_data;
 
-wire [8191:0] distribute_source1_data;
-wire [8191:0] final_source1_data;
+wire [2047:0] distribute_source1_data;
+wire [2047:0] final_source1_data;
 wire [9:0] final_source1_addr;
-vgpr_2to1_rd_port_mux #(8192) source1_mux (
+// change mux width to 2048
+// LSU changes pending
+vgpr_2to1_rd_port_mux #(2048) source1_mux ( /// override the param
   .port0_rd_en(muxed_simx_source1_rd_en),
   .port0_rd_addr(muxed_simx_source1_rd_addr),
   .port1_rd_en(lsu_source1_rd_en),
@@ -275,6 +282,10 @@ vgpr_2to1_rd_port_mux #(8192) source1_mux (
   .rd_data(final_source1_data)
 );
 assign lsu_source1_data = distribute_source1_data;
+
+// S: shrink 8k to 2k, so no need for veriperl assignment
+assign muxed_simx_source1_rd_data = distribute_source1_data;
+/*
 %%start_veriperl
 my $i;
 my $L_index;
@@ -283,13 +294,15 @@ my $l_index;
 my $h_index;
 for($i=0; $i<64; $i=$i+1)
 {
-  $L_index = 128*$i;
-  $H_index = 128*$i+31;
+  // change param from 128 to 32 since the bus shrinked
+  $L_index = 32*$i;
+  $H_index = 32*$i+31;
   $l_index = 32*$i;
   $h_index = 32*$i+31;
   print "assign muxed_simx_source1_rd_data[$h_index:$l_index] = distribute_source1_data[$H_index:$L_index];\n";
 }
 %%stop_veriperl
+*/
 
 
 wire [2047:0] distribute_source2_data;
@@ -311,7 +324,9 @@ assign muxed_simx_source2_rd_data = distribute_source2_data;
 wire [3:0] muxed_simx_dest_wr_en;
 wire [63:0] muxed_simx_dest_wr_mask;
 wire [9:0] muxed_simx_dest_addr;
-wire [8191:0] muxed_simx_dest_data;
+
+// S: shrink to 2k
+wire [2047:0] muxed_simx_dest_data;
 
 wr_port_mux_9to1 port_mux_simx_dest (
   .wr_port_select(rfa_select_fu),

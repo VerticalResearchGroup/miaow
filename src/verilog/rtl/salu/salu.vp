@@ -25,16 +25,16 @@ module salu(
 	    exec_wr_wfid,
 	    exec_rd_en,
 	    exec_rd_wfid,
-	    sgpr_dest_data,
-	    sgpr_dest_addr,
-	    sgpr_dest_wr_en,
-	    sgpr_source2_addr,
-	    sgpr_source1_addr,
-	    sgpr_source1_rd_en,
-	    sgpr_source2_rd_en,
-	    issue_alu_ready,
-	    sgpr_instr_done_wfid,
-	    sgpr_instr_done,
+	    sgpr_dest_data, //**
+	    sgpr_dest_addr, //**
+	    sgpr_dest_wr_en, //**
+	    sgpr_source2_addr, //**
+	    sgpr_source1_addr, //**
+	    sgpr_source1_rd_en, //**
+	    sgpr_source2_rd_en, //**
+	    issue_alu_ready, 
+	    sgpr_instr_done_wfid, //**
+	    sgpr_instr_done, //**
 	    fetchwaveissue_branch_wfid,
 	    fetchwaveissue_branch_en,
 	    fetchwaveissue_branch_taken,
@@ -43,7 +43,10 @@ module salu(
 	    tracemon_exec_word_sel,
 	    tracemon_vcc_word_sel,
 	    clk,
-	    rst
+	    rst,
+
+            //**CHANGE [PSP]
+            rfa2sgpr_request
 	    );
 
    input clk;
@@ -57,6 +60,10 @@ module salu(
    input [31:0] issue_imm_value1, exec_rd_m0_value, issue_instr_pc, issue_opcode;
    input [63:0] sgpr_source2_data, sgpr_source1_data,
 		exec_rd_exec_value, exec_rd_vcc_value;
+
+   //**CHANGE [PSP]
+   reg rfa2salu_req_hold;
+   output rfa2sgpr_request;
 
    output 	exec_wr_exec_en, exec_wr_vcc_en, exec_wr_m0_en, exec_wr_scc_en,
 		exec_wr_scc_value, exec_rd_en, sgpr_source1_rd_en, sgpr_source2_rd_en, issue_alu_ready, sgpr_instr_done,
@@ -97,6 +104,10 @@ module salu(
    wire [1:0] 	 sgpr_en;
 
    wire 	 exec_rd1, vcc_rd1, sgpr_rd1, exec_rd2, vcc_rd2, sgpr_rd2;
+
+   //**CHANGE add wires for new controller ports
+   wire          salu2sgpr_req, salu2sgpr_req_i, salu2sgpr_req_ii;
+   //**
 
    ///////////////////////////////////////////////////////
    // SOURCE REGISTER SELECT LOGIC
@@ -239,12 +250,12 @@ module salu(
 			     { alu_select_i_flopped, dest_reg_i, wfid_i,
 			       instr_pc_i, alu_control, exec_en, vcc_en, scc_en,
 			       m0_en, sgpr_en, vcc_wordsel, exec_wordsel,
-			       branch_en, branch_taken, exec_sgpr_cpy, bit64_op },
+			       branch_en, branch_taken, exec_sgpr_cpy, bit64_op, salu2sgpr_req },
 			     1'b1,
 			     { alu_select_ii, dest_reg_ii, wfid_ii,
 			       instr_pc_ii, alu_control_i, exec_en_i, vcc_en_i, scc_en_i,
 			       m0_en_i, sgpr_en_i, vcc_wordsel_i, exec_wordsel_i,
-			       branch_en_i, branch_taken_i, exec_sgpr_cpy_i, bit64_op_i },
+			       branch_en_i, branch_taken_i, exec_sgpr_cpy_i, bit64_op_i, salu2sgpr_req_i },
 			     clk, rst
 			     );
 
@@ -261,27 +272,37 @@ module salu(
 			    { instr_pc_ii, exec_en_i, vcc_en_i, scc_en_i, m0_en_i,
 			      sgpr_en_i, dest_reg_ii, wfid_ii, alu_out, scc_data,
 			      vcc_wordsel_i, exec_wordsel_i, exec_val_i, vcc_val_i,
-			      branch_en_i, branch_taken_i, exec_sgpr_cpy_i },
+			      branch_en_i, branch_taken_i, exec_sgpr_cpy_i, salu2sgpr_req_i },
 			    1'b1,
 			    { tracemon_retire_pc, exec_wr_exec_en, exec_wr_vcc_en,
 			      exec_wr_scc_en, exec_wr_m0_en, sgpr_dest_wr_en,
 			      salu_dst_reg, sgpr_instr_done_wfid, dest_data,
 			      exec_wr_scc_value, vcc_wordsel_ii, exec_wordsel_ii,
 			      exec_val_ii, vcc_val_ii, fetchwaveissue_branch_en,
-			      fetchwaveissue_branch_taken, exec_sgpr_cpy_ii },
+			      fetchwaveissue_branch_taken, exec_sgpr_cpy_ii, salu2sgpr_req_ii },
 			    clk, rst
 			    );
 
+   //**CHANGE [PSP]
+   //request line will be double flopped. 
+   assign rfa2sgpr_request = salu2sgpr_req_ii;
    ///////////////////////////////////////////////////////
    // MODULE INSTANTIATIONS
 
+
+   //**CHANGE [psp]
+   //**ADD two ports for salu2sgpr_request and rfa2salu_req_hold
    //controller
+
+   assign rfa2salu_req_hold = (salu2sgpr_req_ii | salu2sgpr_req_i | salu2sgpr_req) ? 1'b1: 1'b0;
    salu_controller scontrol(
 			    alu_select_i_flopped, dest_reg_i, opcode_i, alu_control,
 			    branch_on_cc, exec_en, vcc_en, scc_en, m0_en, sgpr_en,
 			    vcc_wordsel, exec_wordsel, exec_sgpr_cpy, snd_src_imm,
-			    bit64_op, rst
+			    bit64_op, rst, clk, salu2sgpr_req, rfa2salu_req_hold, 
+                            issue_alu_select, issue_dest_reg
 			    );
+   //**
 
    //alu
    scalar_alu salu_gpu(
@@ -320,6 +341,17 @@ module salu(
 
    // SALU is currently always ready
    // can accept an instruction every cycle
-   assign issue_alu_ready = 1'b1;
+   //assign issue_alu_ready = 1'b1;
+
+   //**CHANGE [psp]
+   // SALU not always ready
+   // SALU will only accept instruction every cycle
+   // if pending request line is not high
+   // this is to prevent new instructions coming in while
+   // salu has not been satisfied to write to SGPR
+
+   assign issue_alu_ready = ~rfa2salu_req_hold;
+
+   //** 
 
 endmodule
