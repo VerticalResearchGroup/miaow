@@ -6,10 +6,13 @@ use Getopt::Long;
 #Declaration and initialization of variables
 my $test = "";
 my $script_name = $0;
+my $m2s_ver = 0;
+my $fpga;
 
 $opt_result = GetOptions (
   "input=s"   => \$test,
   "fpga"      => \$fpga,
+	"version=s" => \$m2s_ver,
   "help"       => \$help,
 );
 
@@ -45,15 +48,32 @@ if($fpga eq "") {
 
     $t =~ s/\/$//;
     $t =~ s/\/$//;
-    print $t;
+    print "$t\n";
+
+		my $cmd;
+		my $cp;
+		 
+		if($m2s_ver eq 2)
+		{
+			print "Using Multi2Sim 4.2 for compilation\n";
+			$cmd = "../../multi2sim-4.2/bin/m2s --si-debug-isa ${t}_trace --si-sim functional ut --load ut_Kernels.bin";
+			$cp = "cp ../lib/m2s-4.2/libm2s-opencl.so";
+		 }
+		else
+		{
+		  print "Using Multi2Sim 4.0 for compilation\n";
+		  $cmd = "../../multi2sim-4.0/bin/m2s --si-debug-isa ${t}_trace --si-sim functional ut --load ut_Kernels.bin";
+			$cp = "cp ../lib/libm2s-opencl.so";
+		}
+
     system "
-    cp ../lib/libm2s-opencl.so ./$t/;
-    cd ./common/;
+		$cp ./$t/;
+		cd ./common/;
     cp ut ut_Kernels.bin ../$t/;
     cd ../;
     cd ./$t;
-    ../../multi2sim-4.0/bin/m2s --si-debug-isa ${t}_trace --si-sim functional ut --load ut_Kernels.bin;
-    rm -f ut ut_Kernels.bin libm2s-opencl.so;
+    $cmd
+		rm -f ut ut_Kernels.bin libm2s-opencl.so;
     ../../common/trace_parser.pl -i ${t}_trace;
     ";
   }  
@@ -71,7 +91,7 @@ foreach $t (@list)
   close INFILE;
   chomp @c;
 
-  $fl = "stage_cu.c";
+  $fl = "unit_test_instr.fpga";
 
   if (0 == open(OUTFILE, ">./$t/$fl"))
   {
@@ -79,15 +99,12 @@ foreach $t (@list)
     die;
   }
 
-  printf OUTFILE "void stage_cu()\n";
-  printf OUTFILE "{\n";
-
-  printf OUTFILE "   // Writing instruction memory\n";
-
   for($i = 1; $i < scalar(@c); $i+=4) {
-    printf OUTFILE "   Xil_Out32(0x50001004, %d);\n", ($i-1);
-    printf OUTFILE "   Xil_Out32(0x50001000, 0x%s%s%s%s);\n", $c[$i+3], $c[$i+2], $c[$i+1], $c[$i];;
+    printf OUTFILE "Xil_Out32(0x50001004, %d);\n", ($i-1);
+    printf OUTFILE  "Xil_Out32(0x50001000, 0x%s%s%s%s);\n", $c[$i+3], $c[$i+2], $c[$i+1], $c[$i];;
   }
+
+  close OUTFILE;
 
   # generating sgpr files
   open(INFILE, "./$t/unit_test_config.txt") or die "Could not open file";
@@ -96,16 +113,21 @@ foreach $t (@list)
   chomp @c;
 
   foreach($i = 1; $i < scalar(@c); $i++) {
-    
-    printf OUTFILE "\n   // Writing SGPRs for wavefront %d\n", $i;
+    $fl = "unit_test_sgpr_$i.fpga";
     $l = $c[$i];
+
+    if (0 == open(OUTFILE, ">./$t/$fl"))
+    {
+      print STDERR "$script_name: Cannot open file $t/$fl for writing!\n";
+      die;
+    }
 
     if($l =~ m/.*;S:(.*);.*/) 
     {
       @slist = split(',', $1);
       for($j = 0; $j < scalar(@slist); )
       {
-        printf OUTFILE "   Xil_Out32(0x50002004, %d);\n", ($j * 4);
+        printf OUTFILE "Xil_Out32(0x50002004, %d);\n", ($j * 4);
 
         $s1 = $s2 = $s3 = $s4 = 0;
 
@@ -118,16 +140,18 @@ foreach $t (@list)
         if($j < scalar(@slist)) { $s4 = (split('=', $slist[$j]))[1]; }
         $j = $j + 1;
 
-        printf OUTFILE "   Xil_Out32(0x50002008, 0x%X);\n", $s1;
-        printf OUTFILE "   Xil_Out32(0x5000200C, 0x%X);\n", $s2;
-        printf OUTFILE "   Xil_Out32(0x50002010, 0x%X);\n", $s3;
-        printf OUTFILE "   Xil_Out32(0x50002014, 0x%X);\n", $s4;
+        printf OUTFILE "Xil_Out32(0x50002008, 0x%X);\n", $s1;
+        printf OUTFILE "Xil_Out32(0x5000200C, 0x%X);\n", $s2;
+        printf OUTFILE "Xil_Out32(0x50002010, 0x%X);\n", $s3;
+        printf OUTFILE "Xil_Out32(0x50002014, 0x%X);\n", $s4;
 
-        printf OUTFILE "   Xil_Out32(0x50002000, 1);\n";
+        printf OUTFILE "Xil_Out32(0x50002000, 1);\n";
       }
     }
 
-    printf OUTFILE "}\n";
+    
+    
+
     close OUTFILE
   }
 }
@@ -146,6 +170,11 @@ ARGUMENTS:
 
 -i <input_test_name> 
 -input <input_test_name>       This is a compulsory option; used to specify the name of test to be run.
+
+-disasm                        Disassembly of Kernel Binary file
+ 
+-v
+-version           Multi2sim version 0(default)[m2s4.0] 2[m2s4.2] 
 
 -h
 -help                           Well, you know what this option is for! You couldn't be reading this otherwise.

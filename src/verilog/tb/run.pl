@@ -87,7 +87,7 @@ if($rdir eq "")
 if($killtime == 0)
 {
   #Setting default killtimes if not specified
-  if ($rdir eq "1")
+  if ($rdir =~ /^[1-5]$/)
   {
     #100 for unit tests
     $killtime = 1000;
@@ -95,7 +95,7 @@ if($killtime == 0)
   else
   {
     #A 100 million for benchmarks
-    $killtime = 100000000;
+    $killtime = 100000000000;
   }
 }
 if(($outdir eq "") && (0 == $list))
@@ -128,13 +128,17 @@ if("0" eq $rdir)
 {
   $test_source = "../../sw/benchmarks";
 }
-elsif ("2" eq $rdir)
+elsif ("6" eq $rdir)
 {
 	$test_source = "../../sw/rodinia/opencl";
 }
-elsif ("1" eq $rdir)
+elsif ("7" eq $rdir)
 {
-  $test_source = "../../sw/miaow_unit_tests";
+	$test_source = "../../sw/AMDAPP_4.2";
+}
+elsif ($rdir =~ /^[1-5]$/)
+{
+  $test_source = "../../sw/rand_unit_tests_".$rdir;
 }
 else
 {
@@ -309,7 +313,7 @@ USAGE:
 ARGUMENTS:
 
 -r
--folder from which tests will be picked. Provide 0 for AMDAPP_benchmarks, 1 for miaow unit tests and 2 for Rodinia suite.
+-folder from which tests will be picked. Provide 0 for AMDAPP_benchmarks, 1/2/3/4/5 for random tests, 6 for Rodinia suite and 7 for AMDAPP_4.2 version benchamrks.
 
 -t
 -test <testname/regex>	This is a compulsory argument; used to specify the name of the unit test to be run. When this is a regular expression, it can select multiple tests
@@ -343,7 +347,7 @@ ARGUMENTS:
 
 EXAMPLE USAGE:
 	$script_name -r 1 -t test_000_branch -o trial1
-  This will pick the test test_000_branch from miaow_unit_tests folder
+  This will pick the test test_000_branch from rand_unit_tests_1 folder
 	For above run, results can be found at /miaow/src/verilog/tb/results/trial1
 
   $script_name -r 0 -t BinarySearch -o trial1
