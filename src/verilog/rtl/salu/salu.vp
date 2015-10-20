@@ -62,7 +62,6 @@ module salu(
 		exec_rd_exec_value, exec_rd_vcc_value;
 
    //**CHANGE [PSP]
-   reg rfa2salu_req_hold;
    output rfa2sgpr_request;
 
    output 	exec_wr_exec_en, exec_wr_vcc_en, exec_wr_m0_en, exec_wr_scc_en,
@@ -116,6 +115,7 @@ module salu(
    reg [31:0] 	 exec_rd_m0_value_i;
    reg [63:0] exec_rd_exec_value_i, exec_rd_vcc_value_i;
    wire [63:0] sgpr_source2_data_i, sgpr_source1_data_i;
+   wire rfa2salu_req_hold;
   
    // Keep the delay on exec signals
    always @ ( posedge clk or posedge rst ) begin

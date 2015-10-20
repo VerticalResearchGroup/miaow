@@ -167,7 +167,7 @@ wire ext_literal_s3; //VIN
 wire long_instr_or_literal_required;
 wire [31:0] imm1_frominstr_fromliteral;
 reg [31:0] issue_imm_value1;
-reg [9:0] s3_field_const; //VIN
+wire [9:0] s3_field_const; //VIN
 
 
 wire [32:0] s1_fp_constant;

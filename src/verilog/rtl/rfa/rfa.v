@@ -49,8 +49,8 @@ module rfa(/*AUTOARG*/
    wire [31:0] 	 dummy_next_highest_priority;
 
    //**change [psp]
-   reg lsu_wait;
-   reg lsu_wr_req_lp;
+   wire lsu_wait;
+   wire lsu_wr_req_lp;
 
    // If lsu requests writes, it bypasses the priority encoder
    // but if salu request writes, it bypasses both

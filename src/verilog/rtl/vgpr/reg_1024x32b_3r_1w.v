@@ -65,18 +65,22 @@ module reg_1024x32b_3r_1w (/*AUTOARG*/
 	rd2_data <= rd2_data_bank0;
 
      end
-
-   reg_256x32b_3r_1w bank0(
-			   .rd0_addr(rd0_addr),
-			   .rd0_data(rd0_data_bank0),
-			   .rd1_addr(rd1_addr),
-			   .rd1_data(rd1_data_bank0),
-			   .rd2_addr(rd2_addr),
-			   .rd2_data(rd2_data_bank0),
-			   .wr0_addr(wr0_addr), //connect write address straight in
-			   .wr0_en(wr0_en[0]|wr0_en[1]|wr0_en[2]|wr0_en[3]),  //only focus on 32b, so only enable if bottom bit active high
-			   .wr0_data(wr0_data[31:0]),
-			   .clk(clk)
-			   );
+`ifdef FPGA_BUILD
+  reg_256x32b_3r_1w_fpga
+`else
+  reg_256x32b_3r_1w
+`endif
+   bank0(
+    .rd0_addr(rd0_addr),
+    .rd0_data(rd0_data_bank0),
+    .rd1_addr(rd1_addr),
+    .rd1_data(rd1_data_bank0),
+    .rd2_addr(rd2_addr),
+    .rd2_data(rd2_data_bank0),
+    .wr0_addr(wr0_addr), //connect write address straight in
+    .wr0_en(wr0_en[0]|wr0_en[1]|wr0_en[2]|wr0_en[3]),  //only focus on 32b, so only enable if bottom bit active high
+    .wr0_data(wr0_data[31:0]),
+    .clk(clk)
+  );
 
 endmodule

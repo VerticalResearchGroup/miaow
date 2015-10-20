@@ -105,7 +105,12 @@ module reg_512x32b_3r_2w
    reg [31:0] 	  wr1_data_bank3;
    //see mux at end of module
 
-   reg_128x32b_3r_2w bank0(
+`ifdef FPGA_BUILD
+  reg_128x32b_3r_2w_fpga
+`else
+  reg_128x32b_3r_2w
+`endif
+  bank0(
 			   .rd0_addr(rd0_addr_bank0),
 			   .rd0_data(rd0_data_bank0),
 			   .rd1_addr(rd1_addr_bank0),
@@ -121,7 +126,12 @@ module reg_512x32b_3r_2w
 			   .clk(clk)
 			   );
 
-   reg_128x32b_3r_2w bank1(
+`ifdef FPGA_BUILD
+  reg_128x32b_3r_2w_fpga
+`else
+  reg_128x32b_3r_2w
+`endif
+  bank1(
 			   .rd0_addr(rd0_addr_bank1),
 			   .rd0_data(rd0_data_bank1),
 			   .rd1_addr(rd1_addr_bank1),
@@ -137,7 +147,12 @@ module reg_512x32b_3r_2w
 			   .clk(clk)
 			   );
 
-   reg_128x32b_3r_2w bank2(
+`ifdef FPGA_BUILD
+  reg_128x32b_3r_2w_fpga
+`else
+  reg_128x32b_3r_2w
+`endif
+  bank2(
 			   .rd0_addr(rd0_addr_bank2),
 			   .rd0_data(rd0_data_bank2),
 			   .rd1_addr(rd1_addr_bank2),
@@ -153,7 +168,12 @@ module reg_512x32b_3r_2w
 			   .clk(clk)
 			   );
 
-   reg_128x32b_3r_2w bank3(
+`ifdef FPGA_BUILD
+  reg_128x32b_3r_2w_fpga
+`else
+  reg_128x32b_3r_2w
+`endif
+  bank3(
 			   .rd0_addr(rd0_addr_bank3),
 			   .rd0_data(rd0_data_bank3),
 			   .rd1_addr(rd1_addr_bank3),

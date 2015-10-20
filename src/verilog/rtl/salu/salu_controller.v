@@ -68,7 +68,7 @@ reg [31:0] alu_control;
 reg salu2sgpr_req;
 reg salu2sgpr_req_trig;
 
-reg sgpr_fw_check;
+wire sgpr_fw_check;
 assign sgpr_fw_check = {control_en_fw, dst_reg_fw[11:9]} && 4'b1110;
 //**
 
