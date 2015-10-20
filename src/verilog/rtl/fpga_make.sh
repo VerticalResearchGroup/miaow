@@ -5,7 +5,7 @@
 TOP=fpga_core
 ADEF=$TOP/alu_definitions.v
 DDEF=$TOP/decode_definitions.v
-GDEF=$TOP/global_defintions.v
+GDEF=$TOP/global_definitions.v
 LDEF=$TOP/lsu_definitions.v
 IDEF=$TOP/issue_definitions.v
 
