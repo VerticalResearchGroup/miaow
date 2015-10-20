@@ -47,9 +47,9 @@ module simd_alu
    wire   mul_done_s;              // Pulse at end of computation
    reg       mul_op_s;                // Indicates multipler operation underway
 
-   wire [31:0]     twos_compliment_inp0_s;
-   wire [31:0]     twos_compliment_inp1_s;
-	 wire [31:0]		 twos_compliment_inp2_s; //VIN
+   wire [31:0]     twos_complement_inp0_s;
+   wire [31:0]     twos_complement_inp1_s;
+	 wire [31:0]		 twos_complement_inp2_s; //VIN
 
    //TODO check logic
 
@@ -66,9 +66,9 @@ module simd_alu
    reg [31:0] final_unsigned_source2_data;
    reg [31:0] final_unsigned_source3_data;
    
-	 assign twos_compliment_inp0_s = ~alu_source1_data + 32'd1;
-   assign twos_compliment_inp1_s = ~alu_source2_data + 32'd1;
-   assign twos_compliment_inp2_s = ~alu_source3_data + 32'd1;
+	 assign twos_complement_inp0_s = ~alu_source1_data + 32'd1;
+   assign twos_complement_inp1_s = ~alu_source2_data + 32'd1;
+   assign twos_complement_inp2_s = ~alu_source3_data + 32'd1;
    
 	 assign alu_sgpr_dest_data = alu_dest_vcc_value;
 
@@ -77,13 +77,13 @@ module simd_alu
          {`ALU_VOP3A_FORMAT} :
             begin
                abs_signed_source1_data <= alu_control[`ALU_VOP3A_ABS1_POS]
-                                          ? (alu_source1_data[31] ? twos_compliment_inp0_s : alu_source1_data)
+                                          ? (alu_source1_data[31] ? twos_complement_inp0_s : alu_source1_data)
                                           : alu_source1_data;
                abs_signed_source2_data <= alu_control[`ALU_VOP3A_ABS2_POS]
-                                          ? (alu_source2_data[31] ? twos_compliment_inp1_s : alu_source2_data)
+                                          ? (alu_source2_data[31] ? twos_complement_inp1_s : alu_source2_data)
                                           : alu_source2_data;
                abs_signed_source3_data <= alu_control[`ALU_VOP3A_ABS3_POS]
-                                          ? (alu_source3_data[31] ? twos_compliment_inp2_s : alu_source3_data)
+                                          ? (alu_source3_data[31] ? twos_complement_inp2_s : alu_source3_data)
                                           : alu_source3_data;
             end
          default : //VOP1, VOP2 and VOPC
@@ -102,18 +102,18 @@ module simd_alu
                final_signed_source1_data <= alu_control[`ALU_VOP3A_NEG1_POS] ? (~abs_signed_source1_data + 32'd1) : abs_signed_source1_data;
                final_signed_source2_data <= alu_control[`ALU_VOP3A_NEG2_POS] ? (~abs_signed_source2_data + 32'd1) : abs_signed_source2_data;
                final_signed_source3_data <= alu_control[`ALU_VOP3A_NEG3_POS] ? (~abs_signed_source3_data + 32'd1) : abs_signed_source3_data;
-							 final_unsigned_source1_data <= alu_control[`ALU_VOP3A_NEG1_POS] ? twos_compliment_inp0_s : alu_source1_data;
-               final_unsigned_source2_data <= alu_control[`ALU_VOP3A_NEG2_POS] ? twos_compliment_inp1_s : alu_source2_data;
-               final_unsigned_source3_data <= alu_control[`ALU_VOP3A_NEG3_POS] ? twos_compliment_inp2_s : alu_source3_data;
+							 final_unsigned_source1_data <= alu_control[`ALU_VOP3A_NEG1_POS] ? twos_complement_inp0_s : alu_source1_data;
+               final_unsigned_source2_data <= alu_control[`ALU_VOP3A_NEG2_POS] ? twos_complement_inp1_s : alu_source2_data;
+               final_unsigned_source3_data <= alu_control[`ALU_VOP3A_NEG3_POS] ? twos_complement_inp2_s : alu_source3_data;
             end
          {`ALU_VOP3B_FORMAT} :
             begin
                final_signed_source1_data <= alu_control[`ALU_VOP3B_NEG1_POS] ? (~abs_signed_source1_data + 32'd1) : abs_signed_source1_data;
                final_signed_source2_data <= alu_control[`ALU_VOP3B_NEG2_POS] ? (~abs_signed_source2_data + 32'd1) : abs_signed_source2_data;
                final_signed_source3_data <= alu_control[`ALU_VOP3B_NEG3_POS] ? (~abs_signed_source3_data + 32'd1) : abs_signed_source3_data;
-               final_unsigned_source1_data <= alu_control[`ALU_VOP3B_NEG1_POS] ? twos_compliment_inp0_s : alu_source1_data;
-               final_unsigned_source2_data <= alu_control[`ALU_VOP3B_NEG2_POS] ? twos_compliment_inp1_s : alu_source2_data;
-               final_unsigned_source3_data <= alu_control[`ALU_VOP3B_NEG3_POS] ? twos_compliment_inp2_s : alu_source3_data;
+               final_unsigned_source1_data <= alu_control[`ALU_VOP3B_NEG1_POS] ? twos_complement_inp0_s : alu_source1_data;
+               final_unsigned_source2_data <= alu_control[`ALU_VOP3B_NEG2_POS] ? twos_complement_inp1_s : alu_source2_data;
+               final_unsigned_source3_data <= alu_control[`ALU_VOP3B_NEG3_POS] ? twos_complement_inp2_s : alu_source3_data;
             end
          default : //VOP1, VOP2 and VOPC
             begin
@@ -500,7 +500,7 @@ module simd_alu
                // ISSUE-Ragh-20130205 : Assuming i24 => 31st bit is sign, [23:0] has data.
                if (alu_source1_data[31])
                   begin
-                     mul_inp0_s[23:0] <= twos_compliment_inp0_s[23:0];
+                     mul_inp0_s[23:0] <= twos_complement_inp0_s[23:0];
                      mul_inp0_s[31:24] <= 'd0;
                   end
                else
@@ -510,7 +510,7 @@ module simd_alu
                   end
                if (alu_source2_data[31])
                   begin
-                     mul_inp1_s[23:0] <= twos_compliment_inp1_s[23:0];
+                     mul_inp1_s[23:0] <= twos_complement_inp1_s[23:0];
                      mul_inp1_s[31:24] <= 'd0;
                   end
                else
@@ -525,7 +525,7 @@ module simd_alu
                // ISSUE-Ragh-20130205 : Assuming i24 => 31st bit is sign, [23:0] has data.
                if (alu_source1_data[31])
                   begin
-                     mul_inp0_s[23:0] <= twos_compliment_inp0_s[23:0];
+                     mul_inp0_s[23:0] <= twos_complement_inp0_s[23:0];
                      mul_inp0_s[31:24] <= 'd0;
                   end
                else
@@ -535,7 +535,7 @@ module simd_alu
                   end
                if (alu_source2_data[31])
                   begin
-                     mul_inp1_s[23:0] <= twos_compliment_inp1_s[23:0];
+                     mul_inp1_s[23:0] <= twos_complement_inp1_s[23:0];
                      mul_inp1_s[31:24] <= 'd0;
                   end
                else
@@ -548,11 +548,11 @@ module simd_alu
             begin
                mul_op_s <= 1'b1;
                if (alu_source1_data[31])
-                  mul_inp0_s <= twos_compliment_inp0_s;
+                  mul_inp0_s <= twos_complement_inp0_s;
                else
                   mul_inp0_s <= alu_source1_data;
                if (alu_source2_data[31])
-                  mul_inp1_s <= twos_compliment_inp1_s;
+                  mul_inp1_s <= twos_complement_inp1_s;
                else
                   mul_inp1_s <= alu_source2_data;
             end
