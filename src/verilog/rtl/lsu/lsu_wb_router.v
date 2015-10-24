@@ -297,7 +297,7 @@ module lsu_wb_router
    out_tracemon_retire_pc, out_gm_or_lds, out_rfa_dest_wr_req, wb_en,
    // Inputs
    in_rd_data, in_wftag_resp, in_ack, in_exec_value,
-   in_lddst_stsrc_addr, in_reg_wr_en, in_instr_pc, in_gm_or_lds, increAddr, retire
+   in_lddst_stsrc_addr, in_reg_wr_en, in_instr_pc, in_gm_or_lds
    );
 
 input [2047:0] in_rd_data;
@@ -309,8 +309,6 @@ input [3:0] in_reg_wr_en;
 input [31:0] in_instr_pc;
 input in_gm_or_lds;
 input wb_en;
-input [1:0] increAddr;
-input retire;
 
 output [8:0] out_sgpr_dest_addr;
 output [127:0] out_sgpr_dest_data;
@@ -339,7 +337,7 @@ assign out_sgpr_dest_addr = in_lddst_stsrc_addr[8:0];
 assign out_sgpr_dest_data = in_rd_data[127:0];
 assign out_sgpr_instr_done_wfid = in_wftag_resp[6:1];
 
-assign out_vgpr_dest_addr = in_lddst_stsrc_addr[9:0]+increAddr;
+assign out_vgpr_dest_addr = in_lddst_stsrc_addr[9:0];
 assign out_vgpr_dest_data = in_rd_data;
 assign out_vgpr_dest_wr_mask = in_exec_value;
 assign out_vgpr_instr_done_wfid = in_wftag_resp[6:1];
@@ -361,13 +359,13 @@ always @* begin
          out_sgpr_dest_wr_en <= 4'b0;
          out_vgpr_dest_wr_en <= |(in_reg_wr_en & wb_en);
          out_sgpr_instr_done <= 1'b0;
-         out_vgpr_instr_done <= 1'b1 & retire;
+         out_vgpr_instr_done <= 1'b1;
       end
    4'b1_1_11:
       begin
          out_sgpr_dest_wr_en <= in_reg_wr_en & {4{wb_en}};
          out_vgpr_dest_wr_en <= 4'b0;
-         out_sgpr_instr_done <= 1'b1 & retire;
+         out_sgpr_instr_done <= 1'b1;
          out_vgpr_instr_done <= 1'b0;
       end
    4'b1_0_10:
@@ -375,13 +373,13 @@ always @* begin
          out_sgpr_dest_wr_en <= 4'b0;
          out_vgpr_dest_wr_en <= 4'b0;
          out_sgpr_instr_done <= 1'b0;
-         out_vgpr_instr_done <= 1'b1 & retire;
+         out_vgpr_instr_done <= 1'b1;
       end
    4'b1_0_11:
       begin
          out_sgpr_dest_wr_en <= 4'b0;
          out_vgpr_dest_wr_en <= 4'b0;
-         out_sgpr_instr_done <= 1'b1 & retire;
+         out_sgpr_instr_done <= 1'b1;
          out_vgpr_instr_done <= 1'b0;
       end
    4'b1_?_0?:

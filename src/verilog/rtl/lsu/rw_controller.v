@@ -1,7 +1,7 @@
  module rw_controller(rd_en_in, wrt_en_in, exec_mask_in, addr_in, addr_out, 
 	wrt_en, rd_en, clk, rst, shift, increAddr, mem_ack, lsu_stall, 
 	lsu_rdy, lsu_select, load_src_a, set_freez, clr_freez, wb_en,
-	load_wb, shift_wb, retire);
+	load_wb, shift_wb);
 
 	input [3:0] rd_en_in, wrt_en_in;
 	input [63:0] exec_mask_in;
@@ -17,8 +17,6 @@
 	output set_freez, clr_freez;
 	output wb_en;
 	output load_wb, shift_wb;
-	output retire;
-	reg retire;
 	reg lsu_rdy;
 	reg clear_round;
 	reg incre_round;
@@ -105,7 +103,7 @@
 	// address offset (0~3)
 	assign increAddr = round_4;
 	// actual 32-bit write address
-	assign addr_out = address[31:0] + (round_4*4);
+	assign addr_out = address[31:0] + round_4;
 
 	localparam IDLE = 4'b0000;
 	localparam WRITE = 4'b0001;
@@ -120,9 +118,6 @@
 	localparam WB = 4'b1010;
 	localparam DISPATCH = 4'b1011;
 	localparam INIT_READ = 4'b1100;
-	localparam RETIRE = 4'b1101;
-	localparam INIT_READ2 = 4'b1110;
-	localparam SPIN_WRITE1 = 4'b1111;
 
 	reg [3:0] state, nxtState;
 	always @(posedge clk or posedge rst) begin
@@ -156,7 +151,6 @@
 		wb_en = 0;
 		load_wb = 0;
 		shift_wb = 0;
-		retire = 0;
 
 		case(state)
 			IDLE: begin
@@ -174,11 +168,8 @@
 					nxtState = INIT_READ;
 				end
 			end
-			// wait 2 cycle for block ram VGPR read
+			// wait one cycle for block ram VGPR read
 			INIT_READ: begin
-				nxtState = INIT_READ2;
-			end
-			INIT_READ2: begin
 				nxtState = DISPATCH;
 			end
 			DISPATCH: begin
@@ -191,7 +182,6 @@
 					// lsu_rdy = 0;
 					load_src_a = 1;
 					load_exec = 1;
-					//$strobe("load addr %h",addr_in);
 				end
 				// when it detects non-zero wr_en, goto
 				// write state and load new 2k address
@@ -211,9 +201,38 @@
 				if(round_4 == 0 && wrt_en_in == 4'b0001 && word_round == 63) begin
 					// if the last exec mask is 0, directly go back to idle
 					if(exec[0] == 0) begin
-						nxtState = RETIRE;
+						nxtState = IDLE;
 						lsu_rdy = 1;
-						//clr_freez = 1;
+						clr_freez = 1;
+					end
+					// else write the last word in the WRITE_END stage
+					else begin
+						nxtState = WRITE_END;
+						lsu_rdy = 0;
+						wrt_en = 1;
+					end					
+				end
+				//////////////TEMP FIX
+				if(round_4 == 1 && wrt_en_in == 4'b0011 && word_round == 63) begin
+					// if the last exec mask is 0, directly go back to idle
+					if(exec[0] == 0) begin
+						nxtState = IDLE;
+						lsu_rdy = 1;
+						clr_freez = 1;
+					end
+					// else write the last word in the WRITE_END stage
+					else begin
+						nxtState = WRITE_END;
+						lsu_rdy = 0;
+						wrt_en = 1;
+					end					
+				end
+				if(round_4 == 2 && wrt_en_in == 4'b0111 && word_round == 63) begin
+					// if the last exec mask is 0, directly go back to idle
+					if(exec[0] == 0) begin
+						nxtState = IDLE;
+						lsu_rdy = 1;
+						clr_freez = 1;
 					end
 					// else write the last word in the WRITE_END stage
 					else begin
@@ -226,9 +245,9 @@
 				else if(round_4 == 3 && wrt_en_in == 4'b1111 && word_round == 63) begin
 					// if the last exec mask is 0, directly go back to idle
 					if(exec[0] == 0) begin
-						nxtState = RETIRE;
+						nxtState = IDLE;
 						lsu_rdy = 1;
-						//clr_freez = 1;
+						clr_freez = 1;
 					end
 					// else write the last word in the WRITE_END stage
 					else begin
@@ -248,7 +267,6 @@
 						// if reach the end of word-round, update the round cntr
 						if(word_round == 63) begin
 							incre_round = 1;
-							load_exec = 1;
 							nxtState = SPIN_WRITE;
 							// goto SPIN_WRITE to wait 
 							// one cycle and let new data
@@ -280,8 +298,7 @@
 					shift_addr = 1;
 					incre_word_round = 1;
 					if(word_round == 63) begin
-						incre_round = 1;
-						load_exec = 1;						
+						incre_round = 1;						
 						nxtState = SPIN_WRITE;
 					end
 					else begin
@@ -300,27 +317,24 @@
 				else begin
 					// release the stall signal
 					lsu_rdy = 1;
-					nxtState = RETIRE;
-					//clr_freez = 1;
+					nxtState = IDLE;
+					clr_freez = 1;
 				end
-			end
-			SPIN_WRITE1: begin
-				lsu_rdy = 0;
-				// if(mem_ack) begin
-				// 	nxtState = WRITE;
-				// end
-				// else begin
-				// 	nxtState = SPIN_WRITE1;
-				// end
-				// //nxtState = WRITE;
-				load_addr = 1;
-				load_src_a = 1;
 			end
 			// wait one cycle and let the new data from
 			// blockram (VGPR) feed the register
 			// might not be necessary?
 			SPIN_WRITE: begin
-				nxtState = SPIN_WRITE1;
+				lsu_rdy = 0;
+				if(mem_ack) begin
+					nxtState = WRITE;
+				end
+				else begin
+					nxtState = SPIN_WRITE;
+				end
+				//nxtState = WRITE;
+				load_addr = 1;
+				load_src_a = 1;
 			end
 			// wait for last word to ack
 			//////////////////////////////////////////////////////////////////////////DELAY
@@ -331,29 +345,20 @@
 					nxtState = SPIN_READ1;
 				end
 				else begin
-					shift = 1;
-					shift_exec = 1;
-					shift_addr = 1;
-					incre_word_round = 1;
-					load_wb = 1;
-					nxtState = SPIN_READ2;
-					//$display("addrout: %h",addr_out);	
+					nxtState = SPIN_READ2;	
 				end				
-				//load_addr = 1;
+				load_addr = 1;
 			end
 			// wait until lsu finish writing the 2k data
 			// back to vgpr
 			SPIN_READ2: begin
-				//rd_en = 1;
-				//wb_en = 1;
+				lsu_rdy = 0;
+				wb_en = 1;
 				if(lsu_stall == 1) begin
 					nxtState = SPIN_READ2;
 				end
 				else begin
-					wb_en = 1;
-					//$strobe("AT FINAL WB");
-					nxtState = RETIRE;					
-					//set = 1;
+					nxtState = READ;
 				end
 			end
 			READ: begin
@@ -364,30 +369,42 @@
 				// this detects the end of this instruction
 				if(round_4 == 0 && rd_en_in == 4'b0001 && word_round == 63) begin
 					if(exec[0] == 0) begin
-						load_wb = 1;
-						nxtState = SPIN_READ2;
+						nxtState = IDLE;
 						lsu_rdy = 1;
-						//clr_freez = 1;
+						clr_freez = 1;
 						//set = 1;
 					end
 					// else read the last word
 					else begin
 						lsu_rdy = 0;
-						nxtState = SPIN_READ1;
+						nxtState = READ_END;
 						rd_en = 1;
 					end					
 				end
 				// same, this handles the end of 64-bit read case
 				else if(round_4 == 1 && rd_en_in == 4'b0011 && word_round == 63) begin
 					if(exec[0] == 0) begin
-						load_wb = 1;
-						nxtState = SPIN_READ2;
+						nxtState = IDLE;
 						lsu_rdy = 1;
-						//clr_freez = 1;
+						clr_freez = 1;
 						//set = 1;
 					end
 					else begin
-						nxtState = SPIN_READ1;
+						nxtState = READ_END;
+						lsu_rdy = 0;
+						rd_en = 1;
+					end	
+				end
+				//////////////////////////////////////////////////
+				else if(round_4 == 2 && rd_en_in == 4'b0111 && word_round == 63) begin
+					if(exec[0] == 0) begin
+						nxtState = IDLE;
+						lsu_rdy = 1;
+						clr_freez = 1;
+						//set = 1;
+					end
+					else begin
+						nxtState = READ_END;
 						lsu_rdy = 0;
 						rd_en = 1;
 					end	
@@ -395,14 +412,13 @@
 				// this handles the end of 128-bit read case
 				else if(round_4 == 3 && rd_en_in == 4'b1111 && word_round == 63) begin
 					if(exec[0] == 0) begin
-						load_wb = 1;
-						nxtState = SPIN_READ2;
+						nxtState = IDLE;
 						lsu_rdy = 1;
-						//clr_freez = 1;
+						clr_freez = 1;
 						//set = 1;
 					end
 					else begin
-						nxtState = SPIN_READ1;
+						nxtState = READ_END;
 						lsu_rdy = 0;
 						rd_en = 1;
 					end	
@@ -411,24 +427,19 @@
 					lsu_rdy = 0;	
 					// if current exec mask is 0, go to the next				
 					if(exec[0] == 0) begin
-						//$strobe("addrout exec0: %h",addr_out);
 						nxtState = READ;
-						//$strobe("wordround: %h",word_round);
-						load_wb = 1;
 						shift_exec = 1;	
 						shift = 1;				
 						incre_word_round = 1;
 						if(word_round == 63) begin
 							incre_round = 1;
-
 							// when reaching the end of one round, wait
 							// for write back to vgpr
-							nxtState = WB;
+							nxtState = SPIN_READ1;
 						end
 					end
 					else begin
 						rd_en = 1;
-						//$strobe("addrout: %h",addr_out);
 						nxtState = READ_WAIT;
 					end
 				end
@@ -448,54 +459,41 @@
 					shift_exec = 1;
 					shift_addr = 1;
 					incre_word_round = 1;
-					load_wb=1;
 					if(word_round == 63) begin
 						incre_round = 1;
-						//load_exec=1;
-						//load_wb=1;
-						nxtState = WB;
+						nxtState = SPIN_READ1;
 					end
 					else begin
 						nxtState = READ;
-						//load_wb = 1;
+						load_wb = 1;
 					end
 				end
 			end 
 			// read the last word for this instr
 			READ_END: begin
-				// lsu_rdy = 0;
-				// rd_en = 1;
-				// if(!mem_ack) begin
-				// 	nxtState = READ_END;
-				// end
-				// else begin
-				// 	nxtState = WB;
-				// 	//set = 1;
-				// end
-				//$strobe("load addr end %h",addr_in);
-				load_exec=1;
-							//load_addr=1;
-				load_addr = 1;
-				nxtState = READ;
+				lsu_rdy = 0;
+				rd_en = 1;
+				if(!mem_ack) begin
+					nxtState = READ_END;
+				end
+				else begin
+					nxtState = WB;
+					//set = 1;
+				end
 			end
 			// write back the last word
 			WB: begin
 				//rd_en = 1;
-				//wb_en = 1;
+				wb_en = 1;
 				if(lsu_stall == 1) begin
 					nxtState = WB;
 				end
 				else begin
 					wb_en = 1;
-
-					nxtState = READ_END;	
-					//$strobe("AT WB");				
+					nxtState = IDLE;
+					clr_freez = 1;
 					//set = 1;
 				end
-			end
-			RETIRE: begin
-				retire = 1;
-				clr_freez = 1;
 			end
 		endcase
 	end

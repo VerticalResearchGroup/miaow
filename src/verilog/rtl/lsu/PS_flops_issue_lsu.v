@@ -60,12 +60,11 @@ output [31:0] out_instr_pc;
 
 
 //lsu_select is not enabled; all other flops are enabled
-dff_en flop_lsu_select(
+dff flop_lsu_select(
   .q(out_lsu_select),
   .d(in_lsu_select),
   .clk(clk),
-  .rst(rst),
-  .en(~freez)
+  .rst(rst)
 );
 
 dff_en flop_wfid[5:0](
@@ -73,7 +72,7 @@ dff_en flop_wfid[5:0](
   .d(in_wfid),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_lds_base[15:0](
@@ -81,7 +80,7 @@ dff_en flop_lds_base[15:0](
   .d(in_lds_base),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_source_reg1[11:0](
@@ -89,7 +88,7 @@ dff_en flop_source_reg1[11:0](
   .d(in_source_reg1),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_source_reg2[11:0](
@@ -97,7 +96,7 @@ dff_en flop_source_reg2[11:0](
   .d(in_source_reg2),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_source_reg3[11:0](
@@ -105,7 +104,7 @@ dff_en flop_source_reg3[11:0](
   .d(in_source_reg3),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_mem_sgpr[11:0](
@@ -113,7 +112,7 @@ dff_en flop_mem_sgpr[11:0](
   .d(in_mem_sgpr),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_imm_value0[15:0](
@@ -121,7 +120,7 @@ dff_en flop_imm_value0[15:0](
   .d(in_imm_value0),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_imm_value1[31:0](
@@ -129,7 +128,7 @@ dff_en flop_imm_value1[31:0](
   .d(in_imm_value1),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_dest_reg[11:0](
@@ -137,7 +136,7 @@ dff_en flop_dest_reg[11:0](
   .d(in_dest_reg),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_opcode[31:0](
@@ -145,7 +144,7 @@ dff_en flop_opcode[31:0](
   .d(in_opcode),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 dff_en flop_instr_pc[31:0](
@@ -153,7 +152,7 @@ dff_en flop_instr_pc[31:0](
   .d(in_instr_pc),
   .clk(clk),
   .rst(rst),
-  .en(~freez)
+  .en(in_lsu_select & ~freez)
 );
 
 endmodule

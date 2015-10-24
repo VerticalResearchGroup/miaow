@@ -32,7 +32,7 @@ always @(posedge clk, posedge rst) begin
     
   // end
   else if(load_wb) begin
-    flop_rd_data[2047:2016] <= in_rd_data;
+    flop_rd_data[2047:2015] <= in_rd_data;
     flop_rd_data[2015:0] <= flop_rd_data[2047:32];
   end
 end

@@ -177,15 +177,15 @@ module lsu
 
    lsu_rd_stage_router lsu_rd_stage_router
      (
-      .in_lsu_select(router_lsu_select),
-      .in_source_reg1(router_source_reg1),
-      .in_source_reg2(router_source_reg2),
-      .in_source_reg3(router_source_reg3),
-      .in_mem_sgpr(router_mem_sgpr),
+      .in_lsu_select(issue_lsu_select),
+      .in_source_reg1(issue_source_reg1),
+      .in_source_reg2(issue_source_reg2),
+      .in_source_reg3(issue_source_reg3),
+      .in_mem_sgpr(issue_mem_sgpr),
       .in_lsu_select_flopped(router_lsu_select),
       .in_source_reg2_flopped(router_source_reg2),
       .in_dest_reg(router_dest_reg),
-      .in_opcode(rd_opcode),
+      .in_opcode(issue_opcode),
       .in_opcode_flopped(rd_opcode),
       .in_imm_value0(rd_imm_value0),
       .in_imm_value1(rd_imm_value1),
@@ -262,7 +262,7 @@ module lsu
    wire [2047:0] ex_ld_st_addr;
    wire [63:0] 	 ex_exec_value;
    wire 	 ex_gm_or_lds;
-   wire retire;
+
    lsu_addr_calculator addr_calc(
 				 .in_vector_source_b(addr_calc_vector_source_b),
 				 .in_scalar_source_a(addr_calc_scalar_source_a),
@@ -299,8 +299,7 @@ module lsu
         .clr_freez(clr_freez),
         .wb_en(wb_en),
         .shift_wb(shift_wb),
-        .load_wb(load_wb),
-        .retire(retire)
+        .load_wb(load_wb)
       );
 
 // rw_controller(rd_en_in, wrt_en_in, exec_mask_in, addr_in, addr_out, 
@@ -389,8 +388,8 @@ module lsu
 
    lsu_wb_router wb_router(
                            .in_rd_data(wb_rd_data),
-                           .in_ack(1'b1),
-                           .in_wftag_resp(mem_tag_req),
+                           .in_ack(wb_ack),
+                           .in_wftag_resp(wb_wftag_resp),
                            .in_exec_value(wb_exec_value),
                            .in_lddst_stsrc_addr(wb_lddst_stsrc_addr),
                            .in_reg_wr_en(wb_reg_wr_en),
@@ -410,10 +409,9 @@ module lsu
                            .out_tracemon_retire_pc(tracemon_retire_pc),
                            .out_gm_or_lds(tracemon_gm_or_lds),
 			                     .out_rfa_dest_wr_req(rfa_dest_wr_req),
-                           .wb_en(wb_en),
+                           .wb_en(wb_en)
                            // .wb_ack(wb_ack),
-                           .increAddr(addr_incre_amt),
-                           .retire(retire)
+                           // .increAddr(addr_incre_amt),
                            // .clk(clk),
                            // .rst(rst),
                            // .wb_en(wb_en)

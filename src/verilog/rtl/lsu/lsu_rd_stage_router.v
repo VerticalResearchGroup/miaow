@@ -180,6 +180,20 @@ module lsu_rd_stage_router
                out_wr_en <= 4'b0000;
                out_lddst_stsrc_addr <= in_dest_reg;
             end
+          ///////// ADDED XY & XYZ support
+          {1'b1, `LSU_MTBUF_FORMAT, 8'h01}: //tbuffer_load_format_xy
+            begin
+               out_rd_en <= 4'b0011;
+               out_wr_en <= 4'b0000;
+               out_lddst_stsrc_addr <= in_dest_reg;
+            end
+          {1'b1, `LSU_MTBUF_FORMAT, 8'h02}: //tbuffer_load_format_xyz
+            begin
+               out_rd_en <= 4'b0111;
+               out_wr_en <= 4'b0000;
+               out_lddst_stsrc_addr <= in_dest_reg;
+            end
+          //////////////////////////////////////
           {1'b1, `LSU_MTBUF_FORMAT, 8'h03}: //tbuffer_load_format_xyzw
             begin
                out_rd_en <= 4'b1111;
@@ -192,6 +206,20 @@ module lsu_rd_stage_router
                out_wr_en <= 4'b0001;
                out_lddst_stsrc_addr <= in_source_reg2_flopped;
             end
+          ///////// ADDED XY & XYZ support
+          {1'b1, `LSU_MTBUF_FORMAT, 8'h05}: //tbuffer_store_format_xy
+            begin
+               out_rd_en <= 4'b0000;
+               out_wr_en <= 4'b0011;
+               out_lddst_stsrc_addr <= in_source_reg2_flopped;
+            end
+          {1'b1, `LSU_MTBUF_FORMAT, 8'h06}: //tbuffer_store_format_xyz
+            begin
+               out_rd_en <= 4'b0000;
+               out_wr_en <= 4'b0111;
+               out_lddst_stsrc_addr <= in_source_reg2_flopped;
+            end
+          ////////////////////////////////
           {1'b1, `LSU_MTBUF_FORMAT, 8'h07}: //tbuffer_store_format_xyzw
             begin
                out_rd_en <= 4'b0000;

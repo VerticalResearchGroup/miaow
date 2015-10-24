@@ -49,19 +49,19 @@ assign out_ld_st_addr = in_ld_st_addr;
 assign out_rd_en = in_rd_en;
 assign out_wr_en = in_wr_en;
 
-// dff flop_rd_en[3:0](
-//   .q(out_rd_en),
-//   .d(in_rd_en),
-//   .clk(clk),
-//   .rst(rst)
-// );
+dff flop_rd_en[3:0](
+  .q(out_rd_en),
+  .d(in_rd_en),
+  .clk(clk),
+  .rst(rst)
+);
 
-// dff flop_wr_en[3:0](
-//   .q(out_wr_en),
-//   .d(in_wr_en),
-//   .clk(clk),
-//   .rst(rst)
-// );
+dff flop_wr_en[3:0](
+  .q(out_wr_en),
+  .d(in_wr_en),
+  .clk(clk),
+  .rst(rst)
+);
 
 // dff flop_ld_st_addr[2047:0](
 //   .q(out_ld_st_addr),
