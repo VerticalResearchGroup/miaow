@@ -285,25 +285,6 @@ assign lsu_source1_data = distribute_source1_data;
 
 // S: shrink 8k to 2k, so no need for veriperl assignment
 assign muxed_simx_source1_rd_data = distribute_source1_data;
-/*
-%%start_veriperl
-my $i;
-my $L_index;
-my $H_index;
-my $l_index;
-my $h_index;
-for($i=0; $i<64; $i=$i+1)
-{
-  // change param from 128 to 32 since the bus shrinked
-  $L_index = 32*$i;
-  $H_index = 32*$i+31;
-  $l_index = 32*$i;
-  $h_index = 32*$i+31;
-  print "assign muxed_simx_source1_rd_data[$h_index:$l_index] = distribute_source1_data[$H_index:$L_index];\n";
-}
-%%stop_veriperl
-*/
-
 
 wire [2047:0] distribute_source2_data;
 wire [2047:0] final_source2_data;
