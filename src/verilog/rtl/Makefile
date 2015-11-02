@@ -17,7 +17,7 @@ build:
 	cd simf && make my_build
 	cd rfa && make my_build
 	cd alu && make my_build
-	# cd dispatcher && make my_build
+	cd dispatcher && make my_build
 
 fpga: build
 	mkdir -p fpga_core
@@ -57,7 +57,7 @@ check:
 	cd wavepool && make clean && make compile
 	cd simf && make clean && make compile
 	cd rfa && make clean && make compile
-	#cd alu && make clean && make compile
+	cd alu && make clean && make compile
 	make compile
 
 unbuild:
@@ -96,8 +96,8 @@ uncheck:
 	cd wavepool && make clean
 	cd simf && make clean
 	cd rfa && make clean
-	# cd dispatcher && make clean
-	#cd alu && make clean
+	cd dispatcher && make clean
+	cd alu && make clean
 
 clean: unbuild uncheck
 	rm -rf csrc/ simv simv.daidir/ compile.log
