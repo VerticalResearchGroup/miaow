@@ -138,7 +138,7 @@ elsif ("7" eq $rdir)
 }
 elsif ($rdir =~ /^[1-5]$/)
 {
-  $test_source = "../../sw/rand_unit_tests_".$rdir;
+  $test_source = "../../sw/miaow_unit_tests";
 }
 else
 {
