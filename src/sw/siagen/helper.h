@@ -8,10 +8,6 @@
 
 #define MAX_IMM_VAL 50
 
-FILE *config_file;
-FILE *instrmem_file;
-FILE *datamem_file;
-
 // populate according to commandline values
 // only one variable of this type
 struct //_configValues

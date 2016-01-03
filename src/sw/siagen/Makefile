@@ -1,5 +1,5 @@
-siagen: helper.c asm.c siagen.c main.c
-	gcc -o siagen main.c asm.c siagen.c helper.c
+siagen: helper.cpp asm.cpp siagen.cpp main.cpp
+	g++ -o siagen main.cpp asm.cpp siagen.cpp helper.cpp
 
 #main.o: main.c
 #	gcc -O -Wall -c main.c

@@ -1,8 +1,12 @@
 #include "helper.h"
 
+FILE *config_file;
+FILE *instrmem_file;
+FILE *datamem_file;
+
 void printInstruction32(void* instr) 
 {
-	int *x = instr;
+	int *x = static_cast<int*>(instr);
 	char buff[10];
 	sprintf(buff, "%08X", *x);
 	fprintf(instrmem_file, "%c%c\n", buff[6], buff[7]);
@@ -13,7 +17,7 @@ void printInstruction32(void* instr)
 
 void printInstruction64(void* instr) 
 {
-	int *x = instr;
+	int *x = static_cast<int*>(instr);
 	char buff[10];
 	
 	sprintf(buff, "%08X", *x);
