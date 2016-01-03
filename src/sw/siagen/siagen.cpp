@@ -21,6 +21,9 @@
 
 #include "siagen.h"
 
+extern operandValues opvals;
+extern configValues configs;
+
 int initializeScalarAluOps(Instr_Sel ops[MAX_OPS]) 
 {
 	int sopp_num = 7;

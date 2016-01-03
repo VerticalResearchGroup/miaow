@@ -4,6 +4,8 @@ FILE *config_file;
 FILE *instrmem_file;
 FILE *datamem_file;
 
+configValues configs;
+
 void printInstruction32(void* instr) 
 {
 	int *x = static_cast<int*>(instr);

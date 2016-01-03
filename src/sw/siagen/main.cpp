@@ -1,6 +1,8 @@
 #include "siagen.h"
 #include <time.h>
 
+extern configValues configs;
+
 int main(int argc, char *argv[])
 {
 	int instr_arr[MAX_INSTR];

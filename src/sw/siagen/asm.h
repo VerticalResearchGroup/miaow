@@ -312,7 +312,7 @@ union si_inst_microcode_t
 };
 
 // single varable for operand values
-struct //_operandValues 
+struct _operandValues 
 {
         int imm16;
         int offen;
@@ -334,7 +334,7 @@ struct //_operandValues
         int sbase2;
         int offset;
         int offset12;
-} opvals;
+} typedef operandValues;
 
 void randomizeOperand();
 void instruction_sopp(int opcode);

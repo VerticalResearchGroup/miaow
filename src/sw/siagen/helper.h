@@ -10,7 +10,7 @@
 
 // populate according to commandline values
 // only one variable of this type
-struct //_configValues
+struct _configValues
 {
 	int scalar_alu;
 	int vector_alu;
@@ -31,7 +31,7 @@ struct //_configValues
 
 	int test_count;
 	int unit_tests;
-} configs;
+} typedef configValues;
 
 void printInstruction32(void* instr);
 void printInstruction64(void* instr);

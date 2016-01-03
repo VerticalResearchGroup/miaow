@@ -1,5 +1,8 @@
 #include "asm.h"
 
+operandValues opvals;
+extern configValues configs;
+
 int setSregSrc() {
 	int r = rand()%5;
 
