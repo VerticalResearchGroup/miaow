@@ -1,5 +1,5 @@
 siagen: helper.cpp asm.cpp siagen.cpp main.cpp
-	g++ -o siagen main.cpp asm.cpp siagen.cpp helper.cpp
+	g++ -std=c++0x -o siagen main.cpp asm.cpp siagen.cpp helper.cpp
 
 #main.o: main.c
 #	gcc -O -Wall -c main.c

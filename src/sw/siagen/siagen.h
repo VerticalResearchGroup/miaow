@@ -18,6 +18,8 @@
 #define SCALAR_MEM 2
 #define VECTOR_MEM 3
 
+typedef void(*instr_function)(int);
+
 typedef struct _instr
 {
 	int opcode;
@@ -28,10 +30,10 @@ typedef struct _instr_sel
 {
 	enum si_fmt_enum instr_type;
 	Instr instr;
-	void (*instr_func)(int);
+    instr_function instr_func;
 } Instr_Sel;
 
-void initializeInstrArr(int arr[MAX_INSTR]);
+void initializeInstrArr(int *arr, int array_size);
 void printInstrsInArray(int arr[MAX_INSTR]);
 void printAllUnitTests();
 
