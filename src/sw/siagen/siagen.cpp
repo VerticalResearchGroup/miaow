@@ -263,7 +263,7 @@ void printOpSpecificUT(int type, std::vector<Instr_Sel> &ops, int cnt)
         status = CreateDirectory(folName, nullptr);
         status = SetCurrentDirectory(folName);
 #else
-        sprintf(folName, "test_%d%02d_%s", type, i, ops[i].instr.op_str);
+        sprintf(folName, "test_%d%02d_%s", type, i, ops[i].instr.op_str.c_str());
         mkdir(folName, S_IRWXU | S_IRGRP | S_IXGRP);
         chdir(folName);
 #endif
