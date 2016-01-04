@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string>
 #include "asm.h"
 #include "helper.h"
 
@@ -23,7 +24,7 @@ typedef void(*instr_function)(int);
 typedef struct _instr
 {
 	int opcode;
-	char op_str[30];
+	std::string op_str;
 } Instr;
 
 typedef struct _instr_sel 
