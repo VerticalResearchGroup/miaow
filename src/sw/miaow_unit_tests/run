@@ -166,13 +166,15 @@ DESCRIPTION:
 USAGE:
 	$script_name -i <input_test_name> [-h]
 
+    If no options, are specified all the tests are run with M2S 4.0 version
 ARGUMENTS:
 
 -i <input_test_name> 
--input <input_test_name>       This is a compulsory option; used to specify the name of test to be run.
+-input <input_test_name>       This is an option used to specify the name of test to be run.
 
 -disasm                        Disassembly of Kernel Binary file
  
+
 -v
 -version           Multi2sim version 0(default)[m2s4.0] 2[m2s4.2] 
 

@@ -365,7 +365,7 @@ module gpu_tb();
 			//$monitor("sgpr addr %h", DUT[0].lsu2mem_addr);
 			//$monitor("exec addr %h", DUT[0].lsu0.exec_exec_value);
 			//$monitor("sgpr addr %h", DUT[0].lsu0.addr_calc.out_ld_st_addr);
-			$monitor("sgpr data %h", DUT[0].lsu0.flops_mem_wb.flop_rd_data);
+			//$monitor("sgpr data %h", DUT[0].lsu0.flops_mem_wb.flop_rd_data);
 	end
 
 	//SAIF flow
@@ -559,41 +559,41 @@ module gpu_tb();
 		end
 	endgenerate
 
-	genvar pg;
+	//genvar pg;
 
-	generate
-		for (pg=0; pg < NUMOFCU; pg=pg+1) begin : PT
+	//generate
+	//	for (pg=0; pg < NUMOFCU; pg=pg+1) begin : PT
 
-			profiler #(.CUID(pg)) profiler0 (
-				// unit to aid in profiling
-				.salu2sgpr_instr_done(salu2sgpr_instr_done),
-				.salu2fetchwaveissue_branch_en(salu2fetchwaveissue_branch_en),
-				.simd0_2vgpr_instr_done(DUT[pg].simd0_2rfa_queue_entry_valid),
-				.simd1_2vgpr_instr_done(DUT[pg].simd1_2rfa_queue_entry_valid),
-				.simd2_2vgpr_instr_done(DUT[pg].simd2_2rfa_queue_entry_valid),
-				.simd3_2vgpr_instr_done(DUT[pg].simd3_2rfa_queue_entry_valid),
-				.simf0_2vgpr_instr_done(DUT[pg].simf0_2rfa_queue_entry_valid),
-				.simf1_2vgpr_instr_done(DUT[pg].simf1_2rfa_queue_entry_valid),
-				.simf2_2vgpr_instr_done(DUT[pg].simf2_2rfa_queue_entry_valid),
-				.simf3_2vgpr_instr_done(DUT[pg].simf3_2rfa_queue_entry_valid),
-				.rfa2execvgprsgpr_select_fu(rfa2execvgprsgpr_select_fu),
-				.lsu2vgpr_instr_done(lsu2vgpr_instr_done),
-				.lsu2sgpr_instr_done(lsu2sgpr_instr_done),
-				.salu_alu_select(DUT[pg].issue2salu_alu_select),
-				.simd0_alu_select(DUT[pg].issue2simd0_alu_select),
-				.simd1_alu_select(DUT[pg].issue2simd1_alu_select),
-				.simd2_alu_select(DUT[pg].issue2simd2_alu_select),
-				.simd3_alu_select(DUT[pg].issue2simd3_alu_select),
-				.simf0_alu_select(DUT[pg].issue2simf0_alu_select),
-				.simf1_alu_select(DUT[pg].issue2simf1_alu_select),
-				.simf2_alu_select(DUT[pg].issue2simf2_alu_select),
-				.simf3_alu_select(DUT[pg].issue2simf3_alu_select),
-				.lsu_select(DUT[pg].issue2lsu_lsu_select),
-				.clk(clk)
-			);
+	//		profiler #(.CUID(pg)) profiler0 (
+	//			// unit to aid in profiling
+	//			.salu2sgpr_instr_done(salu2sgpr_instr_done),
+	//			.salu2fetchwaveissue_branch_en(salu2fetchwaveissue_branch_en),
+	//			.simd0_2vgpr_instr_done(DUT[pg].simd0_2rfa_queue_entry_valid),
+	//			.simd1_2vgpr_instr_done(DUT[pg].simd1_2rfa_queue_entry_valid),
+	//			.simd2_2vgpr_instr_done(DUT[pg].simd2_2rfa_queue_entry_valid),
+	//			.simd3_2vgpr_instr_done(DUT[pg].simd3_2rfa_queue_entry_valid),
+	//			.simf0_2vgpr_instr_done(DUT[pg].simf0_2rfa_queue_entry_valid),
+	//			.simf1_2vgpr_instr_done(DUT[pg].simf1_2rfa_queue_entry_valid),
+	//			.simf2_2vgpr_instr_done(DUT[pg].simf2_2rfa_queue_entry_valid),
+	//			.simf3_2vgpr_instr_done(DUT[pg].simf3_2rfa_queue_entry_valid),
+	//			.rfa2execvgprsgpr_select_fu(rfa2execvgprsgpr_select_fu),
+	//			.lsu2vgpr_instr_done(lsu2vgpr_instr_done),
+	//			.lsu2sgpr_instr_done(lsu2sgpr_instr_done),
+	//			.salu_alu_select(DUT[pg].issue2salu_alu_select),
+	//			.simd0_alu_select(DUT[pg].issue2simd0_alu_select),
+	//			.simd1_alu_select(DUT[pg].issue2simd1_alu_select),
+	//			.simd2_alu_select(DUT[pg].issue2simd2_alu_select),
+	//			.simd3_alu_select(DUT[pg].issue2simd3_alu_select),
+	//			.simf0_alu_select(DUT[pg].issue2simf0_alu_select),
+	//			.simf1_alu_select(DUT[pg].issue2simf1_alu_select),
+	//			.simf2_alu_select(DUT[pg].issue2simf2_alu_select),
+	//			.simf3_alu_select(DUT[pg].issue2simf3_alu_select),
+	//			.lsu_select(DUT[pg].issue2lsu_lsu_select),
+	//			.clk(clk)
+	//		);
 
-		end
-	endgenerate
+	//	end
+	//endgenerate
 
 	initial begin
 		$display("Starting");
@@ -645,13 +645,22 @@ module gpu_tb();
 
 	always @(posedge clk) begin
 		if (wf_rem <= 0) begin
-			kern = Initialize(NUMOFCU, iter);
+			$display ("--------------------------------------");
+			$display("Initializing kernel: %d", iter);
+			$display ("--------------------------------------");
+			
+            kern = Initialize(NUMOFCU, iter);
 			if (kern <= 0) terminate();
 
 			#0;
 
 			wf_rem = getTotalWavefronts();
-			$readmemh("instr.mem", instr_buffer0.instr_memory);
+				
+			$display ("--------------------------------------");
+			$display("Number of wavefronts: %d", wf_rem);
+			$display ("--------------------------------------");
+			
+            $readmemh("instr.mem", instr_buffer0.instr_memory);
 			$readmemh("data.mem", memory0.data_memory);
 
 			iter = iter + 1;
@@ -746,7 +755,6 @@ module gpu_tb();
 				$display ("LDS_Size value: %d", ldssize);
 				$display ("PC value: %d", dispatch2cu_start_pc_dispatch);
 				$display ("WFID: %d", dispatch2cu_wf_tag_dispatch);
-				$display ("test text");
 			end
 		end
 	end

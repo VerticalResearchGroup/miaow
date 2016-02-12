@@ -90,7 +90,7 @@ if($killtime == 0)
   if ($rdir =~ /^[1-5]$/)
   {
     #100 for unit tests
-    $killtime = 1000;
+    $killtime = 10000;
   }
   else
   {
