@@ -4,7 +4,10 @@ module memory(
       wr_en,
       addresses,
       wr_data,
+      input_tag,
+//      wr_mask,
       rd_data,
+      output_tag,
       ack,
       clk,
       rst
@@ -17,16 +20,22 @@ input gm_or_lds;
 input rd_en, wr_en;
 input [31:0] addresses;
 input [31:0] wr_data;
+input [6:0] input_tag;
 
+output [6:0] output_tag;
 output ack;
 output [31:0] rd_data;
 
 reg[7:0] data_memory[50000:0];
 reg[7:0] lds_memory[65535:0];
 
+reg ack_reg;
+reg [6:0] tag_reg;
+
 //integer locrd = 4; // num of loc to read
 
-assign ack = 1;
+assign ack = ack_reg;
+assign output_tag = tag_reg;
 integer i;
 always@(posedge clk, posedge rst) begin
       // if(rst) begin
@@ -52,6 +61,21 @@ always@(posedge clk, posedge rst) begin
                   data_memory [addresses+3] <= wr_data[31:24];
             end
       end
+end
+
+always@(posedge clk) begin
+  if(rst) begin
+    ack_reg <= 1'b0;
+    tag_reg <= 7'd0;
+  end
+  else begin
+    ack_reg <= 1'b0;
+    tag_reg <= 7'd0;
+    if(rd_en | wr_en) begin
+      ack_reg <= 1'b1;
+      tag_reg <= input_tag;
+    end
+  end
 end
 
 wire [31:0] rd_lds;

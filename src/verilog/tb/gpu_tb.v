@@ -339,11 +339,11 @@ module gpu_tb();
 		.wr_en(lsu2mem_wr_en),
 		.addresses(lsu2mem_addr),
 		.wr_data(lsu2mem_wr_data),
-		//.input_tag(lsu2mem_tag_req),
+		.input_tag(lsu2mem_tag_req),
 		//.wr_mask(lsu2mem_wr_mask),
 		//  Outputs
 		.rd_data(mem2lsu_rd_data),
-		//.output_tag(mem2lsu_tag_resp),
+		.output_tag(mem2lsu_tag_resp),
 		.ack(mem2lsu_ack)
 		//.tracemon_addr(mem2tracemon_addr),
 		//.tracemon_store_data(mem2tracemon_store_data),
