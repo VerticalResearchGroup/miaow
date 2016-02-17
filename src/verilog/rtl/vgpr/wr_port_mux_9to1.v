@@ -100,45 +100,7 @@ module wr_port_mux_9to1
   reg [9:0] muxed_port_wr_addr;
   reg [2047:0] muxed_port_wr_data;
 
-  always @ (
-    wr_port_select or
-    port0_wr_en or
-    port0_wr_mask or
-    port0_wr_addr or
-    port0_wr_data or
-    port1_wr_en or
-    port1_wr_mask or
-    port1_wr_addr or
-    port1_wr_data or
-    port2_wr_en or
-    port2_wr_mask or
-    port2_wr_addr or
-    port2_wr_data or
-    port3_wr_en or
-    port3_wr_mask or
-    port3_wr_addr or
-    port3_wr_data or
-    port4_wr_en or
-    port4_wr_mask or
-    port4_wr_addr or
-    port4_wr_data or
-    port5_wr_en or
-    port5_wr_mask or
-    port5_wr_addr or
-    port5_wr_data or
-    port6_wr_en or
-    port6_wr_mask or
-    port6_wr_addr or
-    port6_wr_data or
-    port7_wr_en or
-    port7_wr_mask or
-    port7_wr_addr or
-    port7_wr_data or
-    port8_wr_en or
-    port8_wr_mask or
-    port8_wr_addr or
-    port8_wr_data	    
-  ) begin
+  always @ (*) begin
     casex(wr_port_select)
       16'h0001:
         begin
@@ -213,8 +175,8 @@ module wr_port_mux_9to1
         end
       default:
         begin
-          muxed_port_wr_en <= 1'bx;
-          muxed_port_wr_mask <= {64{1'bx}};
+          muxed_port_wr_en <= 1'b0;
+          muxed_port_wr_mask <= {64{1'b0}};
           muxed_port_wr_addr <= {10{1'bx}};
           // S: change from 8k to 2k
           muxed_port_wr_data <= {2048{1'bx}};
