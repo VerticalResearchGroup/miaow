@@ -715,14 +715,8 @@ void setVregValue(int cuid, int thrd, int vreg, int bitnum, int value)
 {
 	vpiHandle h1;
 	char str[80];
-	int banknum;
-	int wordnum;
 
-	//Vgpr is organized as 4 banks
-	banknum = vreg % 4;
-	wordnum = vreg / 4;
-
-	sprintf(str, "gpu_tb.DUT[%d].vgpr0.reg_file.page[%d].bank%d.word[%d].bits[%d].flop_0.state", cuid, thrd, banknum, wordnum, bitnum);
+	sprintf(str, "gpu_tb.DUT[%d].vgpr0.reg_file.page[%d].bank0.word[%d].bits[%d].flop_0.state", cuid, thrd, vreg, bitnum);
 	h1 = vpi_handle_by_name (str, NULL); 
 
 	struct t_vpi_value argval;
