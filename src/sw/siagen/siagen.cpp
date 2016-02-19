@@ -176,7 +176,7 @@ int InitializeVectorAluOps(std::vector<Instr_Sel> &instr_sel_ops)
 {
     InitializeOps(SI_FMT_VOP1, instruction_vop1, vop1_ops, instr_sel_ops);
     InitializeOps(SI_FMT_VOP2, instruction_vop2, vop2_ops, instr_sel_ops);
-    InitializeOps(SI_FMT_VOPC, instruction_sop2, sop2_ops, instr_sel_ops);
+    InitializeOps(SI_FMT_VOPC, instruction_vopc, vopc_ops, instr_sel_ops);
     InitializeOps(SI_FMT_VOP3a, instruction_vop3a, vop3a_ops, instr_sel_ops);
     //InitializeOps(SI_FMT_VOP3b, instruction_vop3b, vop3b_ops, instr_sel_ops); // Not supported yet
 
