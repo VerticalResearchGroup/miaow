@@ -192,6 +192,13 @@ begin
         s1_width <= `DECODE_BIT64;
         dest1_width <= `DECODE_BIT64;
       end
+    //SOP1: S_CMOV_B32
+    {2'b10,8'd2,24'h5}:
+      begin
+       scc_read <= 1'b1;
+       s1_width <= `DECODE_BIT32;
+       dest1_width <= `DECODE_BIT32;
+      end
     //SOP1: S_NOT_B32
     {2'b10,8'd2,24'h7}:
       begin
@@ -205,6 +212,20 @@ begin
         scc_write <= 1'b1;
         s1_width <= `DECODE_BIT64;
         dest1_width <= `DECODE_BIT64;
+      end
+    //SOP1: S_BREV_B32
+    {2'b10,8'd2,24'hB}:
+      begin
+        scc_read <= 1'b1;
+        s1_width <= `DECODE_BIT32;
+        dest1_width <= `DECODE_BIT32;
+      end
+    //SOP1: S_SEXT_I32_I8
+    {2'b10,8'd2,24'h19}:
+      begin
+        scc_read <= 1'b1;
+        s1_width <= `DECODE_BIT32;
+	dest1_width <= `DECODE_BIT32;
       end
     //SOP1: S_AND_SAVEEXEC_B64
     {2'b10,8'd2,24'h24}:
@@ -445,6 +466,14 @@ begin
         s1_width <= `DECODE_BIT32;
         s2_width <= `DECODE_BIT32;
         dest1_width <= `DECODE_BIT32;
+      end
+    //SOP2: S_CSELECT_B32
+    {2'b10,8'd8,24'hA}:
+      begin
+	scc_read <= 1'b1;
+	s1_width <= `DECODE_BIT32;
+	s2_width <= `DECODE_BIT32;
+	dest1_width <= `DECODE_BIT32;
       end
     //SOP2: S_AND_B32
     {2'b10,8'd8,24'he}:
