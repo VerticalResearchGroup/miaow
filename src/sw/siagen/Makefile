@@ -16,5 +16,8 @@ siagen: helper.cpp asm.cpp siagen.cpp main.cpp
 #clean:
 #	rm -f main.o siagen.o asm.o helper.o siagen
 
+debug: helper.cpp asm.cpp siagen.cpp main.cpp
+	g++ -ggdb -std=c++0x -o siagen main.cpp asm.cpp siagen.cpp helper.cpp
+
 clean:
 	rm -f siagen
