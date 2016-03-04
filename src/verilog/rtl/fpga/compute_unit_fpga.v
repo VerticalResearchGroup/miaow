@@ -1001,7 +1001,7 @@ rfa rfa0 (
 simd simd0 (
   // Contains a 16 wide vector alu for vector operations
   .clk(clk),
-  .rst(rst),
+  .rst(rst_signal),
   //  Inputs
   .issue_source_reg1(issue2alu_source_reg1),
   .issue_source_reg2(issue2alu_source_reg2),
@@ -1055,7 +1055,7 @@ simd simd0 (
 simf simf0 (
   // Contains a 16 wide floating point vector alu for vector operations
   .clk(clk),
-  .rst(rst),
+  .rst(rst_signal),
   //  Inputs
   .issue_source_reg1(issue2alu_source_reg1),
   .issue_source_reg2(issue2alu_source_reg2),
