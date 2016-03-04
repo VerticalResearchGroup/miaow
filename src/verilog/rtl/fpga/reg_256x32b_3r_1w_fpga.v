@@ -40,7 +40,7 @@ block_ram bank0(
   .douta(), // output [31 : 0] douta
   .clkb(clk), // input clkb
   //.rstb(rst), // input rstb
-  .web(4'd0), // input [3 : 0] web
+  .web(1'b0), // input [3 : 0] web
   .addrb(rd0_addr), // input [31 : 0] addrb
   .dinb(32'd0), // input [31 : 0] dinb
   .doutb(block_out_a) // output [31 : 0] doutb
@@ -55,7 +55,7 @@ block_ram bank1(
   .douta(), // output [31 : 0] douta
   .clkb(clk), // input clkb
   //.rstb(rst), // input rstb
-  .web(4'd0), // input [3 : 0] web
+  .web(1'b0), // input [3 : 0] web
   .addrb(rd1_addr), // input [31 : 0] addrb
   .dinb(32'd0), // input [31 : 0] dinb
   .doutb(block_out_b) // output [31 : 0] doutb
@@ -70,7 +70,7 @@ block_ram bank2(
   .douta(), // output [31 : 0] douta
   .clkb(clk), // input clkb
   //.rstb(rst), // input rstb
-  .web(4'd0), // input [3 : 0] web
+  .web(1'b0), // input [3 : 0] web
   .addrb(rd2_addr), // input [31 : 0] addrb
   .dinb(32'd0), // input [31 : 0] dinb
   .doutb(block_out_c) // output [31 : 0] doutb
