@@ -81,7 +81,7 @@ module salu(
    wire 	 alu_select_i, alu_select_i_flopped, alu_select_ii, exec_en_i, 
 		 vcc_en_i, scc_en_i, m0_en_i, branch_en, branch_taken, 
 		 branch_taken_i, branch_en_i, branch_taken_ii, branch_en_ii, 
-		 bit64_op, bit64_op_i;
+		 bit64_op, bit64_op_i, scc_val_i;
    wire [1:0] 	 sgpr_en_i, vcc_wordsel, exec_wordsel, vcc_wordsel_i,
 		 exec_wordsel_i, vcc_wordsel_ii, exec_wordsel_ii;
    wire [5:0] 	 wfid_i, wfid_ii;
@@ -260,10 +260,10 @@ module salu(
 			     );
 
    // Stage 2: Latching source operands
-   regfile #(256) source_input(
-			       { source1_value, source2_value, exec_rd_exec_value_i, exec_rd_vcc_value_i },
+   regfile #(257) source_input(
+			       { source1_value, source2_value, exec_rd_exec_value_i, exec_rd_vcc_value_i, exec_rd_scc_value_i },
 			       1'b1,
-			       { source1_value_i, source2_value_i, exec_val_i, vcc_val_i },
+			       { source1_value_i, source2_value_i, exec_val_i, vcc_val_i, scc_val_i },
 			       clk, rst
 			       );
 
@@ -296,18 +296,20 @@ module salu(
 
    assign rfa2salu_req_hold = (salu2sgpr_req_ii | salu2sgpr_req_i | salu2sgpr_req) ? 1'b1: 1'b0;
    salu_controller scontrol(
-			    alu_select_i_flopped, dest_reg_i, opcode_i, alu_control,
-			    branch_on_cc, exec_en, vcc_en, scc_en, m0_en, sgpr_en,
-			    vcc_wordsel, exec_wordsel, exec_sgpr_cpy, snd_src_imm,
-			    bit64_op, rst, clk, salu2sgpr_req, rfa2salu_req_hold, 
-                            issue_alu_select, issue_dest_reg
+			    .control_en(alu_select_i_flopped), .dst_reg(dest_reg_i), .opcode(opcode_i), 
+                            .alu_control(alu_control), .branch_on_cc(branch_on_cc), .exec_en(exec_en), 
+                            .vcc_en(vcc_en), .scc_en(scc_en), .m0_en(m0_en), .sgpr_en(sgpr_en), 
+                            .vcc_wordsel(vcc_wordsel), .exec_wordsel(exec_wordsel), .exec_sgpr_cpy(exec_sgpr_cpy), 
+                            .snd_src_imm(snd_src_imm), .bit64_op(bit64_op), .rst(rst), .clk(clk), 
+                            .salu2sgpr_req(salu2sgpr_req), .rfa2salu_req_hold(rfa2salu_req_hold), 
+                            .control_en_fw(issue_alu_select), .dst_reg_fw(issue_dest_reg)
 			    );
    //**
 
    //alu
    scalar_alu salu_gpu(
-		       source1_value_i, source2_value_i, exec_val_i, alu_control_i,
-		       bit64_op_i, alu_out, scc_data
+		       .s1(source1_value_i), .s2(source2_value_i), .exec(exec_val_i), .control(alu_control_i),
+		       .scc(scc_val_i), .b64_op(bit64_op_i), .out(alu_out), .scc_val(scc_data)
 		       );
 
    ///////////////////////////////////////////////////////
