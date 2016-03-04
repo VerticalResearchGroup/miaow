@@ -332,7 +332,7 @@ fetch fetch0 (
   vgpr vgpr0 (
   // A set of vector general purpose registers
   .clk(clk),
-  .rst(rst),
+  .rst(rst_signal),
   //  Inputs
   .simd0_source1_rd_en(simd0_2vgpr_source1_rd_en),
   .simd1_source1_rd_en(simd1_2vgpr_source1_rd_en),
