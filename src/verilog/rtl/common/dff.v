@@ -9,7 +9,7 @@ module dff (q, d, clk, rst);
 
    assign q = state;
 
-   always @(posedge clk or posedge rst)
+   always @(posedge clk)
    begin
       if (rst)
          state <= 1'b0;
