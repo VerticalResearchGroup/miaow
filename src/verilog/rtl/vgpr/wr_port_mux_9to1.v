@@ -167,7 +167,7 @@ module wr_port_mux_9to1
         end
       16'b0000:
         begin
-          muxed_port_wr_en <= 4'b0;
+          muxed_port_wr_en <= 4'd0;
           muxed_port_wr_mask <= 64'b0;
           muxed_port_wr_addr <= {10{1'bx}};
           // S: change from 8k to 2k
@@ -175,7 +175,7 @@ module wr_port_mux_9to1
         end
       default:
         begin
-          muxed_port_wr_en <= 1'b0;
+          muxed_port_wr_en <= 4'd0;
           muxed_port_wr_mask <= {64{1'b0}};
           muxed_port_wr_addr <= {10{1'bx}};
           // S: change from 8k to 2k
