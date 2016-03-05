@@ -34,7 +34,8 @@
         output wire [31:0] quadData2_out,
         output wire [31:0] quadData3_out,
         input wire [127:0] quadData_in,
-
+        input wire [2047:0] singleVectorData_in,
+        output wire [9:0] singleVectorBaseAddress_out,
         output wire execute_out,
         output wire executeStart_out,
 
@@ -46,7 +47,8 @@
         output wire mb2fpgamem_data_we,
         output wire mb2fpgamem_ack,
         output wire mb2fpgamem_done,
-        
+        output wire [0:0] peripheral_aresetn,
+
         input wire [3:0] fpgamem2mb_op,
         input wire [31:0] fpgamem2mb_data,
         input wire [31:0] fpgamem2mb_addr,
@@ -176,6 +178,8 @@ reg [31:0] quadData2;
 reg [31:0] quadData3;
 reg [3:0] lsu2sgpr_dest_wr_en_reg;
 
+reg [9:0]  singleVectorBaseAddress;
+
 reg [31:0] mb2fpgamem_data_in_reg;
 reg mb2fpgamem_data_we_reg;
 reg mb2fpgamem_ack_reg;
@@ -183,6 +187,9 @@ reg mb2fpgamem_done_reg;
 
 reg [31:0] cycle_counter;
 reg [31:0] cycle_counter_next;
+
+reg mb_reset;
+initial mb_reset = 1'b1;
 
 wire [31:0] fpgamem2mb_op_net;
 
@@ -200,13 +207,15 @@ assign baseLDS_out = baseLDS;
 assign waveCount_out = waveCount;
 assign pcStart_out = pcStart;
 assign instrAddrReg_out = instrAddrReg;
-
+assign peripheral_aresetn = mb_reset & S_AXI_ARESETN;
 assign quadBaseAddress_out = quadBaseAddress;
 assign lsu2sgpr_dest_wr_en_out = lsu2sgpr_dest_wr_en_reg;
 assign quadData0_out = quadData0;
 assign quadData1_out = quadData1;
 assign quadData2_out = quadData2;
 assign quadData3_out = quadData3;
+
+assign singleVectorBaseAddress_out = singleVectorBaseAddress;
 
 assign execute_out = execute;
 assign executeStart_out = executeStart;
@@ -238,7 +247,7 @@ always @(*) begin
     end
 
     always @( posedge S_AXI_ACLK ) begin
-      if ( S_AXI_ARESETN == 1'b0 ) begin
+      if ( S_AXI_ARESETN == 1'b0 | mb_reset == 1'b0) begin
         executeState <= IDLE_STATE;
         cycle_counter <= 32'd0;
       end
@@ -381,10 +390,25 @@ always @(*) begin
         slv_reg_wren_buffer <= 1'b0;
       end
       else begin
-        slv_reg_wren_buffer <= slv_reg_wren;
-        if(cu2dispatch_wf_done_in) begin
-          resultsReadyTag <= resultsReadyTag_in;
-        end
+      	if( mb_reset == 1'b0)
+            begin
+              waveID    <= 32'd0;
+              baseVGPR  <= 32'd0;
+              baseSGPR  <= 32'd0;
+              baseLDS   <= 32'd0;
+              waveCount <= 32'd0;
+      
+              resultsReadyTag <= 32'd0;
+              
+              slv_reg_wren_buffer <= 1'b0;
+            end
+        else
+          begin
+              slv_reg_wren_buffer <= slv_reg_wren;
+              if(cu2dispatch_wf_done_in) begin
+                resultsReadyTag <= resultsReadyTag_in;
+              end
+          end
         if (slv_reg_wren)
           begin
             case ( axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
@@ -397,8 +421,9 @@ always @(*) begin
               7'h06: pcStart      <= S_AXI_WDATA;
               7'h07: instrAddrReg <= S_AXI_WDATA;
               // 7'h08: Instruction value
-              // 7'h09: Unused
+              7'h09: mb_reset <= ~S_AXI_WDATA[0];
               // 7'h0A: GPR command register
+              
               7'h0B: quadBaseAddress <= S_AXI_WDATA[9:0];
               7'h0C: quadData0 <= S_AXI_WDATA;
               7'h0D: quadData1 <= S_AXI_WDATA;
@@ -409,6 +434,7 @@ always @(*) begin
               7'h31: mb2fpgamem_data_we_reg <= S_AXI_WDATA[0];
               7'h32: mb2fpgamem_ack_reg <= S_AXI_WDATA[0];
               7'h33: mb2fpgamem_done_reg <= S_AXI_WDATA[0];
+              7'h34: singleVectorBaseAddress <= S_AXI_WDATA[9:0];
               default:
               begin
                 waveID    <= waveID;
@@ -547,6 +573,74 @@ always @(*) begin
         
         7'h30   : reg_data_out <= cycle_counter;
         7'h31   : reg_data_out <= pc_value;
+        7'h35   : reg_data_out <= singleVectorData_in[31:0];
+        7'h36   : reg_data_out <= singleVectorData_in[63:32];
+        7'h37   : reg_data_out <= singleVectorData_in[95:64];
+        7'h38   : reg_data_out <= singleVectorData_in[127:96];
+        7'h39   : reg_data_out <= singleVectorData_in[159:128];
+        7'h3A   : reg_data_out <= singleVectorData_in[191:160];
+        7'h3B   : reg_data_out <= singleVectorData_in[223:192];
+        7'h3C   : reg_data_out <= singleVectorData_in[255:224];
+        7'h3D   : reg_data_out <= singleVectorData_in[287:256];
+        7'h3E   : reg_data_out <= singleVectorData_in[319:288];
+        7'h3F   : reg_data_out <= singleVectorData_in[351:320];
+        7'h40   : reg_data_out <= singleVectorData_in[383:352];
+        7'h41   : reg_data_out <= singleVectorData_in[415:384];
+        7'h42   : reg_data_out <= singleVectorData_in[447:416];
+        7'h43   : reg_data_out <= singleVectorData_in[479:448];
+        7'h44   : reg_data_out <= singleVectorData_in[511:480];
+        
+        7'h45   : reg_data_out <= singleVectorData_in[543:512];
+        7'h46   : reg_data_out <= singleVectorData_in[575:544];
+        7'h47   : reg_data_out <= singleVectorData_in[607:576];
+        7'h48   : reg_data_out <= singleVectorData_in[639:608];
+        7'h49   : reg_data_out <= singleVectorData_in[671:640];
+        7'h4A   : reg_data_out <= singleVectorData_in[703:672];
+        7'h4B   : reg_data_out <= singleVectorData_in[735:704];
+        7'h4C   : reg_data_out <= singleVectorData_in[767:736];
+        7'h4D   : reg_data_out <= singleVectorData_in[799:768];
+        7'h4E   : reg_data_out <= singleVectorData_in[831:800];
+        7'h4F   : reg_data_out <= singleVectorData_in[863:832];
+        7'h50   : reg_data_out <= singleVectorData_in[895:864];
+        7'h51   : reg_data_out <= singleVectorData_in[927:896];
+        7'h52   : reg_data_out <= singleVectorData_in[959:928];
+        7'h53   : reg_data_out <= singleVectorData_in[991:960];
+        7'h54   : reg_data_out <= singleVectorData_in[1023:992];
+        
+        7'h55   : reg_data_out <= singleVectorData_in[1055:1024];
+        7'h56   : reg_data_out <= singleVectorData_in[1087:1056];
+        7'h57   : reg_data_out <= singleVectorData_in[1119:1088];
+        7'h58   : reg_data_out <= singleVectorData_in[1151:1120];
+        7'h59   : reg_data_out <= singleVectorData_in[1183:1152];
+        7'h5A   : reg_data_out <= singleVectorData_in[1215:1184];
+        7'h5B   : reg_data_out <= singleVectorData_in[1247:1216];
+        7'h5C   : reg_data_out <= singleVectorData_in[1279:1248];
+        7'h5D   : reg_data_out <= singleVectorData_in[1311:1280];
+        7'h5E   : reg_data_out <= singleVectorData_in[1343:1312];
+        7'h5F   : reg_data_out <= singleVectorData_in[1375:1344];
+        7'h60   : reg_data_out <= singleVectorData_in[1407:1376];
+        7'h61   : reg_data_out <= singleVectorData_in[1439:1408];
+        7'h62   : reg_data_out <= singleVectorData_in[1471:1440];
+        7'h63   : reg_data_out <= singleVectorData_in[1503:1472];
+        7'h64   : reg_data_out <= singleVectorData_in[1535:1504];
+                
+        7'h65   : reg_data_out <= singleVectorData_in[1567:1536];
+        7'h66   : reg_data_out <= singleVectorData_in[1599:1568];
+        7'h67   : reg_data_out <= singleVectorData_in[1631:1600];
+        7'h68   : reg_data_out <= singleVectorData_in[1663:1632];
+        7'h69   : reg_data_out <= singleVectorData_in[1695:1664];
+        7'h6A   : reg_data_out <= singleVectorData_in[1727:1696];
+        7'h6B   : reg_data_out <= singleVectorData_in[1759:1728];
+        7'h6C   : reg_data_out <= singleVectorData_in[1791:1760];
+        7'h6D   : reg_data_out <= singleVectorData_in[1823:1792];
+        7'h6E   : reg_data_out <= singleVectorData_in[1855:1824];
+        7'h6F   : reg_data_out <= singleVectorData_in[1887:1856];
+        7'h70   : reg_data_out <= singleVectorData_in[1919:1888];
+        7'h71   : reg_data_out <= singleVectorData_in[1951:1920];
+        7'h72   : reg_data_out <= singleVectorData_in[1983:1952];
+        7'h73   : reg_data_out <= singleVectorData_in[2015:1984];
+        7'h74   : reg_data_out <= singleVectorData_in[2047:2016];
+        
         default : reg_data_out <= 0;
       endcase
     end
