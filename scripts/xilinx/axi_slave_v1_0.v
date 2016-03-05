@@ -51,7 +51,8 @@
         input wire [31:0] fpgamem2mb_addr,
         
         input wire [31:0] pc_value,
-
+	input wire [2047:0] singleVectorData_in,
+        output wire [9:0] singleVectorBaseAddress_out,
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -105,7 +106,8 @@
         
         .execute_out(execute_out),
         .executeStart_out(executeStart_out),
-        
+        .singleVectorBaseAddress_out(singleVectorBaseAddress_out),
+        .singleVectorData_in(singleVectorData_in),
         .instrBuffWrEn_out(instrBuffWrEn_out),
         
         .axi_data_out(axi_data_out),
