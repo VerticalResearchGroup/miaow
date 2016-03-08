@@ -53,6 +53,10 @@
         input wire [31:0] pc_value,
 	input wire [2047:0] singleVectorData_in,
         output wire [9:0] singleVectorBaseAddress_out,
+        output wire [2047:0] singleVectorWrData_out,
+  	output wire [63:0] singleVectorWrDataMask_out,
+  	output wire [3:0] singleVectorWrEn_out,
+  	
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -108,6 +112,10 @@
         .executeStart_out(executeStart_out),
         .singleVectorBaseAddress_out(singleVectorBaseAddress_out),
         .singleVectorData_in(singleVectorData_in),
+        .singleVectorWrData_out(singleVectorWrData_out),
+        .singleVectorWrDataMask_out(singleVectorWrDataMask_out),
+        .singleVectorWrEn_out(singleVectorWrEn_out),
+        
         .instrBuffWrEn_out(instrBuffWrEn_out),
         
         .axi_data_out(axi_data_out),
