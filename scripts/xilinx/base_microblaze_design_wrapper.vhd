@@ -77,6 +77,11 @@ architecture STRUCTURE of base_microblaze_design_wrapper is
   
   signal  singleVectorData_in : STD_LOGIC_VECTOR ( 2047 downto 0 );
   signal  singleVectorBaseAddress_out : STD_LOGIC_VECTOR ( 9 downto 0 );
+  
+  signal singleVectorWrData_out : STD_LOGIC_VECTOR (2047 downto 0);
+  signal singleVectorWrDataMask_out : STD_LOGIC_VECTOR (63 downto 0);
+  signal singleVectorWrEn_out : STD_LOGIC_VECTOR (3 downto 0);
+  
   component base_microblaze_design is
   port (
     rs232_uart_rxd : in STD_LOGIC;
@@ -134,6 +139,10 @@ architecture STRUCTURE of base_microblaze_design_wrapper is
     singleVectorData_in : in STD_LOGIC_VECTOR ( 2047 downto 0 );
     singleVectorBaseAddress_out : out STD_LOGIC_VECTOR ( 9 downto 0 );
     
+    singleVectorWrData_out : out STD_LOGIC_VECTOR (2047 downto 0);
+    singleVectorWrDataMask_out : out STD_LOGIC_VECTOR (63 downto 0);
+    singleVectorWrEn_out : out STD_LOGIC_VECTOR (3 downto 0);
+    
     clk_out1 : out STD_LOGIC
   );
   end component base_microblaze_design;
@@ -175,6 +184,9 @@ architecture STRUCTURE of base_microblaze_design_wrapper is
       
       singleVectorData_in : out STD_LOGIC_VECTOR ( 2047 downto 0 );
       singleVectorBaseAddress_out : in STD_LOGIC_VECTOR ( 9 downto 0 );
+      singleVectorWrData_out : in STD_LOGIC_VECTOR (2047 downto 0);
+      singleVectorWrDataMask_out : in STD_LOGIC_VECTOR (63 downto 0);
+      singleVectorWrEn_out : in STD_LOGIC_VECTOR (3 downto 0);
       
       pc_value : out STD_LOGIC_VECTOR ( 31 downto 0 )
     );
@@ -236,6 +248,9 @@ base_microblaze_design_i: component base_microblaze_design
       
       singleVectorData_in( 2047 downto 0 ) => singleVectorData_in( 2047 downto 0 ),
       singleVectorBaseAddress_out( 9 downto 0 )  => singleVectorBaseAddress_out( 9 downto 0 ), 
+      singleVectorWrData_out (2047 downto 0) => singleVectorWrData_out (2047 downto 0),
+      singleVectorWrDataMask_out  (63 downto 0) => singleVectorWrDataMask_out  (63 downto 0),
+      singleVectorWrEn_out (3 downto 0) => singleVectorWrEn_out (3 downto 0),
       
       waveID_out(31 downto 0) => waveID_out(31 downto 0)
     );
@@ -274,6 +289,9 @@ base_microblaze_design_i: component base_microblaze_design
       fpgamem2mb_op(3 downto 0) => fpgamem2mb_op(3 downto 0),
       singleVectorData_in( 2047 downto 0 ) => singleVectorData_in( 2047 downto 0 ),
       singleVectorBaseAddress_out( 9 downto 0 )  => singleVectorBaseAddress_out( 9 downto 0 ),
+      singleVectorWrData_out (2047 downto 0) => singleVectorWrData_out (2047 downto 0),
+      singleVectorWrDataMask_out  (63 downto 0) => singleVectorWrDataMask_out  (63 downto 0),
+      singleVectorWrEn_out (3 downto 0) => singleVectorWrEn_out (3 downto 0),
       pc_value => pc_value
     );
 end STRUCTURE;
