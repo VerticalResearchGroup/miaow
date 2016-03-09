@@ -183,8 +183,12 @@ reg [31:0] quadData3;
 reg [3:0] lsu2sgpr_dest_wr_en_reg;
 
 reg [9:0]  singleVectorBaseAddress;
+
 reg [63:0] singleVectorWrDataMask;
+reg [63:0] singleVectorWrDataMask_next;
 reg [3:0] singleVectorWrEn_reg;
+
+
 reg [31:0] singleVectorWrData0, singleVectorWrData1, singleVectorWrData2, singleVectorWrData3, singleVectorWrData4, singleVectorWrData5, singleVectorWrData6,
            singleVectorWrData7, singleVectorWrData8, singleVectorWrData9, singleVectorWrData10, singleVectorWrData11, singleVectorWrData12, singleVectorWrData13,
            singleVectorWrData14, singleVectorWrData15, singleVectorWrData16, singleVectorWrData17, singleVectorWrData18, singleVectorWrData19, singleVectorWrData20,
@@ -247,7 +251,6 @@ assign singleVectorWrData_out = {
            }; 
 assign singleVectorWrDataMask_out = singleVectorWrDataMask;
 assign singleVectorWrEn_out = singleVectorWrEn_reg;
-
 
 assign execute_out = execute;
 assign executeStart_out = executeStart;
@@ -322,7 +325,7 @@ always @(*) begin
 
     always @(*) begin
       singleVectorWrEn_reg <= 4'd0;
-      if(slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] >= 7'h35 && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] <= 7'h74) begin
+      if(slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 7'h75) begin
         singleVectorWrEn_reg <= 4'b1111;
       end
     end
@@ -448,6 +451,7 @@ always @(*) begin
         else
           begin
               slv_reg_wren_buffer <= slv_reg_wren;
+              singleVectorWrDataMask <= singleVectorWrDataMask | singleVectorWrDataMask_next;
               if(cu2dispatch_wf_done_in) begin
                 resultsReadyTag <= resultsReadyTag_in;
               end
@@ -477,330 +481,336 @@ always @(*) begin
               7'h31: mb2fpgamem_data_we_reg <= S_AXI_WDATA[0];
               7'h32: mb2fpgamem_ack_reg <= S_AXI_WDATA[0];
               7'h33: mb2fpgamem_done_reg <= S_AXI_WDATA[0];
-              7'h34: singleVectorBaseAddress <= S_AXI_WDATA[9:0];
+              
+              7'h34:
+              begin
+               singleVectorBaseAddress <= S_AXI_WDATA[9:0];
+               singleVectorWrDataMask <= 64'd0;
+              end
               
               7'h35:
               begin
                singleVectorWrData0 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000001;
+               singleVectorWrDataMask_next <=  64'h0000000000000001;
               end
               7'h36:
               begin
                singleVectorWrData1 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000002;
+                singleVectorWrDataMask_next <=  64'h0000000000000002;
               end
               7'h37:
               begin
                singleVectorWrData2 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000004;
+                singleVectorWrDataMask_next <=  64'h0000000000000004;
               end
               7'h38:
               begin
                singleVectorWrData3 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000008;
+                singleVectorWrDataMask_next <=  64'h0000000000000008;
               end
               7'h39:
               begin
                singleVectorWrData4 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000010;
+                singleVectorWrDataMask_next <=  64'h0000000000000010;
               end
               7'h3a:
               begin
                singleVectorWrData5 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000020;
+                singleVectorWrDataMask_next <=  64'h0000000000000020;
               end
               7'h3b:
               begin
                singleVectorWrData6 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000040;
+                singleVectorWrDataMask_next <=  64'h0000000000000040;
               end
               7'h3c:
               begin
                singleVectorWrData7 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000080;
+                singleVectorWrDataMask_next <=  64'h0000000000000080;
               end
               7'h3d:
               begin
                singleVectorWrData8 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000100;
+                singleVectorWrDataMask_next <=  64'h0000000000000100;
               end
               7'h3e:
               begin
                singleVectorWrData9 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000200;
+                singleVectorWrDataMask_next <=  64'h0000000000000200;
               end
               7'h3f:
               begin
                singleVectorWrData10 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000400;
+                singleVectorWrDataMask_next <=  64'h0000000000000400;
               end
               
               7'h40:
               begin
                singleVectorWrData11 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000000800;
+                singleVectorWrDataMask_next <=  64'h0000000000000800;
               end
               7'h41:
               begin
                singleVectorWrData12 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000001000;
+                singleVectorWrDataMask_next <=  64'h0000000000001000;
                end
               7'h42:
               begin
                singleVectorWrData13 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000002000;
+                singleVectorWrDataMask_next <=  64'h0000000000002000;
               end
               7'h43:
               begin
                singleVectorWrData14 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000004000;
+                singleVectorWrDataMask_next <=  64'h0000000000004000;
               end
               7'h44:
               begin
                singleVectorWrData15 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000008000;
+                singleVectorWrDataMask_next <=  64'h0000000000008000;
               end
               7'h45:
               begin
                singleVectorWrData16 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000010000;
+                singleVectorWrDataMask_next <=  64'h0000000000010000;
               end
               7'h46:
               begin
                singleVectorWrData17 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000020000;
+                singleVectorWrDataMask_next <=  64'h0000000000020000;
               end
               7'h47:
               begin
                singleVectorWrData18 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000040000;
+                singleVectorWrDataMask_next <=  64'h0000000000040000;
               end
               7'h48:
               begin
                singleVectorWrData19 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000080000;
+                singleVectorWrDataMask_next <=  64'h0000000000080000;
               end
               7'h49:
               begin
                singleVectorWrData20 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000100000;
+                singleVectorWrDataMask_next <=  64'h0000000000100000;
               end
               7'h4a:
               begin
                singleVectorWrData21 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000200000;
+                singleVectorWrDataMask_next <=  64'h0000000000200000;
               end
               7'h4b:
               begin
                singleVectorWrData22 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000400000;
+                singleVectorWrDataMask_next <=  64'h0000000000400000;
               end
               7'h4c:
               begin
                singleVectorWrData23 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000000800000;
+                singleVectorWrDataMask_next <=  64'h0000000000800000;
               end
               7'h4d:
               begin
                singleVectorWrData24 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000001000000;
+                singleVectorWrDataMask_next <=  64'h0000000001000000;
               end
               7'h4e:
               begin
                singleVectorWrData25 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000002000000;
+                singleVectorWrDataMask_next <=  64'h0000000002000000;
               end
               7'h4f:
               begin
                singleVectorWrData26 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000004000000;
+                singleVectorWrDataMask_next <=  64'h0000000004000000;
               end
               
               7'h50:
               begin
                singleVectorWrData27 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000008000000;
+                singleVectorWrDataMask_next <=  64'h0000000008000000;
               end
               7'h51:
               begin
                singleVectorWrData28 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000010000000;
+                singleVectorWrDataMask_next <=  64'h0000000010000000;
               end
               7'h52:
               begin
                singleVectorWrData29 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000020000000;
+                singleVectorWrDataMask_next <=  64'h0000000020000000;
               end
               7'h53:
               begin
                singleVectorWrData30 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000040000000;
+                singleVectorWrDataMask_next <=  64'h0000000040000000;
               end
               7'h54:
               begin
                singleVectorWrData31 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000080000000;
+                singleVectorWrDataMask_next <=  64'h0000000080000000;
               end
               7'h55:
               begin
                singleVectorWrData32 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000100000000;
+                singleVectorWrDataMask_next <=  64'h0000000100000000;
               end
               7'h56:
               begin
                singleVectorWrData33 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000200000000;
+                singleVectorWrDataMask_next <=  64'h0000000200000000;
               end
               7'h57:
               begin
                singleVectorWrData34 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000400000000;
+                singleVectorWrDataMask_next <= 64'h0000000400000000;
               end
               7'h58:
               begin
                singleVectorWrData35 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000000800000000;
+                singleVectorWrDataMask_next <= 64'h0000000800000000;
               end
               7'h59:
               begin
                singleVectorWrData36 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000001000000000;
+                singleVectorWrDataMask_next <=  64'h0000001000000000;
               end
               7'h5a:
               begin
                singleVectorWrData37 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000002000000000;
+                singleVectorWrDataMask_next <= 64'h0000002000000000;
               end
               7'h5b:
               begin
                singleVectorWrData38 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000004000000000;
+                singleVectorWrDataMask_next <= 64'h0000004000000000;
               end
               7'h5c:
               begin
                singleVectorWrData39 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000008000000000;
+                singleVectorWrDataMask_next <= 64'h0000008000000000;
               end
               7'h5d:
               begin
                singleVectorWrData40 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000010000000000;
+                singleVectorWrDataMask_next <= 64'h0000010000000000;
               end
               7'h5e:
               begin
                singleVectorWrData41 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000020000000000;
+                singleVectorWrDataMask_next <= 64'h0000020000000000;
               end
               7'h5f:
               begin
                singleVectorWrData42 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000040000000000;
+                singleVectorWrDataMask_next <= 64'h0000040000000000;
               end
               7'h60:
               begin
                singleVectorWrData43 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000080000000000;
+                singleVectorWrDataMask_next <= 64'h0000080000000000;
               end
               7'h61:
               begin
                singleVectorWrData44 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000100000000000;
+                singleVectorWrDataMask_next <= 64'h0000100000000000;
               end
               7'h62:
               begin
                singleVectorWrData45 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000200000000000;
+                singleVectorWrDataMask_next <= 64'h0000200000000000;
               end
               7'h63:
               begin
                singleVectorWrData46 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000400000000000;
+                singleVectorWrDataMask_next <= 64'h0000400000000000;
               end
               7'h64:
               begin
                singleVectorWrData47 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0000800000000000;
+                singleVectorWrDataMask_next <= 64'h0000800000000000;
               end
               7'h65:
               begin
                singleVectorWrData48 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0001000000000000;
+                singleVectorWrDataMask_next <= 64'h0001000000000000;
               end
               7'h66:
               begin
                singleVectorWrData49 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0002000000000000;
+                singleVectorWrDataMask_next <= 64'h0002000000000000;
               end
               7'h67:
               begin
                singleVectorWrData50 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0004000000000000;
+                singleVectorWrDataMask_next <= 64'h0004000000000000;
               end
               7'h68:
               begin
                singleVectorWrData51 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0008000000000000;
+                singleVectorWrDataMask_next <= 64'h0008000000000000;
               end
               7'h69:
               begin
                singleVectorWrData52 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0010000000000000;
+                singleVectorWrDataMask_next <= 64'h0010000000000000;
               end
               7'h6a:
               begin
                singleVectorWrData53 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0020000000000000;
+                singleVectorWrDataMask_next <= 64'h0020000000000000;
               end
               7'h6b:
               begin
                singleVectorWrData54 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0040000000000000;
+                singleVectorWrDataMask_next <= 64'h0040000000000000;
               end
               7'h6c:
               begin
                singleVectorWrData55 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0080000000000000;
+                singleVectorWrDataMask_next <= 64'h0080000000000000;
               end
               7'h6d:
               begin
                singleVectorWrData56 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0100000000000000;
+                singleVectorWrDataMask_next <= 64'h0100000000000000;
               end
               7'h6e:
               begin
-               singleVectorWrData56 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0200000000000000;
+               singleVectorWrData57 <= S_AXI_WDATA;
+                singleVectorWrDataMask_next <= 64'h0200000000000000;
               end
               7'h6f:
               begin
                singleVectorWrData58 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0400000000000000;
+                singleVectorWrDataMask_next <= 64'h0400000000000000;
               end
               7'h70:
               begin
                singleVectorWrData59 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h0800000000000000;
+                singleVectorWrDataMask_next <= 64'h0800000000000000;
               end
               7'h71:
               begin
                singleVectorWrData60 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h1000000000000000;
+                singleVectorWrDataMask_next <= 64'h1000000000000000;
               end
               7'h72:
               begin
                singleVectorWrData61 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h2000000000000000;
+                singleVectorWrDataMask_next <= 64'h2000000000000000;
               end
               7'h73:
               begin
                singleVectorWrData62 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h4000000000000000;
+                singleVectorWrDataMask_next <= 64'h4000000000000000;
               end
               7'h74:
               begin
                singleVectorWrData63 <= S_AXI_WDATA;
-               singleVectorWrDataMask <= 64'h8000000000000000;
+                singleVectorWrDataMask_next <= 64'h8000000000000000;
               end
+              //7'h75: Vector write command
               default:
               begin
                 waveID    <= waveID;
