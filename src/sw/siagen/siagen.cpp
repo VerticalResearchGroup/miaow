@@ -31,122 +31,125 @@ extern operandValues opvals;
 extern configValues configs;
 
 std::vector<Instr> sopp_ops = {
-    { 0x02, "branch" },
-    { 0x04, "cbranch_scc0" },
-    { 0x05, "cbranch_scc1" },
-    { 0x06, "cbranch_vccz" },
-    { 0x08, "cbranch_execz" },
-    { 0x0A, "barrier" },
-    { 0x0C, "waitcnt" }
+  { 0x02, "branch", {true, NO_REG} },
+  { 0x04, "cbranch_scc0", {true, REG_SCC} },
+  { 0x05, "cbranch_scc1", {true, REG_SCC} },
+  { 0x06, "cbranch_vccz", {true, REG_VCCZ} },
+  { 0x08, "cbranch_execz", {true, REG_EXECZ} },
+  { 0x0A, "barrier", {false, NO_REG} },
+  { 0x0C, "waitcnt", {false, NO_REG} }
 };
 
 std::vector<Instr> sop1_ops = {
-    { 0x03, "mov_b32" },
-    { 0x04, "mov_b64" },
-    { 0x07, "not_b32" },
-    { 0x24, "and_saveexec_b64" }
+  { 0x03, "mov_b32", {false, NO_REG} },
+  { 0x04, "mov_b64", {false, NO_REG} },
+  { 0x05, "cmov_b32", {false, REG_SCC} },
+  { 0x07, "not_b32", {false, NO_REG} },
+  { 0x0B, "brev_b32",{ false, NO_REG } },
+  { 0x19, "sext_i32_i8",{ false, NO_REG } },
+  { 0x24, "and_saveexec_b64", {false, NO_REG} }
 };
 
 std::vector<Instr> sop2_ops = {
-    { 0x00, "add_u32" },
-    { 0x02, "add_i32" },
-    { 0x03, "sub_i32" },
-    { 0x07, "min_u32" },
-    { 0x09, "max_u32" },
-    { 0x0E, "and_b32" },
-    { 0x0F, "and_b64" },
-    { 0x10, "or_b32" },
-    { 0x15, "andn2_b64" },
-    { 0x1E, "lshl_b32" },
-    { 0x20, "lshr_b32" },
-    { 0x22, "ashr_i32" },
-    { 0x26, "mul_i32" }
+  { 0x00, "add_u32", {false, NO_REG} },
+  { 0x02, "add_i32", {false, NO_REG} },
+  { 0x03, "sub_i32", {false, NO_REG} },
+  { 0x07, "min_u32", {false, NO_REG} },
+  { 0x09, "max_u32", {false, NO_REG} },
+  { 0x0A, "cselect_b32",{ false, REG_SCC } },
+  { 0x0E, "and_b32", {false, NO_REG} },
+  { 0x0F, "and_b64", {false, NO_REG} },
+  { 0x10, "or_b32", {false, NO_REG} },
+  { 0x15, "andn2_b64", {false, NO_REG} },
+  { 0x1E, "lshl_b32", {false, NO_REG} },
+  { 0x20, "lshr_b32", {false, NO_REG} },
+  { 0x22, "ashr_i32", {false, NO_REG} },
+  { 0x26, "mul_i32", {false, NO_REG} }
 };
 
 std::vector<Instr> sopk_ops = {
-    { 0x00, "movk_i32" },
-    { 0x0F, "addk_i32" },
-    { 0x10, "mulk_i32" }
+  { 0x00, "movk_i32", {false, NO_REG} },
+  { 0x0F, "addk_i32", {false, NO_REG} },
+  { 0x10, "mulk_i32", {false, NO_REG} }
 };
 
 std::vector<Instr> sopc_ops = {
-    { 0x00, "cmp_eq_i32" },
-    { 0x05, "cmp_le_i32" },
-    { 0x09, "cmp_ge_u32" },
-    { 0x0B, "cmp_le_u32" }
+  { 0x00, "cmp_eq_i32", {false, NO_REG} },
+  { 0x05, "cmp_le_i32", {false, NO_REG} },
+  { 0x09, "cmp_ge_u32", {false, NO_REG} },
+  { 0x0B, "cmp_le_u32", {false, NO_REG} }
 };
 
 std::vector<Instr> vop1_ops = {
-    { 0x01, "mov_b32" }//,
-    //{ 0x06, "cvt_f32_u32" },
-    //{ 0x07, "cvt_u32_f32" },
-    //{ 0x2A, "rcp_f32" },
-    //{ 0x33, "sqrt_f32" }
+  { 0x01, "mov_b32", {false, NO_REG} }//,
+  //{ 0x06, "cvt_f32_u32", {false, NO_REG} },
+  //{ 0x07, "cvt_u32_f32", {false, NO_REG} },
+  //{ 0x2A, "rcp_f32", {false, NO_REG} },
+  //{ 0x33, "sqrt_f32", {false, NO_REG} }
 };
 
 std::vector<Instr> vop2_ops = {
-    { 0x00, "cndmask_b32" },
-    { 0x03, "add_f32" },
-    { 0x04, "sub_f32" },
-    { 0x05, "subrev_f32" },
-    { 0x08, "mul_f32" },
-    { 0x09, "mul_i32_i24" },
-    { 0x16, "lshrrev_b32" },
-    { 0x1A, "lshlrev_b32" },
-    { 0x1B, "and_b32" },
-    { 0x1C, "or_b32" },
-    //{ 0x1F, "mac_f32" },
-    { 0x25, "add_i32" },
-    { 0x26, "sub_i32" }
+  { 0x00, "cndmask_b32", {false, NO_REG} },
+  { 0x03, "add_f32", {false, NO_REG} },
+  { 0x04, "sub_f32", {false, NO_REG} },
+  { 0x05, "subrev_f32", {false, NO_REG} },
+  { 0x08, "mul_f32", {false, NO_REG} },
+  { 0x09, "mul_i32_i24", {false, NO_REG} },
+  { 0x16, "lshrrev_b32", {false, NO_REG} },
+  { 0x1A, "lshlrev_b32", {false, NO_REG} },
+  { 0x1B, "and_b32", {false, NO_REG} },
+  { 0x1C, "or_b32", {false, NO_REG} },
+  //{ 0x1F, "mac_f32", {false, NO_REG} },
+  { 0x25, "add_i32", {false, NO_REG} },
+  { 0x26, "sub_i32", {false, NO_REG} }
 };
 
 std::vector<Instr> vopc_ops = {
-    { 0x04, "cmp_gt_f32" },
-    { 0x82, "cmp_eq_i32" },
-    { 0x84, "cmp_gt_i32" },
-    { 0x85, "cmp_ne_i32" },
-    { 0xC3, "cmp_le_u32" },
-    { 0xC4, "cmp_gt_u32" }
+  { 0x04, "cmp_gt_f32", {false, NO_REG} },
+  { 0x82, "cmp_eq_i32", {false, NO_REG} },
+  { 0x84, "cmp_gt_i32", {false, NO_REG} },
+  { 0x85, "cmp_ne_i32", {false, NO_REG} },
+  { 0xC3, "cmp_le_u32", {false, NO_REG} },
+  { 0xC4, "cmp_gt_u32", {false, NO_REG} }
 };
 
 std::vector<Instr> vop3a_ops = {
-    { 0x04, "cmp_gt_f32_3a" },
-    { 0x82, "cmp_eq_i32_3a" },
-    { 0x84, "cmp_gt_i32_3a" },
-    { 0x85, "cmp_ne_i32_3a" },
-    { 0xC3, "cmp_le_u32_3a" },
-    { 0xC4, "cmp_gt_u32_3a" },
-    { 0xC6, "cmp_ge_u32_3a" },
-    { 0x169, "mul_lo_u32_3a" },
-    { 0x16A, "mul_hi_u32_3a" },
-    { 0x16B, "mul_lo_i32_3a" }
+  { 0x04, "cmp_gt_f32_3a", {false, NO_REG} },
+  { 0x82, "cmp_eq_i32_3a", {false, NO_REG} },
+  { 0x84, "cmp_gt_i32_3a", {false, NO_REG} },
+  { 0x85, "cmp_ne_i32_3a", {false, NO_REG} },
+  { 0xC3, "cmp_le_u32_3a", {false, NO_REG} },
+  { 0xC4, "cmp_gt_u32_3a", {false, NO_REG} },
+  { 0xC6, "cmp_ge_u32_3a", {false, NO_REG} },
+  { 0x169, "mul_lo_u32_3a", {false, NO_REG} },
+  { 0x16A, "mul_hi_u32_3a", {false, NO_REG} },
+  { 0x16B, "mul_lo_i32_3a", {false, NO_REG} }
 };
 
 std::vector<Instr> vop3b_ops = {
-    { 0, "" }
+  { 0, "", {false, NO_REG} }
 };
 
 std::vector<Instr> smrd_ops = {
-    { 0x02, "ld_dwx4" },
-    { 0x08, "buff_ld_dw" },
-    { 0x09, "buff_ld_dwx2" }
+  { 0x02, "ld_dwx4", {false, NO_REG} },
+  { 0x08, "buff_ld_dw", {false, NO_REG} },
+  { 0x09, "buff_ld_dwx2", {false, NO_REG} }
 };
 
 std::vector<Instr> mtbuf_ops = {
-    { 0x00, "tbuff_ld_fmt_x" },
-    { 0x03, "tbuff_ld_fmt_xyzw" },
-    { 0x04, "tbuff_st_fmt_x" },
-    { 0x07, "tbuff_st_fmt_xyzw" }
+  { 0x00, "tbuff_ld_fmt_x", {false, NO_REG} },
+  { 0x03, "tbuff_ld_fmt_xyzw", {false, NO_REG} },
+  { 0x04, "tbuff_st_fmt_x", {false, NO_REG} },
+  { 0x07, "tbuff_st_fmt_xyzw", {false, NO_REG} }
 };
 
-
 std::vector<Instr> mubuf_ops = {
-    { 0, "" }
+  { 0, "", {false, NO_REG}}
 };
 
 std::vector<Instr> ds_ops = {
-    { 0x0D, "ds_wr_b32" },
-    { 0x36, "ds_rd_b32" }
+  { 0x0D, "ds_wr_b32", {false, NO_REG} },
+  { 0x36, "ds_rd_b32", {false, NO_REG} }
 };
 
 void InitializeOps(si_fmt_enum instr_type, instr_function instr_func, std::vector<Instr> &instr_ops, std::vector<Instr_Sel> &instr_sel_ops)
@@ -271,10 +274,96 @@ void printOpSpecificUT(int type, std::vector<Instr_Sel> &ops, int cnt)
         // open output files
         openOutputFiles();
 
-        // write instruction and endpgm
-        randomizeOperand();
-        ops[i].instr_func(ops[i].instr.opcode);
-        instruction_sopp_endpgm();
+		if (ops[i].instr.instr_dep.branch_flg)
+		{
+
+			switch (ops[i].instr.instr_dep.cond_reg)
+			{
+			case NO_REG:
+
+				//set target to conditional instruction after fillers
+				opvals.imm16 = 5;
+				ops[i].instr_func(ops[i].instr.opcode);
+
+				//add 5 filler instructions
+				add5scalarinstrs();
+
+				break;
+			case REG_VCCZ:
+				break;
+			case REG_EXECZ:
+				break;
+			case REG_SCC:
+
+				//generate condition scc = 1
+				generate_scc(true);
+
+				//set target to conditional instruction after fillers
+				opvals.imm16 = 5;
+				ops[i].instr_func(ops[i].instr.opcode);
+
+				//add 5 filler instructions
+				add5scalarinstrs();
+
+				//generate condition scc = 0
+				generate_scc(false);
+
+				//set target to endpgm
+				opvals.imm16 = 5;
+				ops[i].instr_func(ops[i].instr.opcode);
+
+				//add fillers
+				add5scalarinstrs();
+				
+				break;
+			default:
+				break;
+			}
+
+		}
+		else if (!ops[i].instr.instr_dep.branch_flg)
+		{
+			switch (ops[i].instr.instr_dep.cond_reg)
+			{
+			case NO_REG:
+
+				randomizeOperand();
+				ops[i].instr_func(ops[i].instr.opcode);
+
+				break;
+			case REG_VCCZ:
+				break;
+			case REG_EXECZ:
+				break;
+			case REG_SCC:
+
+				//generate condition scc = 1
+				generate_scc(true);
+
+				randomizeOperand();
+				ops[i].instr_func(ops[i].instr.opcode);
+
+				//generate condition scc = 0
+				generate_scc(false);
+
+				randomizeOperand();
+				ops[i].instr_func(ops[i].instr.opcode);
+
+				break;
+			default:
+				break;
+			}
+		}
+		else
+		{
+			// write other instructions
+			randomizeOperand();
+			ops[i].instr_func(ops[i].instr.opcode);
+			
+		}
+        
+		//write endpgm
+		instruction_sopp_endpgm();
 
         // write config and data.mem
         writeConfigFile();

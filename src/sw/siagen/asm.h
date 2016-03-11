@@ -61,7 +61,7 @@ enum si_fmt_enum
 	/* Vector Memory Buffer Formats */
 	SI_FMT_MUBUF,
 	SI_FMT_MTBUF,
-	
+
 	/* Vector Memory Image Format */
 	SI_FMT_MIMG,
 
@@ -350,5 +350,7 @@ void instruction_smrd(int opcode);
 void instruction_mtbuf(int opcode);
 void instruction_ds(int opcode);
 void instruction_sopp_endpgm();
+void add5scalarinstrs();
+void generate_scc(bool val);
 
 #endif
