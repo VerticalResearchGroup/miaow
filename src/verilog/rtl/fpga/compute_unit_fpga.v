@@ -32,6 +32,12 @@ module compute_unit_fpga #
   input wire [31:0] quadData2_out,
   input wire [31:0] quadData3_out,
   output wire [127:0] quadData_in,
+  output wire [2047:0] singleVectorData_in,
+  input wire [9:0] singleVectorBaseAddress_out,
+  
+  input wire [2047:0] singleVectorWrData_out,
+  input wire [63:0] singleVectorWrDataMask_out,
+  input wire [3:0] singleVectorWrEn_out,
   
   input wire execute_out,
   input wire executeStart_out,
@@ -79,7 +85,10 @@ wire [31:0] instruction_buff_out_b;
 // SGPR registers
 reg [31:0] gprCommand;
 wire [15:0] sgpr_select_fu;
+wire [15:0] vgpr_select_fu;
+
 wire [3:0] lsu2sgpr_dest_wr_en_thru;
+wire [3:0] lsu2vgpr_dest_wr_en_thru;
 
 wire  buff2fetchwave_ack, cu2dispatch_wf_done, decode2issue_barrier,
       decode2issue_branch, decode2issue_exec_rd, decode2issue_exec_wr, decode2issue_m0_rd,
@@ -229,6 +238,12 @@ wire [9:0] lsu2sgpr_source1_addr_thru;
 wire [9:0] lsu2sgpr_dest_addr_thru;
 wire [127:0] lsu2sgpr_dest_data_thru;
 wire lsu2sgpr_source1_rd_en_thru;
+wire [9:0] lsu2vgpr_dest_addr_thru;
+wire [2047:0] lsu2vgpr_dest_data_thru;
+wire [63:0] lsu2vgpr_dest_wr_mask_thru;
+
+wire lsu2vgpr_source1_rd_en_thru;
+wire [9:0] lsu2vgpr_source1_addr_thru;
 
 assign dispatch2cu_vgpr_base_dispatch = baseVGPR_out[9:0];
 assign dispatch2cu_sgpr_base_dispatch = baseSGPR_out[8:0];
@@ -244,7 +259,7 @@ assign rst_signal = ~reset_out;
 assign cu2dispatch_wf_done_in = cu2dispatch_wf_done;
 
 assign quadData_in = sgpr2lsu_source1_data;
-
+assign singleVectorData_in = vgpr2lsu_source1_data;
 // I/O Connections assignments
 
 assign buff2wave_tag = fetch2buff_tag_reg;
@@ -283,6 +298,15 @@ assign lsu2sgpr_dest_addr_thru = execute_out ? lsu2sgpr_dest_addr : quadBaseAddr
 assign lsu2sgpr_source1_rd_en_thru = execute_out ? lsu2sgpr_source1_rd_en : ~(|lsu2sgpr_dest_wr_en_out);
 assign lsu2sgpr_dest_wr_en_thru = execute_out ? lsu2sgpr_dest_wr_en : lsu2sgpr_dest_wr_en_out;
 assign lsu2sgpr_dest_data_thru = execute_out ? lsu2sgpr_dest_data : {quadData3_out, quadData2_out, quadData1_out, quadData0_out};
+
+assign lsu2vgpr_source1_rd_en_thru = execute_out ? lsu2vgpr_source1_rd_en : ~(|singleVectorWrEn_out);
+assign lsu2vgpr_source1_addr_thru  = execute_out ? lsu2vgpr_source1_addr : singleVectorBaseAddress_out;
+
+assign lsu2vgpr_dest_addr_thru = execute_out ? lsu2vgpr_source1_addr : singleVectorBaseAddress_out;
+assign vgpr_select_fu = execute_out ? rfa2execvgprsgpr_select_fu : {7'd0,  1'b1, 8'd0};
+assign lsu2vgpr_dest_wr_en_thru = execute_out ? lsu2vgpr_dest_wr_en : singleVectorWrEn_out;
+assign lsu2vgpr_dest_data_thru = execute_out ? lsu2vgpr_dest_data : singleVectorWrData_out;
+assign lsu2vgpr_dest_wr_mask_thru = execute_out ? lsu2vgpr_dest_wr_mask : singleVectorWrDataMask_out;
 
 fetch fetch0 (
   // Unit that fetches instructions from a wavefront chosen by the wavepool
@@ -414,15 +438,15 @@ fetch fetch0 (
   .simf1_wr_mask(simf1_2vgpr_wr_mask),
   .simf2_wr_mask(simf2_2vgpr_wr_mask),
   .simf3_wr_mask(simf3_2vgpr_wr_mask),
-  .lsu_source1_addr(lsu2vgpr_source1_addr),
+  .lsu_source1_addr(lsu2vgpr_source1_addr_thru),
   .lsu_source2_addr(lsu2vgpr_source2_addr),
-  .lsu_dest_addr(lsu2vgpr_dest_addr),
-  .lsu_dest_data(lsu2vgpr_dest_data),
-  .lsu_dest_wr_en(lsu2vgpr_dest_wr_en),
-  .lsu_dest_wr_mask(lsu2vgpr_dest_wr_mask),
+  .lsu_dest_addr(lsu2vgpr_dest_addr_thru),
+  .lsu_dest_data(lsu2vgpr_dest_data_thru),
+  .lsu_dest_wr_en(lsu2vgpr_dest_wr_en_thru),
+  .lsu_dest_wr_mask(lsu2vgpr_dest_wr_mask_thru),
   .lsu_instr_done_wfid(lsu2vgpr_instr_done_wfid),
   .lsu_instr_done(lsu2vgpr_instr_done),
-  .lsu_source1_rd_en(lsu2vgpr_source1_rd_en),
+  .lsu_source1_rd_en(lsu2vgpr_source1_rd_en_thru),
   .lsu_source2_rd_en(lsu2vgpr_source2_rd_en),
   .simd0_instr_done_wfid(simd0_2vgpr_instr_done_wfid),
   .simd1_instr_done_wfid(simd1_2vgpr_instr_done_wfid),
@@ -440,7 +464,7 @@ fetch fetch0 (
   .simf1_instr_done(simf1_2vgpr_instr_done),
   .simf2_instr_done(simf2_2vgpr_instr_done),
   .simf3_instr_done(simf3_2vgpr_instr_done),
-  .rfa_select_fu(rfa2execvgprsgpr_select_fu),
+  .rfa_select_fu(vgpr_select_fu),
   //  Outputs
   .simd_source1_data(vgpr2simd_source1_data),
   .simd_source2_data(vgpr2simd_source2_data),
