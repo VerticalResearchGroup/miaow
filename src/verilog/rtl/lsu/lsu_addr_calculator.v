@@ -14,8 +14,6 @@ module lsu_addr_calculator(
   in_opcode,
   in_lds_base,
   in_imm_value0,
-  in_exec_value,
-  out_exec_value,
   out_ld_st_addr,
   out_gm_or_lds
 );
@@ -26,9 +24,7 @@ input [31:0] in_scalar_source_b;
 input [31:0] in_opcode;
 input [15:0] in_lds_base;
 input [15:0] in_imm_value0;
-input [63:0] in_exec_value;
 
-output [63:0] out_exec_value;
 output [2047:0] out_ld_st_addr;
 output out_gm_or_lds;
 
@@ -47,26 +43,22 @@ begin
         //Only 32 bits of the result is the address
         //Other bits are ignored since exec mask is 64'd1
         out_ld_st_addr <= in_scalar_source_a[47:0] + (in_opcode[`LSU_SMRD_IMM_POS] ? (in_imm_value0 * 4) : in_scalar_source_b);
-        out_exec_value <= 64'd1;
         out_gm_or_lds <= 1'b0;
       end
     `LSU_DS_FORMAT:
       begin
         out_ld_st_addr <= ds_address;
-        out_exec_value <= in_exec_value;
         out_gm_or_lds <= 1'b1;
       end
     `LSU_MTBUF_FORMAT:
       begin
         out_ld_st_addr <= ({in_opcode[`LSU_MTBUF_IDXEN_POS],in_opcode[`LSU_MTBUF_OFFEN_POS]} == 2'b11) ? {2048{1'bx}} : mtbuf_address;
-        out_exec_value <= in_exec_value;
         out_gm_or_lds <= 1'b0;
       end
     default:
       begin
         out_ld_st_addr <= {2048{1'bx}};
-        out_exec_value <= {63{1'bx}};
-        out_gm_or_lds <= 1'bx;
+        out_gm_or_lds <= 1'b0;
       end
   endcase
 end
