@@ -1,6 +1,7 @@
 module lsu_op_manager
 (
     lsu_wfid,
+    instr_pc,
     
     mem_op_cnt,
     mem_op_rd,
@@ -43,6 +44,8 @@ module lsu_op_manager
     lsu_done, lsu_done_wfid,
     sgpr_instr_done, sgpr_instr_done_wfid,
     vgpr_instr_done, vgpr_instr_done_wfid,
+    retire_pc,
+    retire_gm_or_lds,
     
     mem_rd_en,
     mem_wr_en,
@@ -69,8 +72,9 @@ parameter MEMORY_BUS_WIDTH = 32;
 parameter MEM_SLOTS = 1;
 
 input [5:0] lsu_wfid;   // wavefront ID, need to figure out what I'm going to do with it
+input [31:0] instr_pc;
 
-input [6:0] mem_op_cnt; // Number of memory operations needed per register row
+input [5:0] mem_op_cnt; // Number of memory operations needed per register row
 input mem_op_rd;    // Indicates this is a memory read operation
 input mem_op_wr;    // Indicates this is a memory write operation
 input mem_gpr; // Indicates whether to write to SGPR (0) or VGPR (1)
@@ -140,6 +144,9 @@ output [5:0] lsu_done_wfid;
 output [5:0] sgpr_instr_done_wfid;
 output [5:0] vgpr_instr_done_wfid;
 
+output [31:0] retire_pc;
+output retire_gm_or_lds;
+
 localparam IDLE_STATE = 4'b0000;
 localparam ADDR_CALC_STATE = 4'b0001;
 localparam RD_STATE = 4'b0010;              // Read from memory, write to register
@@ -152,14 +159,16 @@ localparam SIGNAL_DONE_STATE = 4'b1000;
 
 reg [5:0] current_wfid;
 reg [5:0] current_wfid_next;
+reg [31:0] current_pc;
+reg [31:0] current_pc_next;
 
 reg [3:0] lsu_state;
 reg [3:0] lsu_state_next;
 reg lsu_rd_wr; // 0 for read, 1 for write
 reg lsu_rd_wr_next;
 
-reg [6:0] mem_op_cnt_reg;
-reg [6:0] mem_op_cnt_reg_next;
+reg [5:0] mem_op_cnt_reg;
+reg [5:0] mem_op_cnt_reg_next;
 reg [2047:0] mem_in_addr_reg;
 reg [2047:0] mem_in_addr_reg_next;
 reg [6:0] mem_op_cnter;
@@ -174,7 +183,11 @@ reg [1:0] gpr_op_depth_cntr;
 reg [1:0] gpr_op_depth_cntr_next;
 
 reg [2047:0] mem_data_buffer;
-reg [2047:0] mem_data_buffer_next;
+reg [2047:0] mem_data_buffer_next_flat;
+reg [31:0] mem_data_buffer_next [0:63];
+
+reg [5:0] mem_data_offset;
+reg [5:0] mem_data_offset_next;
 
 reg mem_rd_en_reg;
 reg mem_wr_en_reg;
@@ -212,12 +225,14 @@ reg [63:0] exec_mask_base_reg_next;
 always@(posedge clk) begin
     if(rst) begin
         current_wfid <= 6'd0;
+        current_pc <= 32'd0;
         lsu_state <= IDLE_STATE;
         lsu_rd_wr <= 1'b0;
-        mem_op_cnt_reg <= 7'd0;
+        mem_op_cnt_reg <= 6'd0;
         mem_in_addr_reg <= 2048'd0;
         mem_op_cnter <= 7'd0;
         mem_data_buffer <= 2048'd0;
+        mem_data_offset <= 6'd0;
         sgpr_op <= 1'b0;
         vgpr_op <= 1'b0;
         gpr_dest_addr <= 12'd0;
@@ -231,12 +246,12 @@ always@(posedge clk) begin
     end
     else begin
         current_wfid <= current_wfid_next;
+        current_pc <= current_pc_next;
         lsu_state <= lsu_state_next;
         lsu_rd_wr <= lsu_rd_wr_next;
         mem_op_cnt_reg <= mem_op_cnt_reg_next;
-        mem_in_addr_reg <= mem_in_addr_reg_next;
         mem_op_cnter <= mem_op_cnter_next;
-        mem_data_buffer <= mem_data_buffer_next;
+        mem_data_buffer <= mem_data_buffer_next_flat;
         sgpr_op <= sgpr_op_next;
         vgpr_op <= vgpr_op_next;
         gpr_dest_addr <= gpr_dest_addr_next;
@@ -260,9 +275,16 @@ always@(*) begin
     
     // Memory interface signals
     mem_in_addr_reg_next <= mem_in_addr_reg;
-    mem_data_buffer_next <= mem_data_buffer;
     mem_rd_en_reg <= 1'b0;
     mem_wr_en_reg <= 1'b0;
+    
+    begin : MEM_BUFFER_MAP
+        integer i;
+        for(i = 0; i < 64; i = i + 1) begin
+            mem_data_buffer_next[i] <= mem_data_buffer[32 * i+:32];
+            mem_data_buffer_next_flat[32 * i+:32] <= mem_data_buffer_next[i];
+        end
+    end
     
     // Register bank control signals
     sgpr_wr_mask_reg_next <= sgpr_wr_mask_reg;
@@ -273,6 +295,7 @@ always@(*) begin
     vgpr_op_next <= vgpr_op;
     gpr_wr <= 1'b0;
     current_wfid_next <= current_wfid;
+    current_pc_next <= current_pc;
     gpr_op_depth_next <= gpr_op_depth_reg;
     gpr_op_depth_cntr_next <= gpr_op_depth_cntr;
     
@@ -298,8 +321,10 @@ always@(*) begin
             lsu_rd_wr_next <= 1'b0;
             if(mem_op_rd | mem_op_wr) begin
                 current_wfid_next <= lsu_wfid;
+                current_pc_next <= instr_pc;
                 lsu_state_next <= ADDR_CALC_STATE;
                 mem_op_cnt_reg_next <= mem_op_cnt;
+                mem_op_cnter_next <= 6'd0;
                 
                 // Route SGPR read signals from opcode decoder
                 muxed_sgpr_source1_rd_en <= decoded_sgpr_source1_rd_en;
@@ -339,7 +364,7 @@ always@(*) begin
             lsu_state_next <= RD_STATE;
             mem_in_addr_reg_next <= mem_in_addr;
             gpr_op_depth_cntr_next <= 2'd0;
-            mem_op_cnter_next <= 7'd0;
+            mem_op_cnter_next <= 6'd0;
             if(lsu_rd_wr) begin
                 lsu_state_next <= WR_REG_INIT_RD_STATE;
             end
@@ -355,9 +380,9 @@ always@(*) begin
             end
             else if(mem_ack) begin
                 mem_rd_en_reg <= 1'b0;
-                mem_op_cnter_next <= mem_op_cnter + 7'd1;
+                mem_op_cnter_next <= mem_op_cnter + 6'd1;
                 mem_in_addr_reg_next[2015:0] <= mem_in_addr_reg[2048:32];
-                mem_data_buffer_next <= {mem_data_buffer[2015:0], mem_rd_data};
+                mem_data_buffer_next[mem_op_cnter] <= mem_rd_data;
                 exec_mask_reg_next[62:0] <= exec_mask_reg[63:1];
                 if(mem_op_cnter == mem_op_cnt_reg) begin
                     lsu_state_next <= RD_REG_WR_STATE;
@@ -369,7 +394,7 @@ always@(*) begin
             gpr_wr <= 1'b1;
             gpr_op_depth_cntr_next <= gpr_op_depth_cntr + 2'd1;
             lsu_state_next <= RD_STATE;
-            mem_op_cnter_next <= 7'd0;
+            mem_op_cnter_next <= 6'd0;
             exec_mask_reg_next <= exec_mask_base_reg;
             gpr_dest_addr_next <= gpr_dest_addr + 12'd1;
             if(gpr_op_depth_cntr == gpr_op_depth_reg) begin
@@ -387,7 +412,7 @@ always@(*) begin
         end
         
         WR_REG_RD_STATE: begin
-            mem_data_buffer_next <= vgpr_source1_data;
+            mem_data_buffer_next_flat <= vgpr_source1_data;
             lsu_state_next <= WR_STATE;
         end
         
@@ -400,9 +425,9 @@ always@(*) begin
             end
             else if(mem_ack) begin
                 mem_wr_en_reg <= 1'b0;
-                mem_op_cnter_next <= mem_op_cnter + 7'd1;
+                mem_op_cnter_next <= mem_op_cnter + 6'd1;
                 mem_in_addr_reg_next[2015:0] <= mem_in_addr_reg[2048:32];
-                mem_data_buffer_next <= {mem_data_buffer[2015:0], mem_rd_data};
+                mem_data_buffer_next_flat[2015:0] <= mem_data_buffer[2048:32];
                 exec_mask_reg_next[62:0] <= exec_mask_reg[63:1];
                 if(mem_op_cnter == mem_op_cnt_reg) begin
                     lsu_state_next <= WR_REG_INC_STATE;
@@ -429,6 +454,9 @@ end
 assign lsu_rdy = (lsu_state == IDLE_STATE) ? 1'b1 : 1'b0;
 assign lsu_done = (lsu_state == SIGNAL_DONE_STATE) ? 1'b1 : 1'b0;
 assign lsu_done_wfid = current_wfid;
+
+assign retire_pc = (lsu_state == SIGNAL_DONE_STATE) ? current_pc : 32'd0;
+assign retire_gm_or_lds = (lsu_state == SIGNAL_DONE_STATE) ? gm_or_lds_reg : 1'b0;
 
 assign sgpr_instr_done = (lsu_state == SIGNAL_DONE_STATE) ? sgpr_op : 1'b0;
 assign vgpr_instr_done = (lsu_state == SIGNAL_DONE_STATE) ? vgpr_op : 1'b0;

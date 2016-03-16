@@ -43,7 +43,7 @@ output vgpr_source2_rd_en;
 output [9:0] vgpr_source1_addr;
 output [9:0] vgpr_source2_addr;
 
-output [6:0] mem_op_cnt;
+output [5:0] mem_op_cnt;
 output mem_op_rd;
 output mem_op_wr;
 output mem_gpr; // Indicates whether the operation is for SGPR (0) or VGPR (1)
@@ -72,7 +72,7 @@ reg [9:0] vgpr_source1_addr_reg;
 reg vgpr_source2_rd_en_reg;
 reg [9:0] vgpr_source2_addr_reg;
 
-reg [6:0] mem_op_cnt_reg;
+reg [5:0] mem_op_cnt_reg;
 reg mem_op_rd_reg;
 reg mem_op_wr_reg;
 reg mem_gpr_reg;
@@ -95,7 +95,7 @@ always@(*) begin
     vgpr_source2_rd_en_reg <= 1'b0;
     vgpr_source2_addr_reg <= 10'bxxxxxxxxxx;
     
-    mem_op_cnt_reg <= 7'bxxxxxxx;
+    mem_op_cnt_reg <= 6'bxxxxxx;
     mem_op_rd_reg <= 1'b0;
     mem_op_wr_reg <= 1'b0;
     mem_gpr_reg <= 1'b0;
@@ -145,13 +145,13 @@ always@(*) begin
         {1'b1, `LSU_SMRD_FORMAT, 8'h00}: //s_load_dword
         begin
             mem_op_rd_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd0;
+            mem_op_cnt_reg <= 6'd0;
             sgpr_wr_mask_reg <= 4'b0001;
         end
         {1'b1, `LSU_SMRD_FORMAT, 8'h01}: //s_load_dwordx2
         begin
             mem_op_rd_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd1;
+            mem_op_cnt_reg <= 6'd1;
             sgpr_wr_mask_reg <= 4'b0011;
         end
         {1'b1, `LSU_SMRD_FORMAT, 8'h02}: //s_load_dwordx4
@@ -164,14 +164,14 @@ always@(*) begin
         begin
             gpr_op_depth_reg <= 2'b01;
             mem_op_rd_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd3;
+            mem_op_cnt_reg <= 6'd3;
             sgpr_wr_mask_reg <= 4'b1111;
         end
         {1'b1, `LSU_SMRD_FORMAT, 8'h04}: //s_load_dwordx16
         begin
             gpr_op_depth_reg <= 2'b10;
             mem_op_rd_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd3;
+            mem_op_cnt_reg <= 6'd3;
             sgpr_wr_mask_reg <= 4'b1111;
         end
         {1'b1, `LSU_DS_FORMAT, 8'h36}: //ds_read_b32
@@ -192,45 +192,45 @@ always@(*) begin
         begin
             gpr_op_depth_reg <= 2'b01;
             mem_op_rd_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd63;
+            mem_op_cnt_reg <= 6'd63;
         end
         {1'b1, `LSU_MTBUF_FORMAT, 8'h02}: //tbuffer_load_format_xyz
         begin
             gpr_op_depth_reg <= 2'b10;
             mem_op_rd_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd63;
+            mem_op_cnt_reg <= 6'd63;
         end
         //////////////////////////////////////
         {1'b1, `LSU_MTBUF_FORMAT, 8'h03}: //tbuffer_load_format_xyzw
         begin
             gpr_op_depth_reg <= 2'b11;
             mem_op_rd_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd63;
+            mem_op_cnt_reg <= 6'd63;
         end
         {1'b1, `LSU_MTBUF_FORMAT, 8'h04}: //tbuffer_store_format_x
         begin
             mem_op_wr_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd63;
+            mem_op_cnt_reg <= 6'd63;
         end
         ///////// ADDED XY & XYZ support
         {1'b1, `LSU_MTBUF_FORMAT, 8'h05}: //tbuffer_store_format_xy
         begin
             gpr_op_depth_reg <= 2'b01;
             mem_op_wr_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd63;
+            mem_op_cnt_reg <= 6'd63;
         end
         {1'b1, `LSU_MTBUF_FORMAT, 8'h06}: //tbuffer_store_format_xyz
         begin
             gpr_op_depth_reg <= 2'b10;
             mem_op_wr_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd63;
+            mem_op_cnt_reg <= 6'd63;
         end
         ////////////////////////////////
         {1'b1, `LSU_MTBUF_FORMAT, 8'h07}: //tbuffer_store_format_xyzw
         begin
             gpr_op_depth_reg <= 2'b11;
             mem_op_wr_reg <= 1'b1;
-            mem_op_cnt_reg <= 7'd63;
+            mem_op_cnt_reg <= 6'd63;
         end
     endcase
 end

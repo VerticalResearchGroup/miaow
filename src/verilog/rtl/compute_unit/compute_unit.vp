@@ -21,7 +21,8 @@ module compute_unit
    simf3_2sgpr_wr_en, lsu2sgpr_instr_done, lsu2vgpr_instr_done,
    issue2fetchwave_wf_done_en, salu2fetchwaveissue_branch_en,
    salu2fetchwaveissue_branch_taken, decode2tracemon_colldone,
-   decode2issue_valid, lsu2tracemon_gm_or_lds,
+   decode2issue_valid,
+   lsu2tracemon_gm_or_lds, lsu2tracemon_addr, lsu2tracemon_store_data, lsu2tracemon_store_enable,
    fetch2tracemon_dispatch, salu2exec_wr_m0_en, decode2issue_barrier,
    salu2tracemon_exec_word_sel, salu2tracemon_vcc_word_sel,
    salu2sgpr_dest_wr_en, lsu2mem_rd_en, lsu2mem_wr_en,
@@ -110,8 +111,13 @@ module compute_unit
 		  simd3_2sgpr_wr_en, simf0_2sgpr_wr_en, simf1_2sgpr_wr_en, simf2_2sgpr_wr_en,
 		  simf3_2sgpr_wr_en, lsu2sgpr_instr_done, lsu2vgpr_instr_done, issue2fetchwave_wf_done_en,
 		  salu2fetchwaveissue_branch_en, salu2fetchwaveissue_branch_taken, decode2tracemon_colldone,
-		  decode2issue_valid, lsu2tracemon_gm_or_lds, fetch2tracemon_dispatch,
+		  decode2issue_valid, fetch2tracemon_dispatch,
 		  salu2exec_wr_m0_en, decode2issue_barrier;
+
+    output lsu2tracemon_gm_or_lds;
+    output [2047:0] lsu2tracemon_addr;
+    output [2047:0] lsu2tracemon_store_data;
+    output lsu2tracemon_store_enable;
    output [1:0]   salu2tracemon_exec_word_sel, salu2tracemon_vcc_word_sel,
 		  salu2sgpr_dest_wr_en;
    output [3:0]   lsu2mem_rd_en, lsu2mem_wr_en, lsu2sgpr_dest_wr_en, lsu2vgpr_dest_wr_en;

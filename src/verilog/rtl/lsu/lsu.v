@@ -96,7 +96,7 @@ wire decoded_vgpr_source2_rd_en;
 wire [9:0] decoded_vgpr_source1_addr;
 wire [9:0] decoded_vgpr_source2_addr;
 
-wire [6:0] mem_op_cnt;
+wire [5:0] mem_op_cnt;
 wire mem_op_rd;
 wire mem_op_wr;
 wire mem_gpr;
@@ -154,6 +154,7 @@ lsu_opcode_decoder lsu_opcode_decoder0(
 
 lsu_op_manager lsu_op_manager0(
     .lsu_wfid(issue_wfid),
+    .instr_pc(issue_instr_pc),
     
     // Signals to indicate a new memory request
     .mem_op_cnt(mem_op_cnt),
@@ -204,6 +205,9 @@ lsu_op_manager lsu_op_manager0(
     .lsu_done_wfid(lsu_done_wfid),
     .sgpr_instr_done_wfid(sgpr_instr_done_wfid),
     .vgpr_instr_done_wfid(vgpr_instr_done_wfid),
+    
+    .retire_pc(tracemon_retire_pc),
+    .retire_gm_or_lds(tracemon_gm_or_lds),
     
     .mem_rd_en(mem_rd_en),
     .mem_wr_en(mem_wr_en),
