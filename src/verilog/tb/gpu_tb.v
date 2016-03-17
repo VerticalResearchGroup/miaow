@@ -84,7 +84,8 @@ module gpu_tb();
          salu2exec_wr_m0_en, decode2issue_barrier;
 	wire [NUMOFCU*2 - 1:0] salu2tracemon_exec_word_sel, salu2tracemon_vcc_word_sel,
          salu2sgpr_dest_wr_en;
-	wire [NUMOFCU*4 - 1:0] lsu2mem_rd_en, lsu2mem_wr_en, lsu2sgpr_dest_wr_en, lsu2vgpr_dest_wr_en;
+	wire [NUMOFCU*4 - 1:0] lsu2sgpr_dest_wr_en;
+    wire lsu2mem_rd_en, lsu2mem_wr_en, lsu2vgpr_dest_wr_en;
 	wire [NUMOFCU*6 - 1:0] issue2tracemon_waitcnt_retire_wfid, wave2decode_wfid, salu2sgpr_instr_done_wfid,
          simd0_2vgpr_instr_done_wfid, simd1_2vgpr_instr_done_wfid, simd2_2vgpr_instr_done_wfid,
          simd3_2vgpr_instr_done_wfid, simf0_2vgpr_instr_done_wfid, simf1_2vgpr_instr_done_wfid,
@@ -130,7 +131,7 @@ module gpu_tb();
 	// from memory to tracemon
 	wire [NUMOFCU*4 - 1:0] mem2tracemon_store_en;
 	wire [NUMOFCU*2048 - 1:0] mem2tracemon_addr;
-	wire [NUMOFCU*8192 - 1:0] mem2tracemon_store_data;
+	wire [NUMOFCU*2048 - 1:0] mem2tracemon_store_data;
 
 	compute_unit DUT[(NUMOFCU-1):0] (
 		.dispatch2cu_wf_dispatch(dispatch2cu_wf_dispatch),
@@ -171,6 +172,8 @@ module gpu_tb();
 		.salu2tracemon_exec_word_sel(salu2tracemon_exec_word_sel),
 		.salu2tracemon_vcc_word_sel(salu2tracemon_vcc_word_sel),
 		.lsu2tracemon_retire_pc(lsu2tracemon_retire_pc),
+        .lsu2tracemon_addr(mem2tracemon_addr),
+        .lsu2tracemon_store_data(mem2tracemon_store_data),
 		.issue2tracemon_barrier_retire_en(issue2tracemon_barrier_retire_en),
 		.issue2tracemon_barrier_retire_wf_bitmap(issue2tracemon_barrier_retire_wf_bitmap),
 		.issue2tracemon_barrier_retire_pc(issue2tracemon_barrier_retire_pc),

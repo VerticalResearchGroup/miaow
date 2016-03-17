@@ -222,7 +222,8 @@ input issue2tracemon_barrier_retire_en, wave2decode_instr_valid, salu2sgpr_instr
          salu2exec_wr_m0_en, decode2issue_barrier;
 input[1:0] salu2sgpr_dest_wr_en, salu2tracemon_exec_word_sel,
          salu2tracemon_vcc_word_sel;
-input[3:0] lsu2vgpr_dest_wr_en, lsu2sgpr_dest_wr_en, mem2tracemon_store_en;
+input[3:0] lsu2sgpr_dest_wr_en;
+input    lsu2vgpr_dest_wr_en, mem2tracemon_store_en;
 input[5:0] wave2decode_wfid, salu2sgpr_instr_done_wfid, issue2tracemon_waitcnt_retire_wfid,
          salu2fetchwaveissue_branch_wfid, simd0_2vgpr_instr_done_wfid, simd1_2vgpr_instr_done_wfid,
          simd2_2vgpr_instr_done_wfid, simd3_2vgpr_instr_done_wfid, simf0_2vgpr_instr_done_wfid,
@@ -256,7 +257,7 @@ input[127:0] lsu2sgpr_dest_data;
 input[2047:0] simd0_2vgpr_dest_data, simd1_2vgpr_dest_data, simd2_2vgpr_dest_data,
          simd3_2vgpr_dest_data, simf0_2vgpr_dest_data, simf1_2vgpr_dest_data,
          simf2_2vgpr_dest_data, simf3_2vgpr_dest_data, mem2tracemon_addr;
-input[8191:0] lsu2vgpr_dest_data, mem2tracemon_store_data;
+input[2047:0] lsu2vgpr_dest_data, mem2tracemon_store_data;
 
 input[63:0] decode2tracemon_collinstr; // 64
 input decode2tracemon_colldone; // 0(32)/1(64)
@@ -763,15 +764,10 @@ always @ (posedge clk) begin
 
 			for(i = 0; i < 64; i++) begin
 				if(lsu2vgpr_dest_wr_mask[i]) begin
-					hi_addr = 32 * i + 31;
-					for(j = 0; j < 4; j++) begin
-						hi = 128 * i + 32 * j + 31;
-						if(lsu2vgpr_dest_wr_en[j])
-							if(lsu2tracemon_gm_or_lds)
-								PrintVgprLoadDS(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr[hi_addr-:32] -lsu_lds + 4*j), lsu2vgpr_dest_data[hi-:32]);
-							else
-								PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr[hi_addr-:32] + 4*j), lsu2vgpr_dest_data[hi-:32]);
-					end
+					if(lsu2tracemon_gm_or_lds)
+                        PrintVgprLoadDS(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr[hi_addr-:32] -lsu_lds + 4*j), lsu2vgpr_dest_data[hi_addr-:32]);
+                    else
+                        PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr[hi_addr-:32] + 4*j), lsu2vgpr_dest_data[hi_addr-:32]);
 				end
 			end
 			PrintEndLine(CUID, wfid, pc);

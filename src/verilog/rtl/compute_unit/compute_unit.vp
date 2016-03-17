@@ -120,7 +120,8 @@ module compute_unit
     output lsu2tracemon_store_enable;
    output [1:0]   salu2tracemon_exec_word_sel, salu2tracemon_vcc_word_sel,
 		  salu2sgpr_dest_wr_en;
-   output [3:0]   lsu2mem_rd_en, lsu2mem_wr_en, lsu2sgpr_dest_wr_en, lsu2vgpr_dest_wr_en;
+   output [3:0]   lsu2sgpr_dest_wr_en;
+   output lsu2mem_rd_en, lsu2mem_wr_en, lsu2vgpr_dest_wr_en;
    output [5:0]   issue2tracemon_waitcnt_retire_wfid, wave2decode_wfid, salu2sgpr_instr_done_wfid,
 		  simd0_2vgpr_instr_done_wfid, simd1_2vgpr_instr_done_wfid, simd2_2vgpr_instr_done_wfid,
 		  simd3_2vgpr_instr_done_wfid, simf0_2vgpr_instr_done_wfid, simf1_2vgpr_instr_done_wfid,
@@ -218,9 +219,10 @@ module compute_unit
 		   wave2decode_instr_valid;
    wire [1:0] 	   decode2issue_fu, salu2sgpr_dest_wr_en, salu2tracemon_exec_word_sel,
 		   salu2tracemon_vcc_word_sel, sgpr2issue_alu_dest_reg_valid;
-   wire [3:0] 	   dispatch2cu_wg_wf_count, fetch2issue_wg_wf_count, lsu2mem_rd_en,
-		   lsu2mem_wr_en, lsu2sgpr_dest_wr_en, lsu2vgpr_dest_wr_en, sgpr2issue_lsu_dest_reg_valid,
+   wire [3:0] 	   dispatch2cu_wg_wf_count, fetch2issue_wg_wf_count,
+		   lsu2sgpr_dest_wr_en, sgpr2issue_lsu_dest_reg_valid,
 		   vgpr2issue_lsu_dest_reg_valid;
+   wire lsu2mem_rd_en, lsu2mem_wr_en, lsu2vgpr_dest_wr_en;
    wire [5:0] 	   decode2issue_wfid, decode2wave_ins_half_wfid, dispatch2cu_wf_size_dispatch,
 		   exec2issue_salu_wr_wfid, exec2issue_valu_wr_vcc_wfid, fetch2exec_init_wf_id,
 		   fetch2issue_wg_wgid, fetch2tracemon_new_wfid, fetch2wave_basereg_wfid,
@@ -690,68 +692,74 @@ module compute_unit
 		 .tracemon_waitcnt_retire_pc(issue2tracemon_waitcnt_retire_pc)
 		 );
 
-   lsu lsu0 (
-	     // unit to handle loads and stores
-	     .clk(clk),//
-	     .rst(rst),//
-	     //  Inputs
-	     .issue_lsu_select(issue2lsu_lsu_select),//
-	     .issue_source_reg1(issue2lsu_source_reg1),//
-	     .issue_source_reg2(issue2lsu_source_reg2),//
-	     .issue_source_reg3(issue2lsu_source_reg3),//
-	     .issue_dest_reg(issue2lsu_dest_reg),//
-	     .issue_imm_value0(issue2lsu_imm_value0),//
-	     .issue_imm_value1(issue2lsu_imm_value1),//
-	     .issue_opcode(issue2lsu_opcode),//
-	     .issue_mem_sgpr(issue2lsu_mem_sgpr),//
-	     .issue_wfid(issue2lsu_wfid),//
-	     .issue_lds_base(issue2lsu_lds_base),//
-	     .vgpr_source1_data(vgpr2lsu_source1_data),//
-	     .vgpr_source2_data(vgpr2lsu_source2_data),//
-	     .mem_rd_data(mem2lsu_rd_data),//
-	     .mem_tag_resp(mem2lsu_tag_resp),//
-	     .mem_ack(mem2lsu_ack),//
-	     .sgpr_source1_data(sgpr2lsu_source1_data),//
-	     .sgpr_source2_data(sgpr2lsu_source2_data),//
-	     .exec_exec_value(exec2lsu_exec_value),//
-	     .exec_rd_m0_value(exec2lsu_rd_m0_value),//
-	     .issue_instr_pc(issue2lsu_instr_pc),//
-             .lsu_stall(lsu_stall),//**CHANGE
-	     //  Outputs
-	     .issue_ready(lsu2issue_ready),
-         .lsu_done(lsu2issue_done),
-         .lsu_done_wfid(lsu2issue_done_wfid),
-	     .vgpr_source1_addr(lsu2vgpr_source1_addr),
-	     .vgpr_source2_addr(lsu2vgpr_source2_addr),
-	     .vgpr_dest_addr(lsu2vgpr_dest_addr),
-	     .vgpr_dest_data(lsu2vgpr_dest_data),
-	     .vgpr_dest_wr_en(lsu2vgpr_dest_wr_en),
-	     .vgpr_dest_wr_mask(lsu2vgpr_dest_wr_mask),
-	     .vgpr_instr_done_wfid(lsu2vgpr_instr_done_wfid),
-	     .vgpr_instr_done(lsu2vgpr_instr_done),
-	     .vgpr_source1_rd_en(lsu2vgpr_source1_rd_en),
-	     .vgpr_source2_rd_en(lsu2vgpr_source2_rd_en),
-	     .exec_rd_wfid(lsu2exec_rd_wfid),
-	     .mem_rd_en(lsu2mem_rd_en),
-	     .mem_wr_en(lsu2mem_wr_en),
-	     .mem_addr(lsu2mem_addr),
-	     .mem_wr_data(lsu2mem_wr_data),
-	     .mem_tag_req(lsu2mem_tag_req),
-	     .mem_wr_mask(lsu2mem_wr_mask),
-	     .sgpr_source1_addr(lsu2sgpr_source1_addr),
-	     .sgpr_source2_addr(lsu2sgpr_source2_addr),
-	     .sgpr_dest_addr(lsu2sgpr_dest_addr),
-	     .sgpr_dest_data(lsu2sgpr_dest_data),
-	     .sgpr_dest_wr_en(lsu2sgpr_dest_wr_en),
-	     .sgpr_instr_done_wfid(lsu2sgpr_instr_done_wfid),
-	     .sgpr_instr_done(lsu2sgpr_instr_done),
-	     .sgpr_source1_rd_en(lsu2sgpr_source1_rd_en),
-	     .sgpr_source2_rd_en(lsu2sgpr_source2_rd_en),
-	     .tracemon_retire_pc(lsu2tracemon_retire_pc),
-	     .mem_gm_or_lds(lsu2mem_gm_or_lds),
-	     .tracemon_gm_or_lds(lsu2tracemon_gm_or_lds),
-	     .rfa_dest_wr_req(lsu2rfa_dest_wr_req)
-	     );
+// Because of how the LSU internally works it's the same buffer that feeds
+// into the VGPR and the SGPR write buses so we can just use the VGPR output
+// bus to capture store operations for both.
+assign lsu2tracemon_store_data = lsu2vgpr_dest_data;
+
+lsu lsu0 (
+    // unit to handle loads and stores
+    .clk(clk),//
+    .rst(rst),//
+    //  Inputs
+    .issue_lsu_select(issue2lsu_lsu_select),//
+    .issue_source_reg1(issue2lsu_source_reg1),//
+    .issue_source_reg2(issue2lsu_source_reg2),//
+    .issue_source_reg3(issue2lsu_source_reg3),//
+    .issue_dest_reg(issue2lsu_dest_reg),//
+    .issue_imm_value0(issue2lsu_imm_value0),//
+    .issue_imm_value1(issue2lsu_imm_value1),//
+    .issue_opcode(issue2lsu_opcode),//
+    .issue_mem_sgpr(issue2lsu_mem_sgpr),//
+    .issue_wfid(issue2lsu_wfid),//
+    .issue_lds_base(issue2lsu_lds_base),//
+    .vgpr_source1_data(vgpr2lsu_source1_data),//
+    .vgpr_source2_data(vgpr2lsu_source2_data),//
+    .mem_rd_data(mem2lsu_rd_data),//
+    .mem_tag_resp(mem2lsu_tag_resp),//
+    .mem_ack(mem2lsu_ack),//
+    .sgpr_source1_data(sgpr2lsu_source1_data),//
+    .sgpr_source2_data(sgpr2lsu_source2_data),//
+    .exec_exec_value(exec2lsu_exec_value),//
+    .exec_rd_m0_value(exec2lsu_rd_m0_value),//
+    .issue_instr_pc(issue2lsu_instr_pc),//
+     .lsu_stall(lsu_stall),//**CHANGE
+    //  Outputs
+    .issue_ready(lsu2issue_ready),
+    .lsu_done(lsu2issue_done),
+    .lsu_done_wfid(lsu2issue_done_wfid),
+    .vgpr_source1_addr(lsu2vgpr_source1_addr),
+    .vgpr_source2_addr(lsu2vgpr_source2_addr),
+    .vgpr_dest_addr(lsu2vgpr_dest_addr),
+    .vgpr_dest_data(lsu2vgpr_dest_data),
+    .vgpr_dest_wr_en(lsu2vgpr_dest_wr_en),
+    .vgpr_dest_wr_mask(lsu2vgpr_dest_wr_mask),
+    .vgpr_instr_done_wfid(lsu2vgpr_instr_done_wfid),
+    .vgpr_instr_done(lsu2vgpr_instr_done),
+    .vgpr_source1_rd_en(lsu2vgpr_source1_rd_en),
+    .vgpr_source2_rd_en(lsu2vgpr_source2_rd_en),
+    .exec_rd_wfid(lsu2exec_rd_wfid),
+    .mem_rd_en(lsu2mem_rd_en),
+    .mem_wr_en(lsu2mem_wr_en),
+    .mem_addr(lsu2mem_addr),
+    .mem_wr_data(lsu2mem_wr_data),
+    .mem_tag_req(lsu2mem_tag_req),
+    .mem_wr_mask(lsu2mem_wr_mask),
+    .sgpr_source1_addr(lsu2sgpr_source1_addr),
+    .sgpr_source2_addr(lsu2sgpr_source2_addr),
+    .sgpr_dest_addr(lsu2sgpr_dest_addr),
+    .sgpr_dest_data(lsu2sgpr_dest_data),
+    .sgpr_dest_wr_en(lsu2sgpr_dest_wr_en),
+    .sgpr_instr_done_wfid(lsu2sgpr_instr_done_wfid),
+    .sgpr_instr_done(lsu2sgpr_instr_done),
+    .sgpr_source1_rd_en(lsu2sgpr_source1_rd_en),
+    .sgpr_source2_rd_en(lsu2sgpr_source2_rd_en),
+    .tracemon_retire_pc(lsu2tracemon_retire_pc),
+    .tracemon_gm_or_lds(lsu2tracemon_gm_or_lds),
+    .tracemon_mem_addr(lsu2tracemon_addr),
+    .mem_gm_or_lds(lsu2mem_gm_or_lds),
+    .rfa_dest_wr_req(lsu2rfa_dest_wr_req)
+);
 
    rfa rfa0 (
 	     // Unit that controls access to register file

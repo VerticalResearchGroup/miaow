@@ -12,7 +12,7 @@ module lsu
     mem_tag_req,
     sgpr_source1_addr, sgpr_source2_addr, sgpr_dest_addr,
     vgpr_source1_addr, vgpr_source2_addr, vgpr_dest_addr,
-    tracemon_retire_pc,
+    tracemon_retire_pc, tracemon_mem_addr,
     vgpr_dest_wr_mask, mem_wr_mask,
     sgpr_dest_data,
     mem_addr,
@@ -61,6 +61,7 @@ output [6:0]   mem_tag_req;
 output [8:0]   sgpr_source1_addr, sgpr_source2_addr, sgpr_dest_addr;
 output [9:0]   vgpr_source1_addr, vgpr_source2_addr, vgpr_dest_addr;
 output [31:0]  tracemon_retire_pc;
+output [2047:0] tracemon_mem_addr;
 output [63:0]  vgpr_dest_wr_mask, mem_wr_mask;
 output [127:0] sgpr_dest_data;
 output [31:0] mem_addr;
@@ -208,6 +209,7 @@ lsu_op_manager lsu_op_manager0(
     
     .retire_pc(tracemon_retire_pc),
     .retire_gm_or_lds(tracemon_gm_or_lds),
+    .tracemon_mem_addr(tracemon_mem_addr),
     
     .mem_rd_en(mem_rd_en),
     .mem_wr_en(mem_wr_en),
