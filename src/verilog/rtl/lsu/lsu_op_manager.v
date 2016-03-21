@@ -396,7 +396,7 @@ always@(*) begin
                 mem_rd_en_reg <= 1'b0;
                 mem_op_cnter_next <= mem_op_cnter + 6'd1;
                 if(sgpr_op) begin
-                    mem_in_addr_reg_next[31:0] = mem_in_addr_reg[31:0] + 32'd4;
+                    mem_in_addr_reg_next[31:0] <= mem_in_addr_reg[31:0] + 32'd4;
                 end
                 else begin
                     mem_in_addr_reg_next[2015:0] <= mem_in_addr_reg[2047:32];
