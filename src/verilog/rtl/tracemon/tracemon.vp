@@ -53,6 +53,10 @@ module tracemon(
 	simf2_2tracemon_retire_pc,
 	simf3_2tracemon_retire_pc,
 	lsu2tracemon_retire_pc,
+    lsu2tracemon_gm_or_lds,
+    lsu2tracemon_idle,
+    lsu2mem_rd_en,
+    lsu2mem_wr_en,
 	salu2tracemon_retire_pc,
 	salu2tracemon_exec_word_sel,
 	salu2tracemon_vcc_word_sel,
@@ -186,7 +190,6 @@ module tracemon(
 	decode2issue_valid,
 	decode2issue_wfid,
 	rfa2execvgprsgpr_select_fu,
-	lsu2tracemon_gm_or_lds,
 	fetch2tracemon_dispatch,
 	fetch2tracemon_wf_tag,
 	fetch2tracemon_new_wfid,
@@ -218,7 +221,8 @@ input issue2tracemon_barrier_retire_en, wave2decode_instr_valid, salu2sgpr_instr
          simd1_2sgpr_wr_en,simd2_2sgpr_wr_en, simd3_2sgpr_wr_en,
          simf0_2sgpr_wr_en, simf1_2sgpr_wr_en, simf2_2sgpr_wr_en,
          simf3_2sgpr_wr_en, lsu2sgpr_instr_done, lsu2vgpr_instr_done,
-         issue2fetchwave_wf_done_en, lsu2tracemon_gm_or_lds, issue2tracemon_waitcnt_retire_en,
+         issue2fetchwave_wf_done_en, issue2tracemon_waitcnt_retire_en,
+         lsu2tracemon_gm_or_lds, lsu2tracemon_idle, lsu2mem_rd_en, lsu2mem_wr_en,
          salu2exec_wr_m0_en, decode2issue_barrier;
 input[1:0] salu2sgpr_dest_wr_en, salu2tracemon_exec_word_sel,
          salu2tracemon_vcc_word_sel;
@@ -242,7 +246,7 @@ input[31:0] simd0_2tracemon_retire_pc, simd1_2tracemon_retire_pc, simd2_2tracemo
          simd3_2tracemon_retire_pc, simf0_2tracemon_retire_pc, simf1_2tracemon_retire_pc,
          simf2_2tracemon_retire_pc, simf3_2tracemon_retire_pc, lsu2tracemon_retire_pc,
          salu2tracemon_retire_pc, salu2fetch_branch_pc_value, issue2tracemon_barrier_retire_pc,
-         issue2tracemon_waitcnt_retire_pc, salu2exec_wr_m0_value;
+         issue2tracemon_waitcnt_retire_pc, salu2exec_wr_m0_value, mem2tracemon_addr;
 input[39:0] issue2tracemon_barrier_retire_wf_bitmap;
 input[63:0] salu2exec_wr_exec_value, salu2exec_wr_vcc_value, salu2sgpr_dest_data,
          simd0_2exec_wr_vcc_value, simd0_2vgpr_wr_mask, simd1_2exec_wr_vcc_value,
@@ -256,7 +260,7 @@ input[63:0] salu2exec_wr_exec_value, salu2exec_wr_vcc_value, salu2sgpr_dest_data
 input[127:0] lsu2sgpr_dest_data;
 input[2047:0] simd0_2vgpr_dest_data, simd1_2vgpr_dest_data, simd2_2vgpr_dest_data,
          simd3_2vgpr_dest_data, simf0_2vgpr_dest_data, simf1_2vgpr_dest_data,
-         simf2_2vgpr_dest_data, simf3_2vgpr_dest_data, mem2tracemon_addr;
+         simf2_2vgpr_dest_data, simf3_2vgpr_dest_data;
 input[2047:0] lsu2vgpr_dest_data, mem2tracemon_store_data;
 
 input[63:0] decode2tracemon_collinstr; // 64
@@ -276,9 +280,18 @@ integer salu_sgpr, lsu_sgpr, lsu_vgpr, simd1_vgpr, simd2_vgpr,
 	simf2_vgpr, simf3_vgpr, lsu_lds;
 integer i, j, hi, hi_addr;
 integer wfid, pc;
+integer memory_offset;
 
 reg rst_buff;
 reg [5:0] lsu_wfid;
+
+reg [127:0] lsu2sgpr_dest_data_flopped;
+reg [3:0] lsu2sgpr_dest_wr_en_flopped;
+reg [8:0] lsu2sgpr_dest_addr_flopped;
+
+reg lsu2tracemon_idle_flopped;
+
+reg [2047:0] mem2tracemon_addr_flopped;
 
 // not doing anything with rst for now
 always @ (rst)
@@ -738,6 +751,35 @@ always @ (posedge clk) begin
 
 		PrintAndDelete(CUID, wfid, pc);
 	end
+    
+    if(rst) begin
+        lsu2sgpr_dest_wr_en_flopped <= 4'd0;
+        lsu2sgpr_dest_data_flopped <= 128'd0;
+        lsu2sgpr_dest_addr_flopped <= 9'd0;
+        lsu2tracemon_idle_flopped <= 1'b0;
+        mem2tracemon_addr_flopped <= 2048'd0;
+    end
+    else begin
+        lsu2tracemon_idle_flopped <= lsu2tracemon_idle;
+        if(|lsu2sgpr_dest_wr_en) begin
+            lsu2sgpr_dest_wr_en_flopped <= lsu2sgpr_dest_wr_en;
+            lsu2sgpr_dest_data_flopped <= lsu2sgpr_dest_data;
+            lsu2sgpr_dest_addr_flopped <= lsu2sgpr_dest_addr;
+        end
+        
+        if(lsu2mem_rd_en | lsu2mem_wr_en) begin
+            mem2tracemon_addr_flopped[memory_offset+:32] <= mem2tracemon_addr;
+        end
+    end
+    
+    if(lsu2tracemon_idle) begin
+        memory_offset = 0;
+    end
+    else begin
+        if(lsu2mem_rd_en | lsu2mem_wr_en) begin
+            memory_offset = memory_offset + 32;
+        end
+    end
 
 	if(lsu2sgpr_instr_done | lsu2vgpr_instr_done) begin
 		wfid = lsu2sgpr_instr_done ? lsu2sgpr_instr_done_wfid : lsu2vgpr_instr_done_wfid;
@@ -746,14 +788,14 @@ always @ (posedge clk) begin
 		lsu_sgpr = GetSgprBase(CUID, wfid);
 		lsu_vgpr = GetVgprBase(CUID, wfid);
 		lsu_lds = GetLdsBase(CUID, wfid);
-		lsu_sgpr = lsu2sgpr_dest_addr - lsu_sgpr;
+		lsu_sgpr = lsu2sgpr_dest_addr_flopped - lsu_sgpr;
 
 		// load to sgpr
-		if(|lsu2sgpr_dest_wr_en) begin
+		if(|lsu2sgpr_dest_wr_en_flopped) begin
 			for(i = 0; i < 4; i++) begin
-				if(lsu2sgpr_dest_wr_en[i]) begin
+				if(lsu2sgpr_dest_wr_en_flopped[i]) begin
 					hi = 32 * i + 31;
-					PrintSgprLoad(CUID, wfid, pc, (mem2tracemon_addr[31:0] + 4*i), (lsu_sgpr + i), lsu2sgpr_dest_data[hi-:32]);
+					PrintSgprLoad(CUID, wfid, pc, (mem2tracemon_addr_flopped[31:0] + 4*i), (lsu_sgpr + i), lsu2sgpr_dest_data_flopped[hi-:32]);
 				end
 			end
 			PrintEndLine(CUID, wfid, pc);
@@ -765,9 +807,9 @@ always @ (posedge clk) begin
 			for(i = 0; i < 64; i++) begin
 				if(lsu2vgpr_dest_wr_mask[i]) begin
 					if(lsu2tracemon_gm_or_lds)
-                        PrintVgprLoadDS(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr[hi_addr-:32] -lsu_lds + 4*j), lsu2vgpr_dest_data[hi_addr-:32]);
+                        PrintVgprLoadDS(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr_flopped[hi_addr-:32] -lsu_lds + 4*j), lsu2vgpr_dest_data[hi_addr-:32]);
                     else
-                        PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr[hi_addr-:32] + 4*j), lsu2vgpr_dest_data[hi_addr-:32]);
+                        PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr_flopped[hi_addr-:32] + 4*j), lsu2vgpr_dest_data[hi_addr-:32]);
 				end
 			end
 			PrintEndLine(CUID, wfid, pc);
@@ -787,9 +829,9 @@ always @ (posedge clk) begin
 						hi = 128 * i + 32 * j + 31;
 						if(mem2tracemon_store_en[j])
 							if(lsu2tracemon_gm_or_lds)
-								PrintVgprStoreDS(CUID, wfid, pc, i, (mem2tracemon_addr[hi_addr-:32] - lsu_lds + 4*j), (lsu_vgpr + j), mem2tracemon_store_data[hi-:32]);
+								PrintVgprStoreDS(CUID, wfid, pc, i, (mem2tracemon_addr_flopped[hi_addr-:32] - lsu_lds + 4*j), (lsu_vgpr + j), mem2tracemon_store_data[hi-:32]);
 							else
-								PrintVgprStore(CUID, wfid, pc, i, (mem2tracemon_addr[hi_addr-:32] + 4*j), (lsu_vgpr + j), mem2tracemon_store_data[hi-:32]);
+								PrintVgprStore(CUID, wfid, pc, i, (mem2tracemon_addr_flopped[hi_addr-:32] + 4*j), (lsu_vgpr + j), mem2tracemon_store_data[hi-:32]);
 					end
 				end
 			end

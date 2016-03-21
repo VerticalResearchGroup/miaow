@@ -234,8 +234,8 @@ always@(posedge clk) begin
         lsu_state <= IDLE_STATE;
         lsu_rd_wr <= 1'b0;
         mem_op_cnt_reg <= 6'd0;
-        mem_in_addr_reg <= 2048'd0;
         mem_op_cnter <= 7'd0;
+        mem_in_addr_reg <= 2048'd0;
         mem_data_buffer <= 2048'd0;
         mem_data_offset <= 6'd0;
         tracemon_mem_addr_reg <= 2048'd0;
@@ -257,6 +257,7 @@ always@(posedge clk) begin
         lsu_rd_wr <= lsu_rd_wr_next;
         mem_op_cnt_reg <= mem_op_cnt_reg_next;
         mem_op_cnter <= mem_op_cnter_next;
+        mem_in_addr_reg <= mem_in_addr_reg_next;
         mem_data_buffer <= mem_data_buffer_next_flat;
         tracemon_mem_addr_reg <= tracemon_mem_addr_reg_next;
         sgpr_op <= sgpr_op_next;
@@ -394,7 +395,12 @@ always@(*) begin
                 // are part of the generated address bank.
                 mem_rd_en_reg <= 1'b0;
                 mem_op_cnter_next <= mem_op_cnter + 6'd1;
-                mem_in_addr_reg_next[2015:0] <= mem_in_addr_reg[2047:32];
+                if(sgpr_op) begin
+                    mem_in_addr_reg_next[31:0] = mem_in_addr_reg[31:0] + 32'd4;
+                end
+                else begin
+                    mem_in_addr_reg_next[2015:0] <= mem_in_addr_reg[2047:32];
+                end
                 mem_data_buffer_next[mem_op_cnter] <= mem_rd_data;
                 exec_mask_reg_next[62:0] <= exec_mask_reg[63:1];
                 if(mem_op_cnter == mem_op_cnt_reg) begin
@@ -485,10 +491,6 @@ assign vgpr_dest_data = mem_data_buffer;
 assign vgpr_dest_wr_en = vgpr_op & gpr_wr;
 assign vgpr_wr_mask = exec_mask_base_reg;
 assign vgpr_dest_addr = gpr_dest_addr[9:0];
-
-assign mem_out_addr = mem_in_addr_reg[31:0];
-assign mem_rd_en = mem_rd_en_reg;
-assign mem_wr_en = mem_wr_en_reg;
 
 assign sgpr_source1_rd_en = muxed_sgpr_source1_rd_en;
 assign sgpr_source2_rd_en = muxed_sgpr_source2_rd_en;

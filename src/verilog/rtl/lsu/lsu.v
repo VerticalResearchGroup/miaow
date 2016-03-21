@@ -12,7 +12,6 @@ module lsu
     mem_tag_req,
     sgpr_source1_addr, sgpr_source2_addr, sgpr_dest_addr,
     vgpr_source1_addr, vgpr_source2_addr, vgpr_dest_addr,
-    tracemon_retire_pc, tracemon_mem_addr,
     vgpr_dest_wr_mask, mem_wr_mask,
     sgpr_dest_data,
     mem_addr,
@@ -20,6 +19,7 @@ module lsu
     lsu_done, lsu_done_wfid,
     sgpr_instr_done, sgpr_instr_done_wfid,
     vgpr_instr_done, vgpr_instr_done_wfid,
+    tracemon_retire_pc, tracemon_mem_addr, tracemon_idle,
     // Inputs
     clk, rst, issue_lsu_select, mem_ack, issue_wfid, mem_tag_resp,
     issue_source_reg1, issue_source_reg2, issue_source_reg3,
@@ -60,8 +60,6 @@ output [5:0]   exec_rd_wfid;
 output [6:0]   mem_tag_req;
 output [8:0]   sgpr_source1_addr, sgpr_source2_addr, sgpr_dest_addr;
 output [9:0]   vgpr_source1_addr, vgpr_source2_addr, vgpr_dest_addr;
-output [31:0]  tracemon_retire_pc;
-output [2047:0] tracemon_mem_addr;
 output [63:0]  vgpr_dest_wr_mask, mem_wr_mask;
 output [127:0] sgpr_dest_data;
 output [31:0] mem_addr;
@@ -77,6 +75,10 @@ output vgpr_instr_done;
 output [5:0] lsu_done_wfid;
 output [5:0] sgpr_instr_done_wfid;
 output [5:0] vgpr_instr_done_wfid;
+
+output [31:0]  tracemon_retire_pc;
+output [2047:0] tracemon_mem_addr;
+output tracemon_idle;
 
 assign exec_rd_wfid = issue_wfid;
 
@@ -250,5 +252,7 @@ assign rfa_dest_wr_req = (|sgpr_dest_wr_en) | vgpr_dest_wr_en;
 
 // Something of a hack, at this point it's not actually needed
 assign mem_wr_mask = vgpr_dest_wr_mask;
+
+assign tracemon_idle = issue_ready;
 
 endmodule

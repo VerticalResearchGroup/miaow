@@ -22,7 +22,7 @@ module compute_unit
    issue2fetchwave_wf_done_en, salu2fetchwaveissue_branch_en,
    salu2fetchwaveissue_branch_taken, decode2tracemon_colldone,
    decode2issue_valid,
-   lsu2tracemon_gm_or_lds, lsu2tracemon_addr, lsu2tracemon_store_data, lsu2tracemon_store_enable,
+   lsu2tracemon_gm_or_lds, lsu2tracemon_addr, lsu2tracemon_store_data, lsu2tracemon_store_enable, lsu2tracemon_idle,
    fetch2tracemon_dispatch, salu2exec_wr_m0_en, decode2issue_barrier,
    salu2tracemon_exec_word_sel, salu2tracemon_vcc_word_sel,
    salu2sgpr_dest_wr_en, lsu2mem_rd_en, lsu2mem_wr_en,
@@ -117,7 +117,7 @@ module compute_unit
     output lsu2tracemon_gm_or_lds;
     output [2047:0] lsu2tracemon_addr;
     output [2047:0] lsu2tracemon_store_data;
-    output lsu2tracemon_store_enable;
+    output lsu2tracemon_store_enable, lsu2tracemon_idle;
    output [1:0]   salu2tracemon_exec_word_sel, salu2tracemon_vcc_word_sel,
 		  salu2sgpr_dest_wr_en;
    output [3:0]   lsu2sgpr_dest_wr_en;
@@ -754,11 +754,12 @@ lsu lsu0 (
     .sgpr_instr_done(lsu2sgpr_instr_done),
     .sgpr_source1_rd_en(lsu2sgpr_source1_rd_en),
     .sgpr_source2_rd_en(lsu2sgpr_source2_rd_en),
+    .mem_gm_or_lds(lsu2mem_gm_or_lds),
+    .rfa_dest_wr_req(lsu2rfa_dest_wr_req),
     .tracemon_retire_pc(lsu2tracemon_retire_pc),
     .tracemon_gm_or_lds(lsu2tracemon_gm_or_lds),
     .tracemon_mem_addr(lsu2tracemon_addr),
-    .mem_gm_or_lds(lsu2mem_gm_or_lds),
-    .rfa_dest_wr_req(lsu2rfa_dest_wr_req)
+    .tracemon_idle(lsu2tracemon_idle)
 );
 
    rfa rfa0 (

@@ -102,16 +102,19 @@ always@(*) begin
 
     gpr_op_depth_reg <= 2'd0;
     
-    // In general it appears that MIAOW tries to put the address value in the
-    // second source register and offsets/data in the first register.
+    // There is an inconsistency here between the decode_core and how we use
+    // the SGPR ports here. The decode unit has register 2 as the BASE value,
+    //  which doesn't work as the second SGPR port to the LSU is only 32bits
+    //  wide, so we have to flip the registers in here. Don't get confused by
+    // the inconsistency.
     case({lsu_selected, lsu_opcode[31:24]})
         
         // The SMRD instructions are different as there no write data from the
         // SGPR to memory instructions.
         {1'b1, `LSU_SMRD_FORMAT}:
         begin
-            sgpr_source1_addr_reg <= `LSU_SMRD_OFFSET;
-            sgpr_source2_addr_reg <= `LSU_SMRD_SBASE;
+            sgpr_source1_addr_reg <= `LSU_SMRD_SBASE;
+            sgpr_source2_addr_reg <= `LSU_SMRD_OFFSET;
             sgpr_source2_rd_en_reg <= 1'b1;
             if(lsu_opcode[8] == 0) begin
                 sgpr_source1_rd_en_reg <= 1'b1;
