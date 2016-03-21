@@ -53,6 +53,7 @@ output [1:0] gpr_op_depth;
 
 `define LSU_SMRD_OFFSET issue_source_reg1[8:0]
 `define LSU_SMRD_SBASE issue_source_reg2[8:0]
+`define LSU_SMRD_IMM_POS 23
 
 `define LSU_DS_DATA0 issue_source_reg2[9:0]
 `define LSU_DS_ADDR  issue_source_reg1[9:0]
@@ -115,9 +116,9 @@ always@(*) begin
         begin
             sgpr_source1_addr_reg <= `LSU_SMRD_SBASE;
             sgpr_source2_addr_reg <= `LSU_SMRD_OFFSET;
-            sgpr_source2_rd_en_reg <= 1'b1;
-            if(lsu_opcode[8] == 0) begin
-                sgpr_source1_rd_en_reg <= 1'b1;
+            sgpr_source1_rd_en_reg <= 1'b1;
+            if(lsu_opcode[`LSU_SMRD_IMM_POS] == 0) begin
+                sgpr_source2_rd_en_reg <= 1'b1;
             end
             
             // NOTE: S_DCACHE_INV instruction not supported, that instruction
@@ -176,6 +177,23 @@ always@(*) begin
             mem_op_rd_reg <= 1'b1;
             mem_op_cnt_reg <= 6'd3;
             sgpr_wr_mask_reg <= 4'b1111;
+        end
+        // Buffered loads aren't actually properly implemented, the necessary
+        // infrastructure just isn't there in the rest of the LSU. Conversely
+        // the documentation for the buffered instructions is extremely
+        // confusing as it is not clear for SI at least how num_records or
+        // stride is used in the memory operation beyond clamping.
+        {1'b1, `LSU_SMRD_FORMAT, 8'h08}: //s_buffer_load_dword
+        begin
+            mem_op_rd_reg <= 1'b1;
+            mem_op_cnt_reg <= 6'd0;
+            sgpr_wr_mask_reg <= 4'b0001;
+        end
+        {1'b1, `LSU_SMRD_FORMAT, 8'h09}: //s_buffer_load_dwordx2
+        begin
+            mem_op_rd_reg <= 1'b1;
+            mem_op_cnt_reg <= 6'd1;
+            sgpr_wr_mask_reg <= 4'b0011;
         end
         {1'b1, `LSU_DS_FORMAT, 8'h36}: //ds_read_b32
         begin
