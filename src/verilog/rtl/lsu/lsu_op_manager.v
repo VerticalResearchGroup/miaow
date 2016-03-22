@@ -500,7 +500,7 @@ assign sgpr_source2_addr = muxed_sgpr_source2_addr;
 assign vgpr_source1_rd_en = muxed_vgpr_source1_rd_en;
 assign vgpr_source2_rd_en = muxed_vgpr_source2_rd_en;
 assign vgpr_source1_addr = muxed_vgpr_source1_addr;
-assign vgpr_source2_addr = muxed_sgpr_source2_addr;
+assign vgpr_source2_addr = muxed_vgpr_source2_addr;
 
 assign mem_rd_en = mem_rd_en_reg;
 assign mem_wr_en = mem_wr_en_reg;

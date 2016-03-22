@@ -281,6 +281,9 @@ integer salu_sgpr, lsu_sgpr, lsu_vgpr, simd1_vgpr, simd2_vgpr,
 integer i, j, hi, hi_addr;
 integer wfid, pc;
 integer memory_offset;
+integer vector_offset;
+integer vector_mem_offset;
+integer vector_wr_index;
 
 reg rst_buff;
 reg [5:0] lsu_wfid;
@@ -290,8 +293,16 @@ reg [3:0] lsu2sgpr_dest_wr_en_flopped;
 reg [8:0] lsu2sgpr_dest_addr_flopped;
 
 reg lsu2tracemon_idle_flopped;
+reg lsu2tracemon_gm_or_lds_flopped;
 
 reg [2047:0] mem2tracemon_addr_flopped;
+reg [8191:0] mem2tracemon_vector_addr_flopped;
+
+reg [3:0] lsu2vgpr_dest_wr_en_flopped;
+reg [8191:0] lsu2vgpr_dest_data_flopped;
+reg [9:0] lsu2vgpr_dest_addr_flopped;
+reg [63:0] lsu2vgpr_dest_wr_mask_flopped;
+reg lsu2vgpr_dest_addr_got;
 
 // not doing anything with rst for now
 always @ (rst)
@@ -757,27 +768,75 @@ always @ (posedge clk) begin
         lsu2sgpr_dest_data_flopped <= 128'd0;
         lsu2sgpr_dest_addr_flopped <= 9'd0;
         lsu2tracemon_idle_flopped <= 1'b0;
+        lsu2tracemon_gm_or_lds_flopped <= 1'b0;
         mem2tracemon_addr_flopped <= 2048'd0;
+        mem2tracemon_vector_addr_flopped <= 8192'd0;
+        
+        lsu2vgpr_dest_wr_en_flopped <= 4'd0;
+        lsu2vgpr_dest_data_flopped <= 8192'd0;
+        lsu2vgpr_dest_addr_flopped <= 10'd0;
+        lsu2vgpr_dest_wr_mask_flopped <= 64'd0;
+        lsu2vgpr_dest_addr_got <= 1'b0;
     end
     else begin
         lsu2tracemon_idle_flopped <= lsu2tracemon_idle;
-        if(|lsu2sgpr_dest_wr_en) begin
-            lsu2sgpr_dest_wr_en_flopped <= lsu2sgpr_dest_wr_en;
-            lsu2sgpr_dest_data_flopped <= lsu2sgpr_dest_data;
-            lsu2sgpr_dest_addr_flopped <= lsu2sgpr_dest_addr;
+        
+        if(lsu2tracemon_idle_flopped) begin
+            lsu2sgpr_dest_wr_en_flopped <= 4'd0;
+            lsu2vgpr_dest_wr_en_flopped <= 4'd0;
+            lsu2vgpr_dest_addr_got <= 1'b0;
+            lsu2vgpr_dest_wr_mask_flopped <= 64'd0;
+        end
+        else begin
+            if(|lsu2sgpr_dest_wr_en) begin
+                lsu2sgpr_dest_wr_en_flopped <= lsu2sgpr_dest_wr_en;
+                lsu2sgpr_dest_data_flopped <= lsu2sgpr_dest_data;
+                lsu2sgpr_dest_addr_flopped <= lsu2sgpr_dest_addr;
+            end
+            if(lsu2vgpr_dest_wr_en) begin
+                lsu2vgpr_dest_wr_en_flopped[vector_wr_index] <= lsu2vgpr_dest_wr_en;
+                lsu2vgpr_dest_wr_mask_flopped <= lsu2vgpr_dest_wr_mask;
+                
+                if(~lsu2vgpr_dest_addr_got) begin
+                    lsu2vgpr_dest_addr_got <= 1'b1;
+                    lsu2vgpr_dest_addr_flopped <= lsu2vgpr_dest_addr;
+                end
+                
+                begin: VGPR_FILLING
+                    integer vgpr_index;
+                    for(vgpr_index = 0; vgpr_index < 64; vgpr_index = vgpr_index + 1) begin
+                        lsu2vgpr_dest_data_flopped[vgpr_index * 128 + vector_offset+:32] <= lsu2vgpr_dest_data[vgpr_index * 32+:32];
+                    end
+                end
+            end
         end
         
         if(lsu2mem_rd_en | lsu2mem_wr_en) begin
             mem2tracemon_addr_flopped[memory_offset+:32] <= mem2tracemon_addr;
+            lsu2tracemon_gm_or_lds_flopped <= lsu2tracemon_gm_or_lds;
+            mem2tracemon_vector_addr_flopped[vector_mem_offset * 128 + vector_offset+:32] <= mem2tracemon_addr;
         end
     end
     
     if(lsu2tracemon_idle) begin
         memory_offset = 0;
+        vector_offset = 0;
+        vector_mem_offset = 0;
+        vector_wr_index = 0;
     end
     else begin
         if(lsu2mem_rd_en | lsu2mem_wr_en) begin
             memory_offset = memory_offset + 32;
+            vector_mem_offset = vector_mem_offset + 1;
+        end
+        else if(lsu2vgpr_dest_wr_en) begin
+            memory_offset = 0;
+            vector_mem_offset = 0;
+        end
+        
+        if(lsu2vgpr_dest_wr_en) begin
+            vector_offset = vector_offset + 32;
+            vector_wr_index = vector_wr_index + 1;
         end
     end
 
@@ -801,19 +860,24 @@ always @ (posedge clk) begin
 			PrintEndLine(CUID, wfid, pc);
 		end
 		// load to vgpr
-		else if(lsu2vgpr_dest_wr_en) begin
-			lsu_vgpr = lsu2vgpr_dest_addr - lsu_vgpr;
-
-			for(i = 0; i < 64; i++) begin
-				if(lsu2vgpr_dest_wr_mask[i]) begin
-					if(lsu2tracemon_gm_or_lds)
-                        PrintVgprLoadDS(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr_flopped[hi_addr-:32] -lsu_lds + 4*j), lsu2vgpr_dest_data[hi_addr-:32]);
-                    else
-                        PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_addr_flopped[hi_addr-:32] + 4*j), lsu2vgpr_dest_data[hi_addr-:32]);
-				end
-			end
-			PrintEndLine(CUID, wfid, pc);
-		end
+		 else if(|lsu2vgpr_dest_wr_en_flopped) begin
+            lsu_vgpr = lsu2vgpr_dest_addr_flopped - lsu_vgpr;
+            
+            for(i = 0; i < 64; i++) begin
+                if(lsu2vgpr_dest_wr_mask_flopped[i]) begin
+                    hi_addr = 32 * i + 31;
+                    for(j = 0; j < 4; j++) begin
+                        hi = 128 * i + 32 * j + 31;
+                        if(lsu2vgpr_dest_wr_en_flopped[j])
+                            if(lsu2tracemon_gm_or_lds_flopped)
+                                PrintVgprLoadDS(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_vector_addr_flopped[hi-:32] -lsu_lds + 4*j), lsu2vgpr_dest_data_flopped[hi-:32]);
+                            else
+                                PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_vector_addr_flopped[hi-:32] + 4*j), lsu2vgpr_dest_data_flopped[hi-:32]);
+                    end
+                end
+            end
+            PrintEndLine(CUID, wfid, pc);
+        end
 		// store from vgpr
 		// correctness issue: reading from tracemon in the cycle after
 		// instruction retires from memory. This could lead to overwrite
@@ -823,12 +887,12 @@ always @ (posedge clk) begin
 			lsu_vgpr = lsu2vgpr_dest_addr - lsu_vgpr;
 
 			for(i = 0; i < 64; i++) begin
-				if(lsu2vgpr_dest_wr_mask[i]) begin
+				if(lsu2vgpr_dest_wr_mask_flopped[i]) begin
 					hi_addr = 32 * i + 31;
 					for(j = 0; j < 4; j++) begin
 						hi = 128 * i + 32 * j + 31;
 						if(mem2tracemon_store_en[j])
-							if(lsu2tracemon_gm_or_lds)
+							if(lsu2tracemon_gm_or_lds_flopped)
 								PrintVgprStoreDS(CUID, wfid, pc, i, (mem2tracemon_addr_flopped[hi_addr-:32] - lsu_lds + 4*j), (lsu_vgpr + j), mem2tracemon_store_data[hi-:32]);
 							else
 								PrintVgprStore(CUID, wfid, pc, i, (mem2tracemon_addr_flopped[hi_addr-:32] + 4*j), (lsu_vgpr + j), mem2tracemon_store_data[hi-:32]);
