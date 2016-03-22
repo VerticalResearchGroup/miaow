@@ -872,7 +872,7 @@ always @ (posedge clk) begin
                             if(lsu2tracemon_gm_or_lds_flopped)
                                 PrintVgprLoadDS(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_vector_addr_flopped[hi-:32] -lsu_lds + 4*j), lsu2vgpr_dest_data_flopped[hi-:32]);
                             else
-                                PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_vector_addr_flopped[hi-:32] + 4*j), lsu2vgpr_dest_data_flopped[hi-:32]);
+                                PrintVgprLoad(CUID, wfid, pc, i, (lsu_vgpr + j), (mem2tracemon_vector_addr_flopped[hi-:32]), lsu2vgpr_dest_data_flopped[hi-:32]);
                     end
                 end
             end

@@ -171,10 +171,16 @@ reg lsu_rd_wr_next;
 
 reg [5:0] mem_op_cnt_reg;
 reg [5:0] mem_op_cnt_reg_next;
-reg [2047:0] mem_in_addr_reg;
-reg [2047:0] mem_in_addr_reg_next;
 reg [6:0] mem_op_cnter;
 reg [6:0] mem_op_cnter_next;
+
+reg [2047:0] mem_in_addr_reg;
+reg [2047:0] mem_in_addr_reg_next;
+reg [2047:0] mem_base_addr_reg;
+reg [2047:0] mem_base_addr_reg_next;
+
+reg [31:0] mem_addr_offset;
+reg [31:0] mem_addr_offset_next;
 
 reg [2047:0] tracemon_mem_addr_reg;
 reg [2047:0] tracemon_mem_addr_reg_next;
@@ -236,6 +242,8 @@ always@(posedge clk) begin
         mem_op_cnt_reg <= 6'd0;
         mem_op_cnter <= 7'd0;
         mem_in_addr_reg <= 2048'd0;
+        mem_base_addr_reg <= 2048'd0;
+        mem_addr_offset <= 32'd0;
         mem_data_buffer <= 2048'd0;
         mem_data_offset <= 6'd0;
         tracemon_mem_addr_reg <= 2048'd0;
@@ -258,6 +266,8 @@ always@(posedge clk) begin
         mem_op_cnt_reg <= mem_op_cnt_reg_next;
         mem_op_cnter <= mem_op_cnter_next;
         mem_in_addr_reg <= mem_in_addr_reg_next;
+        mem_base_addr_reg <= mem_base_addr_reg_next;
+        mem_addr_offset <= mem_addr_offset_next;
         mem_data_buffer <= mem_data_buffer_next_flat;
         tracemon_mem_addr_reg <= tracemon_mem_addr_reg_next;
         sgpr_op <= sgpr_op_next;
@@ -283,6 +293,8 @@ always@(*) begin
     
     // Memory interface signals
     mem_in_addr_reg_next <= mem_in_addr_reg;
+    mem_base_addr_reg_next <= mem_base_addr_reg;
+    mem_addr_offset_next <= mem_addr_offset;
     mem_rd_en_reg <= 1'b0;
     mem_wr_en_reg <= 1'b0;
     
@@ -335,6 +347,7 @@ always@(*) begin
                 lsu_state_next <= ADDR_CALC_STATE;
                 mem_op_cnt_reg_next <= mem_op_cnt;
                 mem_op_cnter_next <= 6'd0;
+                mem_addr_offset_next <= 32'd0;
                 
                 // Route SGPR read signals from opcode decoder
                 muxed_sgpr_source1_rd_en <= decoded_sgpr_source1_rd_en;
@@ -373,6 +386,7 @@ always@(*) begin
         ADDR_CALC_STATE: begin
             lsu_state_next <= RD_STATE;
             mem_in_addr_reg_next <= mem_in_addr;
+            mem_base_addr_reg_next <= mem_in_addr;
             tracemon_mem_addr_reg_next <= mem_in_addr;
             gpr_op_depth_cntr_next <= 2'd0;
             mem_op_cnter_next <= 6'd0;
@@ -396,9 +410,9 @@ always@(*) begin
                 mem_rd_en_reg <= 1'b0;
                 mem_op_cnter_next <= mem_op_cnter + 6'd1;
                 if(sgpr_op) begin
-                    mem_in_addr_reg_next[31:0] <= mem_in_addr_reg[31:0] + 32'd4;
+                    mem_addr_offset_next <= mem_addr_offset + 32'd4;
                 end
-                else begin
+                if(vgpr_op) begin
                     mem_in_addr_reg_next[2015:0] <= mem_in_addr_reg[2047:32];
                 end
                 mem_data_buffer_next[mem_op_cnter] <= mem_rd_data;
@@ -414,8 +428,12 @@ always@(*) begin
             gpr_op_depth_cntr_next <= gpr_op_depth_cntr + 2'd1;
             lsu_state_next <= RD_STATE;
             mem_op_cnter_next <= 6'd0;
+            mem_in_addr_reg_next <= mem_base_addr_reg;
             exec_mask_reg_next <= exec_mask_base_reg;
             gpr_dest_addr_next <= gpr_dest_addr + 12'd1;
+            if(vgpr_op) begin
+                mem_addr_offset_next <= mem_addr_offset + 32'd4;
+            end
             if(gpr_op_depth_cntr == gpr_op_depth_reg) begin
                 // Signal done somehow
                 lsu_state_next <= SIGNAL_DONE_STATE;
@@ -504,7 +522,7 @@ assign vgpr_source2_addr = muxed_vgpr_source2_addr;
 
 assign mem_rd_en = mem_rd_en_reg;
 assign mem_wr_en = mem_wr_en_reg;
-assign mem_out_addr = mem_in_addr_reg[31:0];
+assign mem_out_addr = mem_in_addr_reg[31:0] + mem_addr_offset;
 assign mem_wr_data = mem_data_buffer[31:0];
 assign mem_tag_req = {current_wfid, mem_rd_en_reg};
 assign mem_gm_or_lds = gm_or_lds_reg;
