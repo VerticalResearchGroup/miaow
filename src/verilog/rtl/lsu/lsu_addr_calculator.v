@@ -28,6 +28,8 @@ input [15:0] in_imm_value0;
 output [2047:0] out_ld_st_addr;
 output out_gm_or_lds;
 
+`define ADD_TID_ENABLE in_scalar_source_a[119]
+
 reg [63:0] out_exec_value;
 reg [2047:0] out_ld_st_addr;
 reg out_gm_or_lds;
@@ -52,6 +54,12 @@ begin
       end
     `LSU_MTBUF_FORMAT:
       begin
+        // We suffer a architectural limitation here wherein we cannot support
+        // both an offset and index value as inputs into the address
+        // calculation, as that would require two vector register reads
+        // instead of the one that we currently do. Proposed future solution
+        // is to have the LSU be able to utilize two read ports to the VGPR to
+        // facilitate two reads in a cycle instead of just one.
         out_ld_st_addr <= ({in_opcode[`LSU_MTBUF_IDXEN_POS],in_opcode[`LSU_MTBUF_OFFEN_POS]} == 2'b11) ? {2048{1'bx}} : mtbuf_address;
         out_gm_or_lds <= 1'b0;
       end
@@ -67,6 +75,7 @@ mtbuf_addr_calc mtbuf_address_calc[63:0](
   .out_addr(mtbuf_address),
   .vector_source_b(in_vector_source_b),
   .scalar_source_a(in_scalar_source_a),
+  .scalar_source_b(in_scalar_source_b),
   .imm_value0(in_imm_value0),
   .idx_en(in_opcode[`LSU_MTBUF_IDXEN_POS]),
   .off_en(in_opcode[`LSU_MTBUF_OFFEN_POS]),
@@ -88,72 +97,72 @@ ds_addr_calc ds_address_calc[63:0](
 // {
 //   $high = (($i+1)*6) - 1;
 //   $low = $i * 6;
-//   print "assign thread_id[$high:$low] = 6'd$i;\n";
+//   print "assign thread_id[$high:$low] = `ADD_TID_ENABLE ? 6'd$i : 6'd0;\n";
 // }
 // %%stop_veriperl
-assign thread_id[5:0] = 6'd0;
-assign thread_id[11:6] = 6'd1;
-assign thread_id[17:12] = 6'd2;
-assign thread_id[23:18] = 6'd3;
-assign thread_id[29:24] = 6'd4;
-assign thread_id[35:30] = 6'd5;
-assign thread_id[41:36] = 6'd6;
-assign thread_id[47:42] = 6'd7;
-assign thread_id[53:48] = 6'd8;
-assign thread_id[59:54] = 6'd9;
-assign thread_id[65:60] = 6'd10;
-assign thread_id[71:66] = 6'd11;
-assign thread_id[77:72] = 6'd12;
-assign thread_id[83:78] = 6'd13;
-assign thread_id[89:84] = 6'd14;
-assign thread_id[95:90] = 6'd15;
-assign thread_id[101:96] = 6'd16;
-assign thread_id[107:102] = 6'd17;
-assign thread_id[113:108] = 6'd18;
-assign thread_id[119:114] = 6'd19;
-assign thread_id[125:120] = 6'd20;
-assign thread_id[131:126] = 6'd21;
-assign thread_id[137:132] = 6'd22;
-assign thread_id[143:138] = 6'd23;
-assign thread_id[149:144] = 6'd24;
-assign thread_id[155:150] = 6'd25;
-assign thread_id[161:156] = 6'd26;
-assign thread_id[167:162] = 6'd27;
-assign thread_id[173:168] = 6'd28;
-assign thread_id[179:174] = 6'd29;
-assign thread_id[185:180] = 6'd30;
-assign thread_id[191:186] = 6'd31;
-assign thread_id[197:192] = 6'd32;
-assign thread_id[203:198] = 6'd33;
-assign thread_id[209:204] = 6'd34;
-assign thread_id[215:210] = 6'd35;
-assign thread_id[221:216] = 6'd36;
-assign thread_id[227:222] = 6'd37;
-assign thread_id[233:228] = 6'd38;
-assign thread_id[239:234] = 6'd39;
-assign thread_id[245:240] = 6'd40;
-assign thread_id[251:246] = 6'd41;
-assign thread_id[257:252] = 6'd42;
-assign thread_id[263:258] = 6'd43;
-assign thread_id[269:264] = 6'd44;
-assign thread_id[275:270] = 6'd45;
-assign thread_id[281:276] = 6'd46;
-assign thread_id[287:282] = 6'd47;
-assign thread_id[293:288] = 6'd48;
-assign thread_id[299:294] = 6'd49;
-assign thread_id[305:300] = 6'd50;
-assign thread_id[311:306] = 6'd51;
-assign thread_id[317:312] = 6'd52;
-assign thread_id[323:318] = 6'd53;
-assign thread_id[329:324] = 6'd54;
-assign thread_id[335:330] = 6'd55;
-assign thread_id[341:336] = 6'd56;
-assign thread_id[347:342] = 6'd57;
-assign thread_id[353:348] = 6'd58;
-assign thread_id[359:354] = 6'd59;
-assign thread_id[365:360] = 6'd60;
-assign thread_id[371:366] = 6'd61;
-assign thread_id[377:372] = 6'd62;
-assign thread_id[383:378] = 6'd63;
+assign thread_id[5:0] = `ADD_TID_ENABLE ? 6'd0 : 6'd0;
+assign thread_id[11:6] = `ADD_TID_ENABLE ? 6'd1 : 6'd0;
+assign thread_id[17:12] = `ADD_TID_ENABLE ? 6'd2 : 6'd0;
+assign thread_id[23:18] = `ADD_TID_ENABLE ? 6'd3 : 6'd0;
+assign thread_id[29:24] = `ADD_TID_ENABLE ? 6'd4 : 6'd0;
+assign thread_id[35:30] = `ADD_TID_ENABLE ? 6'd5 : 6'd0;
+assign thread_id[41:36] = `ADD_TID_ENABLE ? 6'd6 : 6'd0;
+assign thread_id[47:42] = `ADD_TID_ENABLE ? 6'd7 : 6'd0;
+assign thread_id[53:48] = `ADD_TID_ENABLE ? 6'd8 : 6'd0;
+assign thread_id[59:54] = `ADD_TID_ENABLE ? 6'd9 : 6'd0;
+assign thread_id[65:60] = `ADD_TID_ENABLE ? 6'd10 : 6'd0;
+assign thread_id[71:66] = `ADD_TID_ENABLE ? 6'd11 : 6'd0;
+assign thread_id[77:72] = `ADD_TID_ENABLE ? 6'd12 : 6'd0;
+assign thread_id[83:78] = `ADD_TID_ENABLE ? 6'd13 : 6'd0;
+assign thread_id[89:84] = `ADD_TID_ENABLE ? 6'd14 : 6'd0;
+assign thread_id[95:90] = `ADD_TID_ENABLE ? 6'd15 : 6'd0;
+assign thread_id[101:96] = `ADD_TID_ENABLE ? 6'd16 : 6'd0;
+assign thread_id[107:102] = `ADD_TID_ENABLE ? 6'd17 : 6'd0;
+assign thread_id[113:108] = `ADD_TID_ENABLE ? 6'd18 : 6'd0;
+assign thread_id[119:114] = `ADD_TID_ENABLE ? 6'd19 : 6'd0;
+assign thread_id[125:120] = `ADD_TID_ENABLE ? 6'd20 : 6'd0;
+assign thread_id[131:126] = `ADD_TID_ENABLE ? 6'd21 : 6'd0;
+assign thread_id[137:132] = `ADD_TID_ENABLE ? 6'd22 : 6'd0;
+assign thread_id[143:138] = `ADD_TID_ENABLE ? 6'd23 : 6'd0;
+assign thread_id[149:144] = `ADD_TID_ENABLE ? 6'd24 : 6'd0;
+assign thread_id[155:150] = `ADD_TID_ENABLE ? 6'd25 : 6'd0;
+assign thread_id[161:156] = `ADD_TID_ENABLE ? 6'd26 : 6'd0;
+assign thread_id[167:162] = `ADD_TID_ENABLE ? 6'd27 : 6'd0;
+assign thread_id[173:168] = `ADD_TID_ENABLE ? 6'd28 : 6'd0;
+assign thread_id[179:174] = `ADD_TID_ENABLE ? 6'd29 : 6'd0;
+assign thread_id[185:180] = `ADD_TID_ENABLE ? 6'd30 : 6'd0;
+assign thread_id[191:186] = `ADD_TID_ENABLE ? 6'd31 : 6'd0;
+assign thread_id[197:192] = `ADD_TID_ENABLE ? 6'd32 : 6'd0;
+assign thread_id[203:198] = `ADD_TID_ENABLE ? 6'd33 : 6'd0;
+assign thread_id[209:204] = `ADD_TID_ENABLE ? 6'd34 : 6'd0;
+assign thread_id[215:210] = `ADD_TID_ENABLE ? 6'd35 : 6'd0;
+assign thread_id[221:216] = `ADD_TID_ENABLE ? 6'd36 : 6'd0;
+assign thread_id[227:222] = `ADD_TID_ENABLE ? 6'd37 : 6'd0;
+assign thread_id[233:228] = `ADD_TID_ENABLE ? 6'd38 : 6'd0;
+assign thread_id[239:234] = `ADD_TID_ENABLE ? 6'd39 : 6'd0;
+assign thread_id[245:240] = `ADD_TID_ENABLE ? 6'd40 : 6'd0;
+assign thread_id[251:246] = `ADD_TID_ENABLE ? 6'd41 : 6'd0;
+assign thread_id[257:252] = `ADD_TID_ENABLE ? 6'd42 : 6'd0;
+assign thread_id[263:258] = `ADD_TID_ENABLE ? 6'd43 : 6'd0;
+assign thread_id[269:264] = `ADD_TID_ENABLE ? 6'd44 : 6'd0;
+assign thread_id[275:270] = `ADD_TID_ENABLE ? 6'd45 : 6'd0;
+assign thread_id[281:276] = `ADD_TID_ENABLE ? 6'd46 : 6'd0;
+assign thread_id[287:282] = `ADD_TID_ENABLE ? 6'd47 : 6'd0;
+assign thread_id[293:288] = `ADD_TID_ENABLE ? 6'd48 : 6'd0;
+assign thread_id[299:294] = `ADD_TID_ENABLE ? 6'd49 : 6'd0;
+assign thread_id[305:300] = `ADD_TID_ENABLE ? 6'd50 : 6'd0;
+assign thread_id[311:306] = `ADD_TID_ENABLE ? 6'd51 : 6'd0;
+assign thread_id[317:312] = `ADD_TID_ENABLE ? 6'd52 : 6'd0;
+assign thread_id[323:318] = `ADD_TID_ENABLE ? 6'd53 : 6'd0;
+assign thread_id[329:324] = `ADD_TID_ENABLE ? 6'd54 : 6'd0;
+assign thread_id[335:330] = `ADD_TID_ENABLE ? 6'd55 : 6'd0;
+assign thread_id[341:336] = `ADD_TID_ENABLE ? 6'd56 : 6'd0;
+assign thread_id[347:342] = `ADD_TID_ENABLE ? 6'd57 : 6'd0;
+assign thread_id[353:348] = `ADD_TID_ENABLE ? 6'd58 : 6'd0;
+assign thread_id[359:354] = `ADD_TID_ENABLE ? 6'd59 : 6'd0;
+assign thread_id[365:360] = `ADD_TID_ENABLE ? 6'd60 : 6'd0;
+assign thread_id[371:366] = `ADD_TID_ENABLE ? 6'd61 : 6'd0;
+assign thread_id[377:372] = `ADD_TID_ENABLE ? 6'd62 : 6'd0;
+assign thread_id[383:378] = `ADD_TID_ENABLE ? 6'd63 : 6'd0;
 
 endmodule
