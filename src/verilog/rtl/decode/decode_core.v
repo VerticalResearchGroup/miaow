@@ -355,8 +355,8 @@ begin
                fu <= 2'b11;
                opcode[31:24] <= 8'd4;
                opcode[23:0] <= {collated_instr[55:54],collated_instr[25:19],collated_instr[15:12],8'b0,collated_instr[18:16]};
-               imm_value0 <= collated_instr[12] ? {16{1'bx}} : {5'b0,collated_instr[11:0]};//OFFSET12 if offen is 0
-               imm_value1 <= {24'b0,collated_instr[63:56]};
+               imm_value0 <= {4'd0,collated_instr[11:0]}; //The ISA does not suggest this offset to be optional.
+               imm_value1 <= {24'd0,collated_instr[63:56]};
                s1_field <= {`VD,1'b0,collated_instr[63:56]}; //SOFFSET8
                s2_field <= {`VD,1'b1,collated_instr[47:40]}; //VDATA8 if store
                s3_field <= {`VD,1'b1,collated_instr[39:32]}; //VADDR8
