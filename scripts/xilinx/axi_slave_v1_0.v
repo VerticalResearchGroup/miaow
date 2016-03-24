@@ -45,6 +45,7 @@
         output wire mb2fpgamem_data_we,
         output wire mb2fpgamem_ack,
         output wire mb2fpgamem_done,
+        output wire [0:0] peripheral_aresetn,
         
         input wire [3:0] fpgamem2mb_op,
         input wire [31:0] fpgamem2mb_data,
@@ -124,6 +125,7 @@
         .mb2fpgamem_data_we(mb2fpgamem_data_we),
         .mb2fpgamem_ack(mb2fpgamem_ack),
         .mb2fpgamem_done(mb2fpgamem_done),
+        .peripheral_aresetn(peripheral_aresetn),
         
         .fpgamem2mb_op(fpgamem2mb_op),
         .fpgamem2mb_data(fpgamem2mb_data),
