@@ -105,7 +105,7 @@ wire  buff2fetchwave_ack, cu2dispatch_wf_done, decode2issue_barrier,
       issue2simf2_alu_select, issue2simf3_alu_select, issue2tracemon_barrier_retire_en,
       issue2tracemon_waitcnt_retire_en, lsu2issue_ready, lsu2mem_gm_or_lds,
       lsu2sgpr_instr_done, lsu2sgpr_source1_rd_en, lsu2sgpr_source2_rd_en,
-      lsu2tracemon_gm_or_lds, lsu2vgpr_instr_done, lsu2vgpr_source1_rd_en,
+      lsu2tracemon_gm_or_lds, lsu2vgpr_instr_done, lsu2vgpr_source1_rd_en, lsu2issue_done,
       lsu2vgpr_source2_rd_en, lsu2rfa_dest_wr_req, mem2lsu_ack, rfa2simd0_queue_entry_serviced,
       rfa2simd1_queue_entry_serviced, rfa2simd2_queue_entry_serviced, rfa2simd3_queue_entry_serviced,
       rfa2simf0_queue_entry_serviced, rfa2simf1_queue_entry_serviced, rfa2simf2_queue_entry_serviced,
@@ -142,15 +142,15 @@ wire  buff2fetchwave_ack, cu2dispatch_wf_done, decode2issue_barrier,
       wave2decode_instr_valid;
 wire [1:0] 	decode2issue_fu, salu2sgpr_dest_wr_en, salu2tracemon_exec_word_sel,
             salu2tracemon_vcc_word_sel, sgpr2issue_alu_dest_reg_valid;
-wire [3:0] 	dispatch2cu_wg_wf_count, fetch2issue_wg_wf_count, lsu2mem_rd_en,
-            lsu2mem_wr_en, lsu2sgpr_dest_wr_en, lsu2vgpr_dest_wr_en, sgpr2issue_lsu_dest_reg_valid,
+wire [3:0] 	dispatch2cu_wg_wf_count, fetch2issue_wg_wf_count,
+            lsu2sgpr_dest_wr_en, lsu2vgpr_dest_wr_en, sgpr2issue_lsu_dest_reg_valid,
             vgpr2issue_lsu_dest_reg_valid;
 wire [5:0] 	decode2issue_wfid, decode2wave_ins_half_wfid, dispatch2cu_wf_size_dispatch,
             exec2issue_salu_wr_wfid, exec2issue_valu_wr_vcc_wfid, fetch2exec_init_wf_id,
             fetch2issue_wg_wgid, fetch2tracemon_new_wfid, fetch2wave_basereg_wfid,
             fetch2wave_reserve_slotid, issue2alu_wfid, issue2fetch_wg_wfid, issue2fetchwave_wf_done_wf_id,
             issue2lsu_wfid, issue2tracemon_waitcnt_retire_wfid, lsu2exec_rd_wfid,
-            lsu2sgpr_instr_done_wfid, lsu2vgpr_instr_done_wfid, salu2exec_rd_wfid,
+            lsu2sgpr_instr_done_wfid, lsu2vgpr_instr_done_wfid, lsu2issue_done_wfid, salu2exec_rd_wfid,
             salu2exec_wr_wfid, salu2fetchwaveissue_branch_wfid, salu2sgpr_instr_done_wfid,
             sgpr2issue_alu_wr_done_wfid, sgpr2issue_lsu_instr_done_wfid, simd0_2exec_rd_wfid,
             simd0_2exec_wr_vcc_wfid, simd0_2vgpr_instr_done_wfid, simd1_2exec_rd_wfid,
@@ -231,6 +231,9 @@ wire [2047:0]   simd0_2vgpr_dest_data, simd1_2vgpr_dest_data,
                 vgpr2simf_source3_data;
 
 wire salu_request, lsu_stall;
+
+wire lsu2mem_rd_en, lsu2mem_wr_en;
+
 wire [31:0]   lsu2mem_wr_data, mem2lsu_rd_data, lsu2mem_addr;
 wire [2047:0] lsu2vgpr_dest_data, vgpr2lsu_source1_data;
 
@@ -622,6 +625,8 @@ issue issue0 (
   .simf3_alu_ready(simf3_2issue_alu_ready),
   .salu_alu_ready(salu2issue_alu_ready),
   .lsu_ready(lsu2issue_ready),
+  .lsu_done(lsu2issue_done),
+  .lsu_done_wfid(lsu2issue_done_wfid),
   .exec_salu_wr_wfid(exec2issue_salu_wr_wfid),
   .exec_salu_wr_vcc_en(exec2issue_salu_wr_vcc_en),
   .exec_salu_wr_exec_en(exec2issue_salu_wr_exec_en),
@@ -932,9 +937,11 @@ lsu lsu0 (
   .exec_exec_value(exec2lsu_exec_value),//
   .exec_rd_m0_value(exec2lsu_rd_m0_value),//
   .issue_instr_pc(issue2lsu_instr_pc),//
-       .lsu_stall(lsu_stall),//**CHANGE
+  .lsu_stall(lsu_stall),//**CHANGE
   //  Outputs
   .issue_ready(lsu2issue_ready),
+  .lsu_done(lsu2issue_done),
+  .lsu_done_wfid(lsu2issue_done_wfid),
   .vgpr_source1_addr(lsu2vgpr_source1_addr),
   .vgpr_source2_addr(lsu2vgpr_source2_addr),
   .vgpr_dest_addr(lsu2vgpr_dest_addr),
@@ -961,11 +968,13 @@ lsu lsu0 (
   .sgpr_instr_done(lsu2sgpr_instr_done),
   .sgpr_source1_rd_en(lsu2sgpr_source1_rd_en),
   .sgpr_source2_rd_en(lsu2sgpr_source2_rd_en),
-  .tracemon_retire_pc(lsu2tracemon_retire_pc),
   .mem_gm_or_lds(lsu2mem_gm_or_lds),
+  .rfa_dest_wr_req(lsu2rfa_dest_wr_req),
+  .tracemon_retire_pc(lsu2tracemon_retire_pc),
   .tracemon_gm_or_lds(lsu2tracemon_gm_or_lds),
-  .rfa_dest_wr_req(lsu2rfa_dest_wr_req)
-  );
+  .tracemon_mem_addr(),
+  .tracemon_idle()
+);
   
 fpga_memory fpga_memory0(
   .mem_wr_en(lsu2mem_wr_en),

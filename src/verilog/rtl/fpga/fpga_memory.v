@@ -20,8 +20,8 @@ module fpga_memory
 input clk;
 input rst;
 
-input [3:0] mem_wr_en;
-input [3:0] mem_rd_en;
+input mem_wr_en;
+input mem_rd_en;
 input [31:0] mem_addr;
 input [31:0] mem_wr_data;
 input [6:0] mem_tag_req;
@@ -87,13 +87,13 @@ always@(posedge clk) begin
     mb_data_we_reg <= mb_data_we;
     
     mb_data_out_reg <= mb_data_out_reg;
-    if((|mem_wr_en)) begin
+    if((mem_wr_en)) begin
       mb_data_out_reg <= mem_wr_data;
     end
     
     mem_addr_reg <= mem_addr_reg;
-    mem_tag_req_reg <= 7'd0;
-    if((|mem_wr_en) | (|mem_rd_en)) begin
+    mem_tag_req_reg <= mem_tag_req_reg;
+    if(mem_wr_en | mem_rd_en) begin
       mem_addr_reg <= mem_addr;
       mem_tag_req_reg <= mem_tag_req;
     end
@@ -110,10 +110,10 @@ always@(*) begin
   mem_ack_reg <= 1'b0;
   case(mem_state)
     `MEM_IDLE: begin
-      if(|mem_wr_en) begin
+      if(mem_wr_en) begin
         mem_state_next <= `MEM_WR_ACK_WAIT;
       end
-      else if(|mem_rd_en) begin
+      else if(mem_rd_en) begin
         mem_state_next <= `MEM_RD_ACK_WAIT;
       end
     end
