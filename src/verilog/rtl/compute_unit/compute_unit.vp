@@ -2,7 +2,15 @@ module compute_unit
   ( 
     /*AUTOARG*/
    // Outputs
-   cu2dispatch_wf_done, lsu2mem_gm_or_lds, fetch2buff_rd_en,
+   cu2dispatch_wf_done, cu2dispatch_wf_tag_done,
+   fetch2buff_rd_en, fetch2buff_addr, fetch2buff_tag,
+   lsu2mem_rd_en, lsu2mem_wr_en, lsu2mem_tag_req, lsu2mem_wr_mask,
+   lsu2mem_addr, lsu2mem_wr_data, lsu2mem_gm_or_lds,
+`ifdef FPGA_BUILD
+  sgpr2dispatch_rd_data,
+  vgpr2dispatch_rd_data,
+`endif
+`ifndef FPGA_BUILD
    issue2tracemon_barrier_retire_en, issue2tracemon_waitcnt_retire_en,
    wave2decode_instr_valid, salu2sgpr_instr_done,
    salu2exec_wr_exec_en, salu2exec_wr_vcc_en, salu2exec_wr_scc_en,
@@ -25,7 +33,7 @@ module compute_unit
    lsu2tracemon_gm_or_lds, lsu2tracemon_addr, lsu2tracemon_store_data, lsu2tracemon_store_enable, lsu2tracemon_idle,
    fetch2tracemon_dispatch, salu2exec_wr_m0_en, decode2issue_barrier,
    salu2tracemon_exec_word_sel, salu2tracemon_vcc_word_sel,
-   salu2sgpr_dest_wr_en, lsu2mem_rd_en, lsu2mem_wr_en,
+   salu2sgpr_dest_wr_en, 
    lsu2sgpr_dest_wr_en, lsu2vgpr_dest_wr_en,
    issue2tracemon_waitcnt_retire_wfid, wave2decode_wfid,
    salu2sgpr_instr_done_wfid, simd0_2vgpr_instr_done_wfid,
@@ -35,7 +43,7 @@ module compute_unit
    simf3_2vgpr_instr_done_wfid, lsu2sgpr_instr_done_wfid,
    lsu2vgpr_instr_done_wfid, issue2fetchwave_wf_done_wf_id,
    salu2fetchwaveissue_branch_wfid, decode2issue_wfid,
-   fetch2tracemon_new_wfid, lsu2mem_tag_req, wave2decode_sgpr_base,
+   fetch2tracemon_new_wfid, wave2decode_sgpr_base,
    salu2sgpr_dest_addr, simd0_2sgpr_wr_addr, simd1_2sgpr_wr_addr,
    simd2_2sgpr_wr_addr, simd3_2sgpr_wr_addr, simf0_2sgpr_wr_addr,
    simf1_2sgpr_wr_addr, simf2_2sgpr_wr_addr, simf3_2sgpr_wr_addr,
@@ -43,9 +51,9 @@ module compute_unit
    simd1_2vgpr_dest_addr, simd2_2vgpr_dest_addr,
    simd3_2vgpr_dest_addr, simf0_2vgpr_dest_addr,
    simf1_2vgpr_dest_addr, simf2_2vgpr_dest_addr,
-   simf3_2vgpr_dest_addr, lsu2vgpr_dest_addr, cu2dispatch_wf_tag_done,
+   simf3_2vgpr_dest_addr, lsu2vgpr_dest_addr,
    fetch2tracemon_wf_tag, wave2decode_lds_base,
-   rfa2execvgprsgpr_select_fu, fetch2buff_addr,
+   rfa2execvgprsgpr_select_fu,
    simd0_2tracemon_retire_pc, simd1_2tracemon_retire_pc,
    simd2_2tracemon_retire_pc, simd3_2tracemon_retire_pc,
    simf0_2tracemon_retire_pc, simf1_2tracemon_retire_pc,
@@ -53,8 +61,8 @@ module compute_unit
    salu2tracemon_retire_pc, lsu2tracemon_retire_pc,
    issue2tracemon_barrier_retire_pc, issue2tracemon_waitcnt_retire_pc,
    salu2fetch_branch_pc_value, decode2issue_instr_pc,
-   salu2exec_wr_m0_value, fetch2buff_tag,
-   issue2tracemon_barrier_retire_wf_bitmap, lsu2mem_wr_mask,
+   salu2exec_wr_m0_value,
+   issue2tracemon_barrier_retire_wf_bitmap,
    salu2exec_wr_exec_value, salu2exec_wr_vcc_value,
    salu2sgpr_dest_data, simd0_2exec_wr_vcc_value, simd0_2vgpr_wr_mask,
    simd1_2exec_wr_vcc_value, simd1_2vgpr_wr_mask,
@@ -67,38 +75,69 @@ module compute_unit
    simd1_2sgpr_wr_data, simd2_2sgpr_wr_data, simd3_2sgpr_wr_data,
    simf0_2sgpr_wr_data, simf1_2sgpr_wr_data, simf2_2sgpr_wr_data,
    simf3_2sgpr_wr_data, lsu2vgpr_dest_wr_mask,
-   decode2tracemon_collinstr, lsu2sgpr_dest_data, lsu2mem_addr,
+   decode2tracemon_collinstr, lsu2sgpr_dest_data,
    simd0_2vgpr_dest_data, simd1_2vgpr_dest_data,
    simd2_2vgpr_dest_data, simd3_2vgpr_dest_data,
    simf0_2vgpr_dest_data, simf1_2vgpr_dest_data,
-   simf2_2vgpr_dest_data, simf3_2vgpr_dest_data, lsu2mem_wr_data,
+   simf2_2vgpr_dest_data, simf3_2vgpr_dest_data,
    lsu2vgpr_dest_data,
+`endif
    // Inputs
-   clk, rst, dispatch2cu_wf_dispatch, mem2lsu_ack, buff2fetchwave_ack,
-   dispatch2cu_wg_wf_count, dispatch2cu_wf_size_dispatch,
-   mem2lsu_tag_resp, dispatch2cu_sgpr_base_dispatch,
-   dispatch2cu_vgpr_base_dispatch, dispatch2cu_wf_tag_dispatch,
-   dispatch2cu_lds_base_dispatch, dispatch2cu_start_pc_dispatch,
-   buff2wave_instr, buff2wave_tag, mem2lsu_rd_data
-   );
+`ifdef FPGA_BUILD
+  dispatch2sgpr_addr, dispatch2sgpr_wr_data, dispatch2sgpr_wr_en,
+  dispatch2vgpr_addr, dispatch2vgpr_wr_data, dispatch2vgpr_wr_en, dispatch2vgpr_wr_mask,
+  dispatch2cu_idle,
+`endif
+  dispatch2cu_wf_dispatch, dispatch2cu_wf_tag_dispatch, dispatch2cu_start_pc_dispatch,
+  dispatch2cu_sgpr_base_dispatch, dispatch2cu_vgpr_base_dispatch, dispatch2cu_lds_base_dispatch,
+  buff2fetchwave_ack, buff2wave_instr, buff2wave_tag,
+  dispatch2cu_wg_wf_count, dispatch2cu_wf_size_dispatch,
+  mem2lsu_ack, mem2lsu_tag_resp, mem2lsu_rd_data,
+  clk, rst
+);
 
-   input clk;
+  input clk;
+  input rst;
 
-   input rst;
+  input dispatch2cu_wf_dispatch, mem2lsu_ack, buff2fetchwave_ack;
+  input [3:0] dispatch2cu_wg_wf_count;
+  input [5:0] dispatch2cu_wf_size_dispatch;
+  input [6:0] mem2lsu_tag_resp;
+  input [8:0] dispatch2cu_sgpr_base_dispatch;
+  input [9:0] dispatch2cu_vgpr_base_dispatch;
+  input [14:0] dispatch2cu_wf_tag_dispatch;
+  input [15:0] dispatch2cu_lds_base_dispatch;
+  input [31:0] dispatch2cu_start_pc_dispatch, buff2wave_instr;
+  input [38:0] buff2wave_tag;
+  input [31:0] mem2lsu_rd_data;
+  
+`ifdef FPGA_BUILD
+  input dispatch2cu_idle;
+  input [8:0] dispatch2sgpr_addr;
+  input [127:0] dispatch2sgpr_wr_data;
+  input dispatch2sgpr_wr_en;
+  
+  input [9:0] dispatch2vgpr_addr;
+  input [2047:0] dispatch2vgpr_wr_data;
+  input dispatch2vgpr_wr_en;
+  input [63:0] dispatch2vgpr_wr_mask;
+  
+  output [127:0] sgpr2dispatch_rd_data;
+  output [2047:0] vgpr2dispatch_rd_data;
+`endif
 
-   input dispatch2cu_wf_dispatch, mem2lsu_ack, buff2fetchwave_ack;
-   input [3:0] dispatch2cu_wg_wf_count;
-   input [5:0] dispatch2cu_wf_size_dispatch;
-   input [6:0] mem2lsu_tag_resp;
-   input [8:0] dispatch2cu_sgpr_base_dispatch;
-   input [9:0] dispatch2cu_vgpr_base_dispatch;
-   input [14:0] dispatch2cu_wf_tag_dispatch;
-   input [15:0] dispatch2cu_lds_base_dispatch;
-   input [31:0] dispatch2cu_start_pc_dispatch, buff2wave_instr;
-   input [38:0] buff2wave_tag;
-   input [31:0] mem2lsu_rd_data;//**CHANGE
+  output 	  cu2dispatch_wf_done, fetch2buff_rd_en, lsu2mem_rd_en, lsu2mem_wr_en, lsu2mem_gm_or_lds;
 
-   output 	  cu2dispatch_wf_done, lsu2mem_gm_or_lds, fetch2buff_rd_en, issue2tracemon_barrier_retire_en,
+  output [6:0] lsu2mem_tag_req;
+  output [63:0] lsu2mem_wr_mask;
+  output [31:0] lsu2mem_wr_data, lsu2mem_addr;
+
+  output [31:0] fetch2buff_addr;
+  output [38:0]  fetch2buff_tag;
+  
+  output [14:0] cu2dispatch_wf_tag_done;
+`ifndef FPGA_BUILD
+   output issue2tracemon_barrier_retire_en,
 		  issue2tracemon_waitcnt_retire_en, wave2decode_instr_valid, salu2sgpr_instr_done,
 		  salu2exec_wr_exec_en, salu2exec_wr_vcc_en, salu2exec_wr_scc_en, salu2exec_wr_scc_value,
 		  simd0_2vgpr_instr_done, simd1_2vgpr_instr_done, simd2_2vgpr_instr_done,
@@ -121,14 +160,14 @@ module compute_unit
    output [1:0]   salu2tracemon_exec_word_sel, salu2tracemon_vcc_word_sel,
 		  salu2sgpr_dest_wr_en;
    output [3:0]   lsu2sgpr_dest_wr_en;
-   output lsu2mem_rd_en, lsu2mem_wr_en, lsu2vgpr_dest_wr_en;
+   output lsu2vgpr_dest_wr_en;
    output [5:0]   issue2tracemon_waitcnt_retire_wfid, wave2decode_wfid, salu2sgpr_instr_done_wfid,
 		  simd0_2vgpr_instr_done_wfid, simd1_2vgpr_instr_done_wfid, simd2_2vgpr_instr_done_wfid,
 		  simd3_2vgpr_instr_done_wfid, simf0_2vgpr_instr_done_wfid, simf1_2vgpr_instr_done_wfid,
 		  simf2_2vgpr_instr_done_wfid, simf3_2vgpr_instr_done_wfid, lsu2sgpr_instr_done_wfid,
 		  lsu2vgpr_instr_done_wfid, issue2fetchwave_wf_done_wf_id, salu2fetchwaveissue_branch_wfid,
 		  decode2issue_wfid, fetch2tracemon_new_wfid;
-   output [6:0]   lsu2mem_tag_req;
+   
    output [8:0]   wave2decode_sgpr_base, salu2sgpr_dest_addr, simd0_2sgpr_wr_addr,
 		  simd1_2sgpr_wr_addr, simd2_2sgpr_wr_addr, simd3_2sgpr_wr_addr, simf0_2sgpr_wr_addr,
 		  simf1_2sgpr_wr_addr, simf2_2sgpr_wr_addr, simf3_2sgpr_wr_addr, lsu2sgpr_dest_addr;
@@ -136,17 +175,16 @@ module compute_unit
 		  simd2_2vgpr_dest_addr, simd3_2vgpr_dest_addr, simf0_2vgpr_dest_addr,
 		  simf1_2vgpr_dest_addr, simf2_2vgpr_dest_addr, simf3_2vgpr_dest_addr,
 		  lsu2vgpr_dest_addr;
-   output [14:0]  cu2dispatch_wf_tag_done, fetch2tracemon_wf_tag;
+   output [14:0]  fetch2tracemon_wf_tag;
    output [15:0]  wave2decode_lds_base, rfa2execvgprsgpr_select_fu;
-   output [31:0]  fetch2buff_addr, simd0_2tracemon_retire_pc, simd1_2tracemon_retire_pc,
+   output [31:0]  simd0_2tracemon_retire_pc, simd1_2tracemon_retire_pc,
 		  simd2_2tracemon_retire_pc, simd3_2tracemon_retire_pc, simf0_2tracemon_retire_pc,
 		  simf1_2tracemon_retire_pc, simf2_2tracemon_retire_pc, simf3_2tracemon_retire_pc,
 		  salu2tracemon_retire_pc, lsu2tracemon_retire_pc, issue2tracemon_barrier_retire_pc,
 		  issue2tracemon_waitcnt_retire_pc, salu2fetch_branch_pc_value, decode2issue_instr_pc,
 		  salu2exec_wr_m0_value;
-   output [38:0]  fetch2buff_tag;
    output [39:0]  issue2tracemon_barrier_retire_wf_bitmap;
-   output [63:0]  lsu2mem_wr_mask, salu2exec_wr_exec_value, salu2exec_wr_vcc_value,
+   output [63:0]  salu2exec_wr_exec_value, salu2exec_wr_vcc_value,
 		  salu2sgpr_dest_data, simd0_2exec_wr_vcc_value, simd0_2vgpr_wr_mask,
 		  simd1_2exec_wr_vcc_value, simd1_2vgpr_wr_mask, simd2_2exec_wr_vcc_value,
 		  simd2_2vgpr_wr_mask, simd3_2exec_wr_vcc_value, simd3_2vgpr_wr_mask,
@@ -161,9 +199,7 @@ module compute_unit
 		   simd2_2vgpr_dest_data, simd3_2vgpr_dest_data, simf0_2vgpr_dest_data,
 		   simf1_2vgpr_dest_data, simf2_2vgpr_dest_data, simf3_2vgpr_dest_data;
    output [2047:0] lsu2vgpr_dest_data; //**CHANGE
-
-   output [31:0] lsu2mem_wr_data, lsu2mem_addr; //**CHANGE
-
+`endif
    ///////////////////////////////
 		   //Signals for submodules 
    ///////////////////////////////
@@ -315,90 +351,41 @@ module compute_unit
 
    wire salu_request, lsu_stall;
 
-   ///////////////////////////////
-   //Submodule instantiation
-   ///////////////////////////////
-/*   vgpr_contention_tracker vgpr_contention_tracker0 
-     (
-      // Inputs
-      .clk				(clk),
-      .rst				(rst),
-      .lsu_source1_rd_en		(lsu2vgpr_source1_rd_en),
-      .lsu_source2_rd_en		(lsu2vgpr_source2_rd_en),
-      .simd0_source1_rd_en		(simd0_2vgpr_source1_rd_en),
-      .simd1_source1_rd_en		(simd1_2vgpr_source1_rd_en),
-      .simd2_source1_rd_en		(simd2_2vgpr_source1_rd_en),
-      .simd3_source1_rd_en		(simd3_2vgpr_source1_rd_en),
-      .simd0_source2_rd_en		(simd0_2vgpr_source2_rd_en),
-      .simd1_source2_rd_en		(simd1_2vgpr_source2_rd_en),
-      .simd2_source2_rd_en		(simd2_2vgpr_source2_rd_en),
-      .simd3_source2_rd_en		(simd3_2vgpr_source2_rd_en),
-      .simd0_source3_rd_en		(simd0_2vgpr_source3_rd_en),
-      .simd1_source3_rd_en		(simd1_2vgpr_source3_rd_en),
-      .simd2_source3_rd_en		(simd2_2vgpr_source3_rd_en),
-      .simd3_source3_rd_en		(simd3_2vgpr_source3_rd_en),
-      .simd0_wr_en			(simd0_2vgpr_wr_en),
-      .simd1_wr_en			(simd1_2vgpr_wr_en),
-      .simd2_wr_en			(simd2_2vgpr_wr_en),
-      .simd3_wr_en			(simd3_2vgpr_wr_en),
-      .simf0_source1_rd_en		(simf0_2vgpr_source1_rd_en),
-      .simf1_source1_rd_en		(simf1_2vgpr_source1_rd_en),
-      .simf2_source1_rd_en		(simf2_2vgpr_source1_rd_en),
-      .simf3_source1_rd_en		(simf3_2vgpr_source1_rd_en),
-      .simf0_source2_rd_en		(simf0_2vgpr_source2_rd_en),
-      .simf1_source2_rd_en		(simf1_2vgpr_source2_rd_en),
-      .simf2_source2_rd_en		(simf2_2vgpr_source2_rd_en),
-      .simf3_source2_rd_en		(simf3_2vgpr_source2_rd_en),
-      .simf0_source3_rd_en		(simf0_2vgpr_source3_rd_en),
-      .simf1_source3_rd_en		(simf1_2vgpr_source3_rd_en),
-      .simf2_source3_rd_en		(simf2_2vgpr_source3_rd_en),
-      .simf3_source3_rd_en		(simf3_2vgpr_source3_rd_en),
-      .simf0_wr_en			(simf0_2vgpr_wr_en),
-      .simf1_wr_en			(simf1_2vgpr_wr_en),
-      .simf2_wr_en			(simf2_2vgpr_wr_en),
-      .simf3_wr_en			(simf3_2vgpr_wr_en),
-      .lsu_dest_wr_en			(lsu2vgpr_dest_wr_en[3:0]),
-      .simd0_source1_addr		(simd0_2vgpr_source1_addr[9:0]),
-      .simd1_source1_addr		(simd1_2vgpr_source1_addr[9:0]),
-      .simd2_source1_addr		(simd2_2vgpr_source1_addr[9:0]),
-      .simd3_source1_addr		(simd3_2vgpr_source1_addr[9:0]),
-      .simd0_source2_addr		(simd0_2vgpr_source2_addr[9:0]),
-      .simd1_source2_addr		(simd1_2vgpr_source2_addr[9:0]),
-      .simd2_source2_addr		(simd2_2vgpr_source2_addr[9:0]),
-      .simd3_source2_addr		(simd3_2vgpr_source2_addr[9:0]),
-      .simd0_source3_addr		(simd0_2vgpr_source3_addr[9:0]),
-      .simd1_source3_addr		(simd1_2vgpr_source3_addr[9:0]),
-      .simd2_source3_addr		(simd2_2vgpr_source3_addr[9:0]),
-      .simd3_source3_addr		(simd3_2vgpr_source3_addr[9:0]),
-      .simd0_dest_addr			(simd0_2vgpr_dest_addr[9:0]),
-      .simd1_dest_addr			(simd1_2vgpr_dest_addr[9:0]),
-      .simd2_dest_addr			(simd2_2vgpr_dest_addr[9:0]),
-      .simd3_dest_addr			(simd3_2vgpr_dest_addr[9:0]),
-      .simf0_source1_addr		(simf0_2vgpr_source1_addr[9:0]),
-      .simf1_source1_addr		(simf1_2vgpr_source1_addr[9:0]),
-      .simf2_source1_addr		(simf2_2vgpr_source1_addr[9:0]),
-      .simf3_source1_addr		(simf3_2vgpr_source1_addr[9:0]),
-      .simf0_source2_addr		(simf0_2vgpr_source2_addr[9:0]),
-      .simf1_source2_addr		(simf1_2vgpr_source2_addr[9:0]),
-      .simf2_source2_addr		(simf2_2vgpr_source2_addr[9:0]),
-      .simf3_source2_addr		(simf3_2vgpr_source2_addr[9:0]),
-      .simf0_source3_addr		(simf0_2vgpr_source3_addr[9:0]),
-      .simf1_source3_addr		(simf1_2vgpr_source3_addr[9:0]),
-      .simf2_source3_addr		(simf2_2vgpr_source3_addr[9:0]),
-      .simf3_source3_addr		(simf3_2vgpr_source3_addr[9:0]),
-      .simf0_dest_addr			(simf0_2vgpr_dest_addr[9:0]),
-      .simf1_dest_addr			(simf1_2vgpr_dest_addr[9:0]),
-      .simf2_dest_addr			(simf2_2vgpr_dest_addr[9:0]),
-      .simf3_dest_addr			(simf3_2vgpr_dest_addr[9:0]),
-      .lsu_source1_addr			(lsu2vgpr_source1_addr[9:0]),
-      .lsu_source2_addr			(lsu2vgpr_source2_addr[9:0]),
-      .lsu_dest_addr			(lsu2vgpr_dest_addr[9:0]),
-      .rfa_select_fu			(rfa2execvgprsgpr_select_fu[15:0]),
-      .fetch2tracemon_dispatch		(fetch2tracemon_dispatch),
-      .issue2fetchwave_wf_done_en	(issue2fetchwave_wf_done_en),
-      .issue2fetchwave_wf_done_wf_id	(issue2fetchwave_wf_done_wf_id[5:0]),
-      .fetch2tracemon_new_wfid		(fetch2tracemon_new_wfid[5:0])); 
-  */ 
+`ifdef FPGA_BUILD
+  wire [8:0] lsu2sgpr_dest_addr_muxed;
+  wire [127:0] lsu2sgpr_dest_data_muxed;
+  wire [3:0] lsu2sgpr_dest_wr_en_muxed;
+  wire [8:0] lsu2sgpr_source1_addr_muxed;
+  wire lsu2sgpr_source1_rd_en_muxed;
+  
+  wire [9:0] lsu2vgpr_dest_addr_muxed;
+  wire [2047:0] lsu2vgpr_dest_data_muxed;
+  wire [3:0] lsu2vgpr_dest_wr_en_muxed;
+  wire [63:0] lsu2vgpr_dest_wr_mask_muxed;
+  wire [9:0] lsu2vgpr_source1_addr_muxed;
+  wire lsu2vgpr_source1_rd_en_muxed;
+  
+  wire [15:0] sgpr_select_fu;
+  wire [15:0] vgpr_select_fu;
+
+  assign sgpr2dispatch_rd_data = sgpr2lsu_source1_data;
+  assign vgpr2dispatch_rd_data = vgpr2lsu_source1_data;
+  
+  assign sgpr_select_fu = dispatch2cu_idle ? {7'd0, dispatch2sgpr_wr_en, 8'd0} : rfa2execvgprsgpr_select_fu;
+  assign lsu2sgpr_dest_addr_muxed = dispatch2cu_idle ? dispatch2sgpr_addr : lsu2sgpr_dest_addr;
+  assign lsu2sgpr_dest_data_muxed = dispatch2cu_idle ? dispatch2sgpr_wr_data ? lsu2sgpr_dest_data;
+  assign lsu2sgpr_dest_wr_en_muxed = dispatch2cu_idle ? {4{dispatch2sgpr_wr_en}} : lsu2sgpr_dest_wr_en;
+  assign lsu2sgpr_source1_addr_muxed = dispatch2cu_idle ? dispatch2sgpr_addr ? lsu2sgpr_source1_addr;
+  assign lsu2sgpr_source1_rd_en_muxed = dispatch2cu_idle | lsu2sgpr_source1_rd_en;
+  
+  assign vgpr_select_fu = dispatch2cu_idle ? {7'd0,  dispatch2vgpr_wr_en, 8'd0}; : rfa2execvgprsgpr_select_fu;
+  assign lsu2vgpr_dest_addr_muxed = dispatch2cu_idle ? dispatch2vgpr_addr : lsu2vgpr_dest_addr;
+  assign lsu2vgpr_dest_data_muxed = dispatch2cu_idle ? dispatch2vgpr_wr_data : lsu2vgpr_dest_data;
+  assign lsu2vgpr_dest_wr_en_muxed = dispatch2cu_idle ? {4{dispatch2vgpr_wr_en}} : lsu2vgpr_dest_wr_en;
+  assign lsu2vgpr_dest_wr_mask_muxed = dispatch2cu_idle ? dispatch2vgpr_wr_mask : lsu2vgpr_dest_wr_mask;
+  assign lsu2vgpr_source1_addr_muxed = dispatch2cu_idle ? dispatch2vgpr_addr : lsu2vgpr_source1_addr;
+  assign lsu2vgpr_source1_rd_en_muxed = dispatch2cu_idle | lsu2vgpr_source1_rd_en;
+`endif
 
    decode decode0 (
 		   // Unit that decodes instructions and passes them to issue.
@@ -843,19 +830,29 @@ lsu lsu0 (
 	       );
 
    sgpr sgpr0 (
-	       // set of scalar general purpose registers
-	       .clk(clk),
-	       .rst(rst),
-	       //  Inputs
-	       .lsu_source1_addr(lsu2sgpr_source1_addr),
+	      // set of scalar general purpose registers
+	      .clk(clk),
+	      .rst(rst),
+	      //  Inputs
+`ifdef FPGA_BUILD
+        .rfa_select_fu(sgpr_select_fu),
+	      .lsu_source1_addr(lsu2sgpr_source1_addr_muxed),
+        .lsu_source1_rd_en(lsu2sgpr_source1_rd_en_muxed),
+        .lsu_dest_addr(lsu2sgpr_dest_addr_muxed),
+	      .lsu_dest_data(lsu2sgpr_dest_data_muxed),
+	      .lsu_dest_wr_en(lsu2sgpr_dest_wr_en_muxed),
+`else
+        .rfa_select_fu(rfa2execvgprsgpr_select_fu),
+	      .lsu_source1_addr(lsu2sgpr_source1_addr),
+        .lsu_source1_rd_en(lsu2sgpr_source1_rd_en),
+        .lsu_dest_addr(lsu2sgpr_dest_addr),
+	      .lsu_dest_data(lsu2sgpr_dest_data),
+	      .lsu_dest_wr_en(lsu2sgpr_dest_wr_en),
+`endif
 	       .lsu_source2_addr(lsu2sgpr_source2_addr),
-	       .lsu_dest_addr(lsu2sgpr_dest_addr),
-	       .lsu_dest_data(lsu2sgpr_dest_data),
-	       .lsu_dest_wr_en(lsu2sgpr_dest_wr_en),
+	       .lsu_source2_rd_en(lsu2sgpr_source2_rd_en),
 	       .lsu_instr_done_wfid(lsu2sgpr_instr_done_wfid),
 	       .lsu_instr_done(lsu2sgpr_instr_done),
-	       .lsu_source1_rd_en(lsu2sgpr_source1_rd_en),
-	       .lsu_source2_rd_en(lsu2sgpr_source2_rd_en),
 	       .simd0_rd_addr(simd0_2sgpr_rd_addr),
 	       .simd0_rd_en(simd0_2sgpr_rd_en),
 	       .simd1_rd_addr(simd1_2sgpr_rd_addr),
@@ -913,7 +910,6 @@ lsu lsu0 (
 	       .salu_instr_done(salu2sgpr_instr_done),
 	       .salu_source1_rd_en(salu2sgpr_source1_rd_en),
 	       .salu_source2_rd_en(salu2sgpr_source2_rd_en),
-	       .rfa_select_fu(rfa2execvgprsgpr_select_fu),
 	       //  Outputs
 	       .lsu_source1_data(sgpr2lsu_source1_data),
 	       .lsu_source2_data(sgpr2lsu_source2_data),
@@ -987,6 +983,7 @@ lsu lsu0 (
 	       .tracemon_retire_pc(simd0_2tracemon_retire_pc)
 	       );
 
+`ifndef FPGA_BUILD
    simd simd1 (
 	       // Contains a 16 wide vector alu for vector operations
 	       .clk(clk),
@@ -1148,7 +1145,7 @@ lsu lsu0 (
 	       .rfa_queue_entry_valid(simd3_2rfa_queue_entry_valid),
 	       .tracemon_retire_pc(simd3_2tracemon_retire_pc)
 	       );
-
+`endif
    simf simf0 (
 	       // Contains a 16 wide floating point vector alu for vector operations
 	       .clk(clk),
@@ -1203,6 +1200,7 @@ lsu lsu0 (
 	       .tracemon_retire_pc(simf0_2tracemon_retire_pc)
 	       );
 
+`ifndef FPGA_BUILD
    simf simf1 (
 	       // Contains a 16 wide floating point vector alu for vector operations
 	       .clk(clk),
@@ -1364,12 +1362,34 @@ lsu lsu0 (
 	       .rfa_queue_entry_valid(simf3_2rfa_queue_entry_valid),
 	       .tracemon_retire_pc(simf3_2tracemon_retire_pc)
 	       );
+`endif
 
    vgpr vgpr0 (
-	       // A set of vector general purpose registers
-	       .clk(clk),
-	       .rst(rst),
-	       //  Inputs
+	      // A set of vector general purpose registers
+	      .clk(clk),
+	      .rst(rst),
+	      //  Inputs
+`ifdef FPGA_BUILD
+        .rfa_select_fu(vgpr_select_fu),
+        .lsu_source1_addr(lsu2vgpr_source1_addr_muxed),
+        .lsu_source1_rd_en(lsu2vgpr_source1_rd_en_muxed),
+        .lsu_dest_addr(lsu2vgpr_dest_addr_muxed),
+	      .lsu_dest_data(lsu2vgpr_dest_data_muxed),
+	      .lsu_dest_wr_en(lsu2vgpr_dest_wr_en_muxed),
+	      .lsu_dest_wr_mask(lsu2vgpr_dest_wr_mask_muxed),
+`else
+        .rfa_select_fu(rfa2execvgprsgpr_select_fu),
+        .lsu_source1_addr(lsu2vgpr_source1_addr),
+        .lsu_source1_rd_en(lsu2vgpr_source1_rd_en),
+        .lsu_dest_addr(lsu2vgpr_dest_addr),
+	      .lsu_dest_data(lsu2vgpr_dest_data),
+	      .lsu_dest_wr_en(lsu2vgpr_dest_wr_en),
+	      .lsu_dest_wr_mask(lsu2vgpr_dest_wr_mask),
+`endif
+	       .lsu_source2_addr(lsu2vgpr_source2_addr),
+	       .lsu_source2_rd_en(lsu2vgpr_source2_rd_en),
+	       .lsu_instr_done_wfid(lsu2vgpr_instr_done_wfid),
+	       .lsu_instr_done(lsu2vgpr_instr_done),
 	       .simd0_source1_rd_en(simd0_2vgpr_source1_rd_en),
 	       .simd1_source1_rd_en(simd1_2vgpr_source1_rd_en),
 	       .simd2_source1_rd_en(simd2_2vgpr_source1_rd_en),
@@ -1450,16 +1470,6 @@ lsu lsu0 (
 	       .simf1_wr_mask(simf1_2vgpr_wr_mask),
 	       .simf2_wr_mask(simf2_2vgpr_wr_mask),
 	       .simf3_wr_mask(simf3_2vgpr_wr_mask),
-	       .lsu_source1_addr(lsu2vgpr_source1_addr),
-	       .lsu_source2_addr(lsu2vgpr_source2_addr),
-	       .lsu_dest_addr(lsu2vgpr_dest_addr),
-	       .lsu_dest_data(lsu2vgpr_dest_data),
-	       .lsu_dest_wr_en(lsu2vgpr_dest_wr_en),
-	       .lsu_dest_wr_mask(lsu2vgpr_dest_wr_mask),
-	       .lsu_instr_done_wfid(lsu2vgpr_instr_done_wfid),
-	       .lsu_instr_done(lsu2vgpr_instr_done),
-	       .lsu_source1_rd_en(lsu2vgpr_source1_rd_en),
-	       .lsu_source2_rd_en(lsu2vgpr_source2_rd_en),
 	       .simd0_instr_done_wfid(simd0_2vgpr_instr_done_wfid),
 	       .simd1_instr_done_wfid(simd1_2vgpr_instr_done_wfid),
 	       .simd2_instr_done_wfid(simd2_2vgpr_instr_done_wfid),
@@ -1476,7 +1486,6 @@ lsu lsu0 (
 	       .simf1_instr_done(simf1_2vgpr_instr_done),
 	       .simf2_instr_done(simf2_2vgpr_instr_done),
 	       .simf3_instr_done(simf3_2vgpr_instr_done),
-	       .rfa_select_fu(rfa2execvgprsgpr_select_fu),
 	       //  Outputs
 	       .simd_source1_data(vgpr2simd_source1_data),
 	       .simd_source2_data(vgpr2simd_source2_data),

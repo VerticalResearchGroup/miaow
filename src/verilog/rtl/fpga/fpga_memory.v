@@ -48,7 +48,6 @@ reg[3:0] mem_state;
 reg[3:0] mem_state_next;
 
 reg [31:0] mb_data_in_reg;
-reg mb_data_we_reg;
 reg mem_ack_reg;
 reg mb_ack_reg;
 reg mb_done_reg;
@@ -76,7 +75,6 @@ always@(posedge clk) begin
     mem_addr_reg <= 32'd0;
     mem_tag_req_reg <= 7'd0;
     mb_data_in_reg <= 32'd0;
-    mb_data_we_reg <= 1'b0;
     mb_ack_reg <= 1'b0;
     mb_done_reg <= 1'b0;
   end
@@ -84,10 +82,9 @@ always@(posedge clk) begin
     mb_ack_reg <= mb_ack;
     mb_done_reg <= mb_done;
     mem_state <= mem_state_next;
-    mb_data_we_reg <= mb_data_we;
     
     mb_data_out_reg <= mb_data_out_reg;
-    if((mem_wr_en)) begin
+    if(mem_wr_en) begin
       mb_data_out_reg <= mem_wr_data;
     end
     
@@ -99,7 +96,7 @@ always@(posedge clk) begin
     end
     
     mb_data_in_reg <= mb_data_in_reg;
-    if(~mb_data_we_reg | mb_data_we) begin
+    if(mb_data_we) begin
       mb_data_in_reg <= mb_data_in;
     end
   end
