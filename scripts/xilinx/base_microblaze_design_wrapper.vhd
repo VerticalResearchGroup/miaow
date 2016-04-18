@@ -184,7 +184,7 @@ base_microblaze_design_i: component base_microblaze_design
     );
     
 compute_unit_fpga_i : component compute_unit_fpga
-(
+port map (
     S_AXI_ACLK => S_AXI_ACLK,
     S_AXI_ARESETN => S_AXI_ARESETN,
     S_AXI_AWADDR => S_AXI_AWADDR,

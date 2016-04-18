@@ -105,6 +105,7 @@ wire clk;
 wire slv_reg_wren;
 wire slv_reg_rden;
 reg slv_reg_wren_buffer;
+reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
 
 assign clk = S_AXI_ACLK;
 
@@ -185,6 +186,8 @@ reg [3:0] executeStateNext;
 
 reg executeStart;
 reg dispatch_idle;
+
+reg mb_reset;
 
 reg [31:0] singleVectorWrData0, singleVectorWrData1, singleVectorWrData2, singleVectorWrData3, singleVectorWrData4, singleVectorWrData5, singleVectorWrData6,
            singleVectorWrData7, singleVectorWrData8, singleVectorWrData9, singleVectorWrData10, singleVectorWrData11, singleVectorWrData12, singleVectorWrData13,
@@ -318,11 +321,11 @@ always @(*) begin
     endcase
   end
   
-  if(~execute && slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h008) begin
+  if(dispatch_idle && slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h008) begin
     instrBuffWrEn <= 1'b1;
   end
   
-  if(~execute && slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h041) begin
+  if(slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h041) begin
     mb2fpgamem_data_we <= 1'b1;
   end
 end
