@@ -99,7 +99,7 @@ reg  	axi_rvalid;
 //-- Signals for user logic register space example
 //------------------------------------------------
 
-wire rst_signal;
+wire rst;
 wire clk;
 
 wire slv_reg_wren;
@@ -228,7 +228,7 @@ always @(*) begin
     `EXECUTE_STATE: begin
       //cycle_counter_next <= cycle_counter + 32'd1;
       //cycle_counter_wr_reg <= 1'b1;
-      if(cu2dispatch_wf_done_in) begin
+      if(cu2dispatch_wf_done) begin
         executeStateNext <= `RESULT_STATE;
       end
     end
@@ -241,7 +241,7 @@ always @(*) begin
   endcase
 end
 
-assign rst_signal = ~S_AXI_ARESETN;
+assign rst = ~S_AXI_ARESETN;
 
 assign slv_reg_wren = axi_wready && S_AXI_WVALID && axi_awready && S_AXI_AWVALID;
 assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
@@ -314,16 +314,28 @@ always @(*) begin
   if(slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h0C0) begin
     case(S_AXI_WDATA)
       32'd0: lsu2sgpr_dest_wr_en_reg <= 1'b1;
-      32'd0: lsu2vgpr_dest_wr_en_reg <= 1'b1;
+      32'd1: lsu2vgpr_dest_wr_en_reg <= 1'b1;
     endcase
   end
   
-  if(~execute && slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h08) begin
+  if(~execute && slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h008) begin
     instrBuffWrEn <= 1'b1;
   end
   
-  if(~execute && slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h40) begin
+  if(~execute && slv_reg_wren && ~slv_reg_wren_buffer && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h041) begin
     mb2fpgamem_data_we <= 1'b1;
+  end
+end
+
+always @( posedge S_AXI_ACLK ) begin
+  if ( S_AXI_ARESETN == 1'b0) begin
+    mb_reset <= 1'b1;
+  end
+  else begin
+    mb_reset <= mb_reset;
+    if (slv_reg_wren && axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] == 9'h009) begin
+      mb_reset <= ~S_AXI_WDATA[0];
+    end
   end
 end
 
@@ -381,8 +393,8 @@ always @( posedge S_AXI_ACLK ) begin
         9'h005: waveCount    <= S_AXI_WDATA;
         9'h006: pcStart      <= S_AXI_WDATA;
         9'h007: instrAddrReg <= S_AXI_WDATA;
-        // 9'h08: Instruction value
-        9'h009: mb_reset <= ~S_AXI_WDATA[0];
+        // 9'h008: Instruction value
+        // 9'h009: MB reset
         
         // 0x0100
         // Memory registers
@@ -689,8 +701,6 @@ always @( posedge S_AXI_ACLK ) begin
           pcStart   <= pcStart;
           instrAddrReg <= instrAddrReg;
           
-          mb_reset <= mb_reset;
-          
           mb2fpgamem_ack_reg <= mb2fpgamem_ack_reg;
           mb2fpgamem_done_reg <= mb2fpgamem_done_reg;
           
@@ -788,10 +798,10 @@ always @(*) begin
     9'h009  : reg_data_out <= resultsReadyTag;
     //9'h00A   : unused
     9'h0C1  : reg_data_out <= quadBaseAddress;
-    9'h0C2  : reg_data_out <= quadData_in[31:0];
-    9'h0C3  : reg_data_out <= quadData_in[63:32];
-    9'h0C4  : reg_data_out <= quadData_in[95:64];
-    9'h0C5  : reg_data_out <= quadData_in[127:96];
+    9'h0C2  : reg_data_out <= sgpr2lsu_source1_data[31:0];
+    9'h0C3  : reg_data_out <= sgpr2lsu_source1_data[63:32];
+    9'h0C4  : reg_data_out <= sgpr2lsu_source1_data[95:64];
+    9'h0C5  : reg_data_out <= sgpr2lsu_source1_data[127:96];
     
     9'h040  : reg_data_out <= {28'd0, fpgamem2mb_op};
     9'h041  : reg_data_out <= fpgamem2mb_data;
@@ -800,73 +810,73 @@ always @(*) begin
     //7'h30   : reg_data_out <= cycle_counter;
     //7'h31   : reg_data_out <= pc_value;
     
-    9'h100  : reg_data_out <= singleVectorData_in[31:0];
-    9'h101  : reg_data_out <= singleVectorData_in[63:32];
-    9'h102  : reg_data_out <= singleVectorData_in[95:64];
-    9'h103  : reg_data_out <= singleVectorData_in[127:96];
-    9'h104  : reg_data_out <= singleVectorData_in[159:128];
-    9'h105  : reg_data_out <= singleVectorData_in[191:160];
-    9'h106  : reg_data_out <= singleVectorData_in[223:192];
-    9'h107  : reg_data_out <= singleVectorData_in[255:224];
-    9'h108  : reg_data_out <= singleVectorData_in[287:256];
-    9'h109  : reg_data_out <= singleVectorData_in[319:288];
-    9'h10A  : reg_data_out <= singleVectorData_in[351:320];
-    9'h10B  : reg_data_out <= singleVectorData_in[383:352];
-    9'h10C  : reg_data_out <= singleVectorData_in[415:384];
-    9'h10D  : reg_data_out <= singleVectorData_in[447:416];
-    9'h10E  : reg_data_out <= singleVectorData_in[479:448];
-    9'h10F  : reg_data_out <= singleVectorData_in[511:480];
+    9'h100  : reg_data_out <= vgpr2lsu_source1_data[31:0];
+    9'h101  : reg_data_out <= vgpr2lsu_source1_data[63:32];
+    9'h102  : reg_data_out <= vgpr2lsu_source1_data[95:64];
+    9'h103  : reg_data_out <= vgpr2lsu_source1_data[127:96];
+    9'h104  : reg_data_out <= vgpr2lsu_source1_data[159:128];
+    9'h105  : reg_data_out <= vgpr2lsu_source1_data[191:160];
+    9'h106  : reg_data_out <= vgpr2lsu_source1_data[223:192];
+    9'h107  : reg_data_out <= vgpr2lsu_source1_data[255:224];
+    9'h108  : reg_data_out <= vgpr2lsu_source1_data[287:256];
+    9'h109  : reg_data_out <= vgpr2lsu_source1_data[319:288];
+    9'h10A  : reg_data_out <= vgpr2lsu_source1_data[351:320];
+    9'h10B  : reg_data_out <= vgpr2lsu_source1_data[383:352];
+    9'h10C  : reg_data_out <= vgpr2lsu_source1_data[415:384];
+    9'h10D  : reg_data_out <= vgpr2lsu_source1_data[447:416];
+    9'h10E  : reg_data_out <= vgpr2lsu_source1_data[479:448];
+    9'h10F  : reg_data_out <= vgpr2lsu_source1_data[511:480];
     
-    9'h110  : reg_data_out <= singleVectorData_in[543:512];
-    9'h111  : reg_data_out <= singleVectorData_in[575:544];
-    9'h112  : reg_data_out <= singleVectorData_in[607:576];
-    9'h113  : reg_data_out <= singleVectorData_in[639:608];
-    9'h114  : reg_data_out <= singleVectorData_in[671:640];
-    9'h115  : reg_data_out <= singleVectorData_in[703:672];
-    9'h116  : reg_data_out <= singleVectorData_in[735:704];
-    9'h117  : reg_data_out <= singleVectorData_in[767:736];
-    9'h118  : reg_data_out <= singleVectorData_in[799:768];
-    9'h119  : reg_data_out <= singleVectorData_in[831:800];
-    9'h11A  : reg_data_out <= singleVectorData_in[863:832];
-    9'h11B  : reg_data_out <= singleVectorData_in[895:864];
-    9'h11C  : reg_data_out <= singleVectorData_in[927:896];
-    9'h11D  : reg_data_out <= singleVectorData_in[959:928];
-    9'h11E  : reg_data_out <= singleVectorData_in[991:960];
-    9'h11F  : reg_data_out <= singleVectorData_in[1023:992];
+    9'h110  : reg_data_out <= vgpr2lsu_source1_data[543:512];
+    9'h111  : reg_data_out <= vgpr2lsu_source1_data[575:544];
+    9'h112  : reg_data_out <= vgpr2lsu_source1_data[607:576];
+    9'h113  : reg_data_out <= vgpr2lsu_source1_data[639:608];
+    9'h114  : reg_data_out <= vgpr2lsu_source1_data[671:640];
+    9'h115  : reg_data_out <= vgpr2lsu_source1_data[703:672];
+    9'h116  : reg_data_out <= vgpr2lsu_source1_data[735:704];
+    9'h117  : reg_data_out <= vgpr2lsu_source1_data[767:736];
+    9'h118  : reg_data_out <= vgpr2lsu_source1_data[799:768];
+    9'h119  : reg_data_out <= vgpr2lsu_source1_data[831:800];
+    9'h11A  : reg_data_out <= vgpr2lsu_source1_data[863:832];
+    9'h11B  : reg_data_out <= vgpr2lsu_source1_data[895:864];
+    9'h11C  : reg_data_out <= vgpr2lsu_source1_data[927:896];
+    9'h11D  : reg_data_out <= vgpr2lsu_source1_data[959:928];
+    9'h11E  : reg_data_out <= vgpr2lsu_source1_data[991:960];
+    9'h11F  : reg_data_out <= vgpr2lsu_source1_data[1023:992];
     
-    9'h120  : reg_data_out <= singleVectorData_in[1055:1024];
-    9'h121  : reg_data_out <= singleVectorData_in[1087:1056];
-    9'h122  : reg_data_out <= singleVectorData_in[1119:1088];
-    9'h123  : reg_data_out <= singleVectorData_in[1151:1120];
-    9'h124  : reg_data_out <= singleVectorData_in[1183:1152];
-    9'h125  : reg_data_out <= singleVectorData_in[1215:1184];
-    9'h126  : reg_data_out <= singleVectorData_in[1247:1216];
-    9'h127  : reg_data_out <= singleVectorData_in[1279:1248];
-    9'h128  : reg_data_out <= singleVectorData_in[1311:1280];
-    9'h129  : reg_data_out <= singleVectorData_in[1343:1312];
-    9'h12A  : reg_data_out <= singleVectorData_in[1375:1344];
-    9'h12B  : reg_data_out <= singleVectorData_in[1407:1376];
-    9'h12C  : reg_data_out <= singleVectorData_in[1439:1408];
-    9'h12D  : reg_data_out <= singleVectorData_in[1471:1440];
-    9'h12E  : reg_data_out <= singleVectorData_in[1503:1472];
-    9'h12F  : reg_data_out <= singleVectorData_in[1535:1504];
+    9'h120  : reg_data_out <= vgpr2lsu_source1_data[1055:1024];
+    9'h121  : reg_data_out <= vgpr2lsu_source1_data[1087:1056];
+    9'h122  : reg_data_out <= vgpr2lsu_source1_data[1119:1088];
+    9'h123  : reg_data_out <= vgpr2lsu_source1_data[1151:1120];
+    9'h124  : reg_data_out <= vgpr2lsu_source1_data[1183:1152];
+    9'h125  : reg_data_out <= vgpr2lsu_source1_data[1215:1184];
+    9'h126  : reg_data_out <= vgpr2lsu_source1_data[1247:1216];
+    9'h127  : reg_data_out <= vgpr2lsu_source1_data[1279:1248];
+    9'h128  : reg_data_out <= vgpr2lsu_source1_data[1311:1280];
+    9'h129  : reg_data_out <= vgpr2lsu_source1_data[1343:1312];
+    9'h12A  : reg_data_out <= vgpr2lsu_source1_data[1375:1344];
+    9'h12B  : reg_data_out <= vgpr2lsu_source1_data[1407:1376];
+    9'h12C  : reg_data_out <= vgpr2lsu_source1_data[1439:1408];
+    9'h12D  : reg_data_out <= vgpr2lsu_source1_data[1471:1440];
+    9'h12E  : reg_data_out <= vgpr2lsu_source1_data[1503:1472];
+    9'h12F  : reg_data_out <= vgpr2lsu_source1_data[1535:1504];
             
-    9'h130  : reg_data_out <= singleVectorData_in[1567:1536];
-    9'h131  : reg_data_out <= singleVectorData_in[1599:1568];
-    9'h132  : reg_data_out <= singleVectorData_in[1631:1600];
-    9'h133  : reg_data_out <= singleVectorData_in[1663:1632];
-    9'h134  : reg_data_out <= singleVectorData_in[1695:1664];
-    9'h135  : reg_data_out <= singleVectorData_in[1727:1696];
-    9'h136  : reg_data_out <= singleVectorData_in[1759:1728];
-    9'h137  : reg_data_out <= singleVectorData_in[1791:1760];
-    9'h138  : reg_data_out <= singleVectorData_in[1823:1792];
-    9'h139  : reg_data_out <= singleVectorData_in[1855:1824];
-    9'h13A  : reg_data_out <= singleVectorData_in[1887:1856];
-    9'h13B  : reg_data_out <= singleVectorData_in[1919:1888];
-    9'h13C  : reg_data_out <= singleVectorData_in[1951:1920];
-    9'h13D  : reg_data_out <= singleVectorData_in[1983:1952];
-    9'h13E  : reg_data_out <= singleVectorData_in[2015:1984];
-    9'h13F  : reg_data_out <= singleVectorData_in[2047:2016];
+    9'h130  : reg_data_out <= vgpr2lsu_source1_data[1567:1536];
+    9'h131  : reg_data_out <= vgpr2lsu_source1_data[1599:1568];
+    9'h132  : reg_data_out <= vgpr2lsu_source1_data[1631:1600];
+    9'h133  : reg_data_out <= vgpr2lsu_source1_data[1663:1632];
+    9'h134  : reg_data_out <= vgpr2lsu_source1_data[1695:1664];
+    9'h135  : reg_data_out <= vgpr2lsu_source1_data[1727:1696];
+    9'h136  : reg_data_out <= vgpr2lsu_source1_data[1759:1728];
+    9'h137  : reg_data_out <= vgpr2lsu_source1_data[1791:1760];
+    9'h138  : reg_data_out <= vgpr2lsu_source1_data[1823:1792];
+    9'h139  : reg_data_out <= vgpr2lsu_source1_data[1855:1824];
+    9'h13A  : reg_data_out <= vgpr2lsu_source1_data[1887:1856];
+    9'h13B  : reg_data_out <= vgpr2lsu_source1_data[1919:1888];
+    9'h13C  : reg_data_out <= vgpr2lsu_source1_data[1951:1920];
+    9'h13D  : reg_data_out <= vgpr2lsu_source1_data[1983:1952];
+    9'h13E  : reg_data_out <= vgpr2lsu_source1_data[2015:1984];
+    9'h13F  : reg_data_out <= vgpr2lsu_source1_data[2047:2016];
     
     default : reg_data_out <= 0;
   endcase
@@ -972,7 +982,7 @@ compute_unit compute_unit0
   .mem2lsu_rd_data(mem2lsu_rd_data),
   
   .clk(clk),
-  .rst(rst_signal)
+  .rst(rst)
 );
   
 fpga_memory fpga_memory0(
@@ -990,7 +1000,7 @@ fpga_memory fpga_memory0(
   .mb_done(mb2fpgamem_done_reg),
   
   .clk(clk),
-  .rst(rst_signal),
+  .rst(rst),
   // output
   // LSU
   .mem_tag_resp(mem2lsu_tag_resp),
