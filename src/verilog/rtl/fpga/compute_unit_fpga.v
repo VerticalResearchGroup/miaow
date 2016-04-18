@@ -762,8 +762,8 @@ always @( posedge S_AXI_ACLK ) begin
           singleVectorWrData17 <= singleVectorWrData17;
           singleVectorWrData16 <= singleVectorWrData16;
           singleVectorWrData15 <= singleVectorWrData15;
-          singleVectorWrData14 <= singleVectorWrData14
-          singleVectorWrData13 <= singleVectorWrData13
+          singleVectorWrData14 <= singleVectorWrData14;
+          singleVectorWrData13 <= singleVectorWrData13;
           singleVectorWrData12 <= singleVectorWrData12;
           singleVectorWrData11 <= singleVectorWrData11;
           singleVectorWrData10 <= singleVectorWrData10;
@@ -908,7 +908,7 @@ assign lsu2vgpr_dest_data = {
   singleVectorWrData15, singleVectorWrData14, singleVectorWrData13, singleVectorWrData12, singleVectorWrData11, singleVectorWrData10,
   singleVectorWrData9,  singleVectorWrData8,  singleVectorWrData7,  singleVectorWrData6,  singleVectorWrData5,  singleVectorWrData4,
   singleVectorWrData3,  singleVectorWrData2,  singleVectorWrData1,  singleVectorWrData0
-}
+};
 // I/O Connections assignments
 
 assign buff2wave_tag = fetch2buff_tag_reg;

@@ -373,12 +373,12 @@ module compute_unit
   
   assign sgpr_select_fu = dispatch2cu_idle ? {7'd0, dispatch2sgpr_wr_en, 8'd0} : rfa2execvgprsgpr_select_fu;
   assign lsu2sgpr_dest_addr_muxed = dispatch2cu_idle ? dispatch2sgpr_addr : lsu2sgpr_dest_addr;
-  assign lsu2sgpr_dest_data_muxed = dispatch2cu_idle ? dispatch2sgpr_wr_data ? lsu2sgpr_dest_data;
+  assign lsu2sgpr_dest_data_muxed = dispatch2cu_idle ? dispatch2sgpr_wr_data : lsu2sgpr_dest_data;
   assign lsu2sgpr_dest_wr_en_muxed = dispatch2cu_idle ? {4{dispatch2sgpr_wr_en}} : lsu2sgpr_dest_wr_en;
-  assign lsu2sgpr_source1_addr_muxed = dispatch2cu_idle ? dispatch2sgpr_addr ? lsu2sgpr_source1_addr;
+  assign lsu2sgpr_source1_addr_muxed = dispatch2cu_idle ? dispatch2sgpr_addr : lsu2sgpr_source1_addr;
   assign lsu2sgpr_source1_rd_en_muxed = dispatch2cu_idle | lsu2sgpr_source1_rd_en;
   
-  assign vgpr_select_fu = dispatch2cu_idle ? {7'd0,  dispatch2vgpr_wr_en, 8'd0}; : rfa2execvgprsgpr_select_fu;
+  assign vgpr_select_fu = dispatch2cu_idle ? {7'd0,  dispatch2vgpr_wr_en, 8'd0} : rfa2execvgprsgpr_select_fu;
   assign lsu2vgpr_dest_addr_muxed = dispatch2cu_idle ? dispatch2vgpr_addr : lsu2vgpr_dest_addr;
   assign lsu2vgpr_dest_data_muxed = dispatch2cu_idle ? dispatch2vgpr_wr_data : lsu2vgpr_dest_data;
   assign lsu2vgpr_dest_wr_en_muxed = dispatch2cu_idle ? {4{dispatch2vgpr_wr_en}} : lsu2vgpr_dest_wr_en;
