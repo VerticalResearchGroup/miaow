@@ -32,6 +32,7 @@ fpga: build
 	cp simd/build/* fpga_core/
 	cp vgpr/build/* fpga_core/
 	cp wavepool/build/* fpga_core/
+  cp compute_unit/build/* fpga_core/
 	cp simf/build/* fpga_core/
 	cp rfa/build/* fpga_core/
 	cp alu/build/* fpga_core/
