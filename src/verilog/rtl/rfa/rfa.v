@@ -54,11 +54,11 @@ module rfa(/*AUTOARG*/
 
    // If lsu requests writes, it bypasses the priority encoder
    // but if salu request writes, it bypasses both
-   assign entry_valid = salu_req ? {'b0, simf3_queue_entry_valid, simf2_queue_entry_valid,
+   assign entry_valid = salu_req ? {8'd0, simf3_queue_entry_valid, simf2_queue_entry_valid,
                          simf1_queue_entry_valid, simf0_queue_entry_valid,
                          simd3_queue_entry_valid, simd2_queue_entry_valid,
                          simd1_queue_entry_valid, simd0_queue_entry_valid} &
-			{16{~salu_req}}:{'b0, simf3_queue_entry_valid, simf2_queue_entry_valid,
+			{16{~salu_req}}:{8'd0, simf3_queue_entry_valid, simf2_queue_entry_valid,
                          simf1_queue_entry_valid, simf0_queue_entry_valid,
                          simd3_queue_entry_valid, simd2_queue_entry_valid,
                          simd1_queue_entry_valid, simd0_queue_entry_valid} &

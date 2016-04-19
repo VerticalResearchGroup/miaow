@@ -38,7 +38,7 @@ assign sgpr_address = sgpr_base + in[6:0];
 assign vgpr_address = vgpr_base + in[7:0];
 assign negative_constant = (~{4'b0,in[5:0]}) + 10'b1;
 
-always @(in or sgpr_base or vgpr_base)
+always @(*)
 begin
   casex(in)
     //invalid operand

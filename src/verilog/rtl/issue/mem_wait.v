@@ -24,18 +24,11 @@ decoder_6b_40b_en issue_value_decoder
 );
 
 
-decoder_6b_40b_en retire_sgpr_value_decoder
+decoder_6b_40b_en retire_lsu_value_decoder
 (
     .addr_in(lsu_done_wfid),
     .out(decoded_lsu_retire_value),
     .en(lsu_done)
-);
-
-decoder_6b_40b_en retire_vgpr_value_decoder
-(
-    .addr_in(f_vgpr_lsu_wr_done_wfid),
-    .out(decoded_vgpr_retire_value),
-    .en(f_vgpr_lsu_wr_done)
 );
 
 dff_set_en_rst mem_wait[`WF_PER_CU-1:0]

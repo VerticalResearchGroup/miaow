@@ -636,7 +636,7 @@ always @( posedge S_AXI_ACLK ) begin
           singleVectorWrData28 <= S_AXI_WDATA;
           singleVectorWrDataMask <= singleVectorWrDataMask |   64'h0000000010000000;
         end
-        9'h511D: begin
+        9'h11D: begin
           singleVectorWrData29 <= S_AXI_WDATA;
           singleVectorWrDataMask <= singleVectorWrDataMask |   64'h0000000020000000;
         end
