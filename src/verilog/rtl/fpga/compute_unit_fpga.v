@@ -249,6 +249,11 @@ assign rst = ~S_AXI_ARESETN;
 assign slv_reg_wren = axi_wready && S_AXI_WVALID && axi_awready && S_AXI_AWVALID;
 assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
 
+// Implement axi_awready generation
+// axi_awready is asserted for one S_AXI_ACLK clock cycle when both
+// S_AXI_AWVALID and S_AXI_WVALID are asserted. axi_awready is
+// de-asserted when reset is low.
+
 always @( posedge S_AXI_ACLK )
 begin
   if ( S_AXI_ARESETN == 1'b0 ) begin
@@ -308,6 +313,84 @@ begin
     end
   end
 end
+
+// Implement write response logic generation
+// The write response and response valid signals are asserted by the slave 
+// when axi_wready, S_AXI_WVALID, axi_wready and S_AXI_WVALID are asserted.  
+// This marks the acceptance of address and indicates the status of 
+// write transaction.
+
+always @( posedge S_AXI_ACLK ) begin
+  if ( S_AXI_ARESETN == 1'b0 ) begin
+    axi_bvalid  <= 0;
+    axi_bresp   <= 2'b0;
+  end
+  else begin
+    if (axi_awready && S_AXI_AWVALID && ~axi_bvalid && axi_wready && S_AXI_WVALID) begin
+      // indicates a valid write response is available
+      axi_bvalid <= 1'b1;
+      axi_bresp  <= 2'b0; // 'OKAY' response 
+    end                   // work error responses in future
+    else begin
+      if (S_AXI_BREADY && axi_bvalid) begin
+        //check if bready is asserted while bvalid is high) 
+        //(there is a possibility that bready is always asserted high)   
+        axi_bvalid <= 1'b0; 
+      end
+    end
+  end
+end
+
+// Implement axi_arready generation
+// axi_arready is asserted for one S_AXI_ACLK clock cycle when
+// S_AXI_ARVALID is asserted. axi_awready is 
+// de-asserted when reset (active low) is asserted. 
+// The read address is also latched when S_AXI_ARVALID is 
+// asserted. axi_araddr is reset to zero on reset assertion.
+
+always @( posedge S_AXI_ACLK ) begin
+  if ( S_AXI_ARESETN == 1'b0 ) begin
+    axi_arready <= 1'b0;
+    axi_araddr  <= 32'b0;
+  end
+  else begin
+    if (~axi_arready && S_AXI_ARVALID) begin
+      // indicates that the slave has accepted the valid read address
+      axi_arready <= 1'b1;
+      // Read address latching
+      axi_araddr  <= S_AXI_ARADDR;
+    end
+    else begin
+      axi_arready <= 1'b0;
+    end
+  end 
+end
+
+// Implement axi_arvalid generation
+// axi_rvalid is asserted for one S_AXI_ACLK clock cycle when both 
+// S_AXI_ARVALID and axi_arready are asserted. The slave registers 
+// data are available on the axi_rdata bus at this instance. The 
+// assertion of axi_rvalid marks the validity of read data on the 
+// bus and axi_rresp indicates the status of read transaction.axi_rvalid 
+// is deasserted on reset (active low). axi_rresp and axi_rdata are 
+// cleared to zero on reset (active low).
+always @( posedge S_AXI_ACLK ) begin
+  if ( S_AXI_ARESETN == 1'b0 ) begin
+    axi_rvalid <= 0;
+    axi_rresp  <= 0;
+  end
+  else begin    
+    if (axi_arready && S_AXI_ARVALID && ~axi_rvalid) begin
+      // Valid read data is available at the read data bus
+      axi_rvalid <= 1'b1;
+      axi_rresp  <= 2'b0; // 'OKAY' response
+    end
+    else if (axi_rvalid && S_AXI_RREADY) begin
+      // Read data is accepted by the master
+      axi_rvalid <= 1'b0;
+    end
+  end
+end 
 
 always @(*) begin
   lsu2sgpr_dest_wr_en_reg <= 1'b0;
@@ -385,8 +468,7 @@ always @( posedge S_AXI_ACLK ) begin
     if(cu2dispatch_wf_done) begin
       resultsReadyTag <= {17'd0, cu2dispatch_wf_tag_done};
     end
-    if (slv_reg_wren)
-    begin
+    if (slv_reg_wren) begin
       case ( axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
         // 9'h00: Start command initiate program
         9'h001: waveID       <= S_AXI_WDATA;
