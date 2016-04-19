@@ -93,6 +93,7 @@ always@(*) begin
     sgpr_source2_addr_reg <= 9'bxxxxxxxxx;
     sgpr_wr_mask_reg <= 4'bxxxx;
     
+    vgpr_source1_addr_reg <= 10'bxxxxxxxxxx;
     vgpr_source2_rd_en_reg <= 1'b0;
     vgpr_source2_addr_reg <= 10'bxxxxxxxxxx;
     

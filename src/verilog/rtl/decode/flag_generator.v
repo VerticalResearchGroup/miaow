@@ -91,7 +91,7 @@ wire [33:0] instruction_id;
 //Current choice: Retain only 9 bits!!
 assign instruction_id = {fu,opcode} & {2'b11,8'hff,15'b0,{9{1'b1}}};
 
-always @(instruction_id)
+always @(*)
 begin
   wf_halt <= 1'b0;
   wf_barrier <= 1'b0;
