@@ -156,8 +156,8 @@ module simf_alu
 						end
          {1'b1, `ALU_VOP1_FORMAT, 12'h02A} : //V_RCP_F32  - VIN
             begin
-               alu_done <= 1'b1;
-               fpu_start_i <= 1'b0;
+               alu_done <= fpu_ready_o;
+               fpu_start_i <= alu_start;
                fpu_op_i <= 3'b011;
                fpu_opa_i <= 32'h3f80_0000;
                fpu_opb_i <= final_source1_data;
