@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ##Copy the *_defintitions file into all the file in the folder
 
