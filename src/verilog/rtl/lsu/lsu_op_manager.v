@@ -400,8 +400,15 @@ always@(*) begin
             mem_rd_en_reg <= 1'b1;
             if(vgpr_op & ~exec_mask_reg[0]) begin
                 // Stop trying to load
-                lsu_state_next <= RD_REG_WR_STATE;
+                //lsu_state_next <= RD_REG_WR_STATE;
                 mem_rd_en_reg <= 1'b0;
+                mem_op_cnter_next <= mem_op_cnter + 6'd1;
+                mem_in_addr_reg_next[2015:0] <= mem_in_addr_reg[2047:32];
+                exec_mask_reg_next[62:0] <= exec_mask_reg[63:1];
+                mem_data_buffer_next[mem_op_cnter] <= 32'd0; //the value doesnt matter since the exec mask is zero
+                if(mem_op_cnter == mem_op_cnt_reg) begin
+                    lsu_state_next <= RD_REG_WR_STATE;
+                end
             end
             else if(mem_ack) begin
                 // Need to verify how SGPR addresses are generated, whether
@@ -457,8 +464,15 @@ always@(*) begin
             mem_wr_en_reg <= 1'b1;
             if(vgpr_op & ~exec_mask_reg[0]) begin
                 // Stop trying to load
-                lsu_state_next <= WR_REG_INC_STATE;
+                //lsu_state_next <= WR_REG_INC_STATE;
                 mem_wr_en_reg <= 1'b0;
+                mem_op_cnter_next <= mem_op_cnter + 6'd1;
+                mem_in_addr_reg_next[2015:0] <= mem_in_addr_reg[2047:32];
+                mem_data_buffer_next_flat[2015:0] <= mem_data_buffer[2047:32];
+                exec_mask_reg_next[62:0] <= exec_mask_reg[63:1];
+                if(mem_op_cnter == mem_op_cnt_reg) begin
+                    lsu_state_next <= WR_REG_INC_STATE;
+                end
             end
             else if(mem_ack) begin
                 mem_wr_en_reg <= 1'b0;
