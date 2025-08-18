@@ -244,9 +244,6 @@ module resource_table
 
 	 dealloc_start <= 0;
 	 dealloc_done <= 0;
-
-	 find_max_start <= 0;
-	 find_max_done <=0;
 	 
 	 rem_entry_is_first <= 0;
 	 rem_entry_is_last <= 0;
