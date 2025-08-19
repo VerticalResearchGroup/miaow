@@ -1,3 +1,9 @@
+
+
+
+
+
+
 module lsu
 (/*AUTOARG*/
     // Outputs
@@ -85,6 +91,13 @@ assign exec_rd_wfid = issue_wfid;
 reg [31:0] issue_opcode_flopped;
 reg [15:0] issue_lds_base_flopped;
 reg [15:0] issue_imm_value0_flopped;
+//pduarte: added wires and reg required for aditional logic regarding inline constants
+wire [31:0] final_sgpr_source2_data;
+wire op_manager_sgpr_source2_rd_en;
+reg [31:0] final_sgpr_source2_data_reg;
+
+
+assign final_sgpr_source2_data = final_sgpr_source2_data_reg;
 
 wire [2047:0] calc_mem_addr;
 wire gm_or_lds;
@@ -113,6 +126,7 @@ always@(posedge clk) begin
         issue_opcode_flopped <= 32'd0;
         issue_lds_base_flopped <= 16'd0;
         issue_imm_value0_flopped <= 16'd0;
+        
     end
     else begin
         issue_opcode_flopped <= issue_opcode;
@@ -120,6 +134,25 @@ always@(posedge clk) begin
         issue_imm_value0_flopped <= issue_imm_value0;
     end
 
+end
+
+always @(*)//pduarte: aditional logic for inline constants
+    begin
+    if(rst) begin
+    final_sgpr_source2_data_reg <= 32'd0;
+    end
+    else begin
+    
+      if(~issue_source_reg1[11])
+      begin
+        final_sgpr_source2_data_reg <= {{23{issue_source_reg1[8]}},issue_source_reg1[8:0]};
+      end
+      else
+      begin 
+        final_sgpr_source2_data_reg <= sgpr_source2_data;
+      end
+    
+    end
 end
 
 // The decoder requires two cycles to receive the entire opcode. On the second
@@ -221,7 +254,7 @@ lsu_op_manager lsu_op_manager0(
     .mem_gm_or_lds(mem_gm_or_lds),
     
     .sgpr_source1_rd_en(sgpr_source1_rd_en),
-    .sgpr_source2_rd_en(sgpr_source2_rd_en),
+    .sgpr_source2_rd_en(op_manager_sgpr_source2_rd_en),//pduarte: if the input is an inline constant no rd_en is required, redirected output .sgpr_source2_rd_en(sgpr_source2_rd_en),
     .sgpr_source1_addr(sgpr_source1_addr),
     .sgpr_source2_addr(sgpr_source2_addr),
     
@@ -240,13 +273,16 @@ lsu_op_manager lsu_op_manager0(
 lsu_addr_calculator addr_calc(
     .in_vector_source_b(vgpr_source2_data),
     .in_scalar_source_a(sgpr_source1_data),
-    .in_scalar_source_b(sgpr_source2_data),
+    //.in_scalar_source_b(final_sgpr_source2_data),//pduarte: second source may come from inline constant .in_scalar_source_b(sgpr_source2_data),
     .in_opcode(issue_opcode_flopped),
     .in_lds_base(issue_lds_base_flopped),
     .in_imm_value0(issue_imm_value0_flopped),
     .out_ld_st_addr(calc_mem_addr),
     .out_gm_or_lds(gm_or_lds)
 );
+
+
+assign sgpr_source2_rd_en = op_manager_sgpr_source2_rd_en & ~issue_source_reg1[11];//pduarte: if element 11 is set then it's an inline constant
 
 assign rfa_dest_wr_req = (|sgpr_dest_wr_en) | vgpr_dest_wr_en;
 
