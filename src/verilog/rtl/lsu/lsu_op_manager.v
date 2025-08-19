@@ -1,3 +1,9 @@
+
+
+
+
+
+
 module lsu_op_manager
 (
     lsu_wfid,
@@ -455,7 +461,8 @@ always@(*) begin
         
         WR_STATE: begin
             mem_wr_en_reg <= 1'b1;
-            if(vgpr_op & ~exec_mask_reg[0]) begin
+            //pduarte: removed vgpr_op from the condition since only vector writes occur 
+            if(~exec_mask_reg[0]) begin
                 // Stop trying to load
                 lsu_state_next <= WR_REG_INC_STATE;
                 mem_wr_en_reg <= 1'b0;
@@ -476,6 +483,13 @@ always@(*) begin
             lsu_state_next <= WR_REG_INIT_RD_STATE;
             gpr_op_depth_cntr_next <= gpr_op_depth_cntr + 2'd1;
             vgpr_source1_addr_reg_next <= vgpr_source1_addr_reg + 10'd1;
+            //pduarte: added reinitializations for the execute mask, the base address, and the counter
+            mem_op_cnter_next <= 6'd0;
+            mem_in_addr_reg_next <= mem_base_addr_reg;
+            exec_mask_reg_next <= exec_mask_base_reg;
+            //pduarte: updates offset when changing to the next vgpr
+            mem_addr_offset_next <= mem_addr_offset + 32'd4;
+                       
             if(gpr_op_depth_cntr == gpr_op_depth_reg) begin
                 // Signal done somehow
                 lsu_state_next <= SIGNAL_DONE_STATE;
